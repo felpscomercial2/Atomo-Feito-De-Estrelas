@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Átomo — Análise Vendedor</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#060e1f;--card:#0f2040;--sidebar:#0d2b5e;--accent:#1a5cb8;
+  --accent2:#4da6ff;--text:#F5F5F5;--muted:#a0aec0;
+  --border:rgba(255,255,255,0.07);--success:#00ff88;--danger:#ff4d4d;--warning:#ffaa00;
+}
+body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;}
+.sidebar{width:220px;background:var(--sidebar);position:fixed;top:0;left:0;height:100vh;display:flex;flex-direction:column;align-items:center;padding:24px 12px;border-right:1px solid var(--border);z-index:100;}
+.sidebar-logo{width:100px;margin-bottom:4px;filter:drop-shadow(0 2px 8px rgba(1,95,184,0.4));}
+.sidebar-title{font-size:10px;letter-spacing:3px;color:var(--muted);margin-bottom:28px;}
+.nav-section{width:100%;font-size:10px;letter-spacing:1px;color:var(--muted);text-transform:uppercase;padding:0 8px;margin-bottom:6px;}
+.nav-item{width:100%;display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--muted);transition:all 0.2s;border:1px solid transparent;text-decoration:none;margin-bottom:2px;}
+.nav-item:hover{background:rgba(1,95,184,0.1);color:var(--text);border-color:rgba(1,95,184,0.2);}
+.nav-item.active{background:rgba(1,95,184,0.2);color:#fff;border-color:var(--accent);}
+.nav-item .icon{font-size:16px;width:20px;text-align:center;}
+.sidebar-divider{width:100%;height:1px;background:var(--border);margin:16px 0;}
+.btn-logout{margin-top:auto;width:100%;padding:10px;border-radius:8px;background:rgba(255,77,77,0.1);color:var(--danger);border:1px solid rgba(255,77,77,0.2);cursor:pointer;font-size:13px;}
+.main{margin-left:220px;flex:1;padding:28px;}
+
+/* SELETOR */
+.selector-bar{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.selector-bar label{font-size:13px;color:var(--muted);white-space:nowrap;}
+.sel-vendedor{flex:1;min-width:200px;padding:10px 14px;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none;cursor:pointer;}
+.sel-vendedor:focus{border-color:var(--accent);}
+.sel-vendedor option{background:#1A1D2D;}
+.btn-ver{padding:10px 24px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;transition:all 0.2s;white-space:nowrap;}
+.btn-ver:hover{background:#0172db;transform:translateY(-1px);}
+
+/* VENDEDOR HEADER */
+.v-header{background:linear-gradient(135deg,rgba(1,95,184,0.2),rgba(0,195,255,0.05));border:1px solid rgba(1,95,184,0.3);border-radius:12px;padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+.v-avatar{width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#015FB8,#00c3ff);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;color:#fff;flex-shrink:0;}
+.v-nome{font-size:18px;font-weight:700;}
+.v-sub{font-size:12px;color:var(--muted);margin-top:2px;}
+.v-badges{display:flex;gap:8px;margin-left:auto;flex-wrap:wrap;}
+.badge{padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;}
+.badge-unidades{background:rgba(1,95,184,0.15);color:var(--accent2);border:1px solid rgba(1,95,184,0.3);}
+
+/* DRILL BAR */
+.drill-bar{display:none;align-items:center;gap:10px;padding:10px 16px;background:rgba(0,195,255,0.08);border:1px solid rgba(0,195,255,0.25);border-radius:10px;margin-bottom:16px;font-size:13px;flex-wrap:wrap;}
+.drill-bar.show{display:flex;}
+.drill-tag{background:rgba(0,195,255,0.15);border:1px solid rgba(0,195,255,0.3);border-radius:20px;padding:4px 12px;color:var(--accent2);font-weight:600;font-size:12px;}
+.drill-clear{margin-left:auto;background:rgba(255,77,77,0.1);color:var(--danger);border:1px solid rgba(255,77,77,0.2);border-radius:6px;padding:5px 14px;cursor:pointer;font-size:12px;}
+
+/* KPIs */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px;}
+.kpi-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;transition:all 0.2s;position:relative;overflow:hidden;}
+.kpi-card:hover{border-color:var(--accent);transform:translateY(-2px);}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:var(--accent);border-radius:12px 0 0 12px;}
+.kpi-card.verde::before{background:var(--success);}
+.kpi-card.vermelho::before{background:var(--danger);}
+.kpi-card.amarelo::before{background:var(--warning);}
+.kpi-card.ciano::before{background:var(--accent2);}
+.kpi-card.roxo::before{background:#a78bfa;}
+.kpi-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;}
+.kpi-value{font-size:16px;font-weight:700;line-height:1.3;}
+.kpi-sub{font-size:10px;color:var(--muted);margin-top:4px;}
+.kpi-icon{position:absolute;top:12px;right:10px;font-size:16px;opacity:0.15;}
+
+/* POSITIVAÇÃO ESPECIAL */
+.positiv-ring{width:80px;height:80px;position:relative;margin:0 auto 8px;}
+.positiv-ring svg{transform:rotate(-90deg);}
+.positiv-pct{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:16px;font-weight:800;color:var(--success);}
+
+/* COMPARATIVO */
+.comp-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px;}
+.comp-row:last-child{border-bottom:none;}
+.comp-label{flex:1;color:var(--muted);}
+.comp-vendedor{font-weight:700;min-width:100px;text-align:right;}
+.comp-media{color:var(--muted);min-width:100px;text-align:right;font-size:12px;}
+.comp-diff{min-width:60px;text-align:right;font-size:12px;font-weight:600;}
+.comp-up{color:var(--success);}
+.comp-down{color:var(--danger);}
+
+/* CHARTS */
+.charts-row{display:grid;gap:16px;margin-bottom:16px;}
+.charts-row.col-2{grid-template-columns:1fr 1fr;}
+.charts-row.col-3{grid-template-columns:2fr 1fr;}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;}
+.chart-title{font-size:13px;font-weight:600;margin-bottom:4px;}
+.chart-subtitle{font-size:11px;color:var(--muted);margin-bottom:14px;}
+canvas{max-height:220px;cursor:pointer;}
+
+/* TABELA */
+.table-wrap{overflow-x:auto;max-height:280px;overflow-y:auto;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{color:var(--muted);font-weight:500;text-align:left;padding:8px 12px;border-bottom:1px solid var(--border);font-size:11px;text-transform:uppercase;letter-spacing:1px;position:sticky;top:0;background:var(--card);}
+td{padding:9px 12px;border-bottom:1px solid rgba(255,255,255,0.04);}
+tr:hover td{background:rgba(255,255,255,0.02);}
+.rank{color:var(--accent2);font-weight:700;width:30px;}
+.progress-bar{background:rgba(255,255,255,0.08);border-radius:4px;height:4px;margin-top:4px;}
+.progress-fill{background:var(--accent);border-radius:4px;height:4px;transition:width 0.8s;}
+
+/* PLACEHOLDER */
+.placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;color:var(--muted);gap:12px;text-align:center;}
+.placeholder-icon{font-size:48px;opacity:0.3;}
+
+.loading{display:flex;align-items:center;justify-content:center;height:80px;color:var(--muted);font-size:13px;gap:8px;}
+.spinner{width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+.nota{font-size:11px;color:var(--muted);padding:8px 12px;background:rgba(255,170,0,0.05);border:1px solid rgba(255,170,0,0.15);border-radius:6px;margin-bottom:16px;}
+
+@media(max-width:900px){.charts-row.col-2,.charts-row.col-3{grid-template-columns:1fr;}}
+
+@keyframes ringRotate { from{transform:rotate(0deg);}to{transform:rotate(360deg);} }
+@keyframes logoFloat {
+  0%,100%{transform:scale(1) translateY(0);filter:drop-shadow(0 0 15px rgba(1,95,184,0.8)) drop-shadow(0 0 40px rgba(0,195,255,0.4));}
+  25%{transform:scale(1.06) translateY(-4px);filter:drop-shadow(0 0 30px rgba(0,195,255,1)) drop-shadow(0 0 60px rgba(0,195,255,0.6));}
+  50%{transform:scale(0.97) translateY(2px);filter:drop-shadow(0 0 10px rgba(1,95,184,0.5));}
+  75%{transform:scale(1.04) translateY(-2px);filter:drop-shadow(0 0 25px rgba(0,255,200,0.8));}
+}
+@keyframes glowPulse{0%,100%{transform:scale(1);opacity:0.6;}50%{transform:scale(1.8);opacity:0.2;}}
+@keyframes textGlow{0%,100%{text-shadow:0 0 10px rgba(1,95,184,0.8),0 0 20px rgba(1,95,184,0.4);}50%{text-shadow:0 0 20px rgba(0,195,255,1),0 0 40px rgba(0,195,255,0.6);}}
+@keyframes subFade{0%,100%{opacity:0.4;}50%{opacity:1;}}
+@keyframes beamSlide{0%{transform:translateX(-100%);}100%{transform:translateX(400%);}}
+.loading-global{display:none;position:fixed;inset:0;background:radial-gradient(ellipse at center,#010d1f 0%,#000508 100%);z-index:9999;align-items:center;justify-content:center;}
+.loading-global.show{display:flex;}
+.loading-scene{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;width:320px;height:320px;}
+.lo-ring{position:absolute;border-radius:50%;border:1px solid transparent;animation:ringRotate linear infinite;}
+.lo-ring-1{width:260px;height:260px;border-top-color:#015FB8;border-right-color:rgba(1,95,184,0.3);animation-duration:3s;box-shadow:0 0 20px rgba(1,95,184,0.3);}
+.lo-ring-2{width:210px;height:210px;border-bottom-color:#00c3ff;border-left-color:rgba(0,195,255,0.3);animation-duration:2s;animation-direction:reverse;box-shadow:0 0 15px rgba(0,195,255,0.3);}
+.lo-ring-3{width:160px;height:160px;border-top-color:rgba(0,255,200,0.6);animation-duration:1.5s;}
+.lo-logo-wrap{position:relative;z-index:10;display:flex;align-items:center;justify-content:center;}
+.lo-logo{width:100px;z-index:2;animation:logoFloat 3s ease-in-out infinite;}
+.lo-glow{position:absolute;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,rgba(0,195,255,0.15) 0%,transparent 70%);animation:glowPulse 2s ease-in-out infinite;z-index:1;}
+.lo-particles{position:absolute;inset:0;pointer-events:none;}
+.lo-text{position:absolute;bottom:-60px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:6px;white-space:nowrap;}
+.lo-title{font-size:18px;font-weight:800;letter-spacing:8px;color:#fff;animation:textGlow 2s ease-in-out infinite;}
+.lo-sub{font-size:9px;letter-spacing:4px;color:#00c3ff;opacity:0.7;animation:subFade 2s ease-in-out infinite;}
+.lo-track{width:160px;height:2px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden;margin-top:4px;}
+.lo-beam{height:100%;width:30%;border-radius:2px;background:linear-gradient(90deg,transparent,#00c3ff,#015FB8,transparent);animation:beamSlide 1.5s ease-in-out infinite;}
+
+
+/* ═══ ÁTOMO — Loading Screen ═══ */
+.loading-overlay,.loading-global{
+  display:none;position:fixed;inset:0;z-index:9999;
+  align-items:center;justify-content:center;flex-direction:column;gap:28px;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 0%,   rgba(192,64,255,0.18) 0%,transparent 55%),
+    radial-gradient(ellipse 60% 50% at -10% 60%,  rgba(255,50,120,0.14) 0%,transparent 50%),
+    radial-gradient(ellipse 60% 50% at 110% 60%,  rgba(0,200,255,0.12) 0%,transparent 50%),
+    radial-gradient(ellipse 80% 40% at 50% 110%,  rgba(140,0,255,0.18) 0%,transparent 55%),
+    #02000A;
+}
+.loading-overlay.show,.loading-global.show{display:flex;}
+.lo-particles{
+  position:absolute;inset:0;pointer-events:none;
+  background-image:
+    radial-gradient(circle 1px at 8% 12%,rgba(255,255,255,0.9) 0%,transparent 100%),
+    radial-gradient(circle 1.5px at 20% 5%,rgba(255,100,160,0.8) 0%,transparent 100%),
+    radial-gradient(circle 1px at 33% 18%,rgba(255,255,255,0.7) 0%,transparent 100%),
+    radial-gradient(circle 1px at 48% 8%,rgba(0,220,255,0.8) 0%,transparent 100%),
+    radial-gradient(circle 1.5px at 62% 15%,rgba(255,255,255,0.6) 0%,transparent 100%),
+    radial-gradient(circle 1px at 75% 6%,rgba(180,60,255,0.8) 0%,transparent 100%),
+    radial-gradient(circle 1px at 88% 20%,rgba(255,255,255,0.7) 0%,transparent 100%),
+    radial-gradient(circle 1px at 5% 45%,rgba(255,255,255,0.6) 0%,transparent 100%),
+    radial-gradient(circle 1.5px at 15% 60%,rgba(255,60,140,0.7) 0%,transparent 100%),
+    radial-gradient(circle 1px at 42% 55%,rgba(0,200,255,0.7) 0%,transparent 100%),
+    radial-gradient(circle 1.5px at 58% 68%,rgba(255,255,255,0.8) 0%,transparent 100%),
+    radial-gradient(circle 1px at 72% 50%,rgba(180,60,255,0.6) 0%,transparent 100%),
+    radial-gradient(circle 1px at 90% 48%,rgba(0,255,180,0.6) 0%,transparent 100%),
+    radial-gradient(circle 1.5px at 35% 90%,rgba(255,100,160,0.7) 0%,transparent 100%),
+    radial-gradient(circle 1px at 80% 88%,rgba(0,200,255,0.6) 0%,transparent 100%);
+}
+.loading-scene{position:relative;width:320px;height:320px;display:flex;align-items:center;justify-content:center;}
+.lo-atom-svg{position:absolute;top:0;left:0;width:320px;height:320px;overflow:visible;}
+.lo-nucleus-circle{animation:nucleusPulse 2.5s ease-in-out infinite;transform-origin:160px 160px;}
+@keyframes nucleusPulse{
+  0%,100%{filter:drop-shadow(0 0 8px rgba(192,64,255,1)) drop-shadow(0 0 20px rgba(255,60,140,0.6));}
+  50%{filter:drop-shadow(0 0 16px rgba(192,64,255,1)) drop-shadow(0 0 40px rgba(255,60,140,0.8));}
+}
+.lo-group-1{animation:groupSpin1 3s linear infinite;transform-origin:160px 160px;}
+.lo-group-2{animation:groupSpin2 5s linear infinite;transform-origin:160px 160px;}
+.lo-group-3{animation:groupSpin3 7s linear infinite;transform-origin:160px 160px;}
+@keyframes groupSpin1{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+@keyframes groupSpin2{from{transform:rotate(60deg);}to{transform:rotate(420deg);}}
+@keyframes groupSpin3{from{transform:rotate(120deg);}to{transform:rotate(480deg);}}
+.lo-electron{animation:electronPulse 1.5s ease-in-out infinite;}
+.lo-electron-1{animation-delay:0s;}
+.lo-electron-2{animation-delay:0.5s;}
+.lo-electron-3{animation-delay:1s;}
+@keyframes electronPulse{0%,100%{opacity:1;}50%{opacity:0.6;}}
+.lo-text{display:flex;flex-direction:column;align-items:center;gap:8px;z-index:10;}
+.lo-title{
+  font-family:'Space Grotesk',sans-serif !important;
+  font-size:24px;font-weight:700;letter-spacing:8px;text-transform:uppercase;
+  background:linear-gradient(135deg,#F0D0FF 0%,#FF60A0 35%,#C040FF 65%,#00C8FF 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  background-size:200% auto;animation:titleShimmer 3s linear infinite;
+}
+@keyframes titleShimmer{0%{background-position:0% center;}100%{background-position:200% center;}}
+.lo-sub{font-size:11px;letter-spacing:5px;color:rgba(192,64,255,0.8);text-transform:uppercase;text-shadow:0 0 10px rgba(192,64,255,0.5);}
+.lo-progress{width:200px;height:2px;background:rgba(192,64,255,0.1);border-radius:2px;overflow:hidden;position:relative;}
+.lo-progress-bar{position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,#C040FF,#FF3C8C,#00C8FF,transparent);animation:progressSlide 2s linear infinite;box-shadow:0 0 10px rgba(192,64,255,0.8);}
+@keyframes progressSlide{0%{left:-100%;}100%{left:100%;}}
+
+/* ═══════════════════════════════════════════════════
+   ÁTOMO — Galáxia Vibrante · Feito de estrelas.
+═══════════════════════════════════════════════════ */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+body,*{font-family:'DM Sans',system-ui,sans-serif !important;}
+h1,h2,h3,.page-title,.sidebar-title,.lo-title{font-family:'Space Grotesk',system-ui,sans-serif !important;}
+
+body{
+  background-color:#02000A !important;
+  background-image:
+    radial-gradient(ellipse 65% 45% at -5% 15%,rgba(255,50,120,0.22) 0%,rgba(200,30,100,0.12) 35%,transparent 65%),
+    radial-gradient(ellipse 55% 55% at 105% 35%,rgba(0,220,255,0.20) 0%,rgba(0,150,220,0.10) 40%,transparent 65%),
+    radial-gradient(ellipse 80% 45% at 50% 105%,rgba(140,0,255,0.25) 0%,rgba(100,0,200,0.12) 40%,transparent 60%),
+    radial-gradient(ellipse 70% 35% at 50% -8%,rgba(180,0,255,0.20) 0%,rgba(130,30,220,0.10) 40%,transparent 60%),
+    #02000A !important;
+}
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:
+    radial-gradient(circle 1px at 5% 8%,#fff 0%,transparent 100%),
+    radial-gradient(circle 1px at 12% 22%,#fff 0%,transparent 100%),
+    radial-gradient(circle 2px at 18% 5%,#fff 0%,transparent 100%),
+    radial-gradient(circle 1px at 25% 35%,#fff 0%,transparent 100%),
+    radial-gradient(circle 1px at 32% 14%,#fff 0%,transparent 100%),
+    radial-gradient(circle 2px at 38% 28%,#fff 0%,transparent 100%),
+    radial-gradient(circle 1px at 44% 8%,#fff 0%,transparent 100%),
+    radial-gradient(circle 1px at 50% 42%,#fff 0%,transparent 100%),
+    radial-gradient(circle 2px at 57% 18%,#fff 0%,transparent 100%),
+    radial-gradient(circle 1px at 63% 5%,#fff 0%,transparent 100%),
+    radial-gradient(circle 1px at 70% 32%,#fff 0%,transparent 100%),
+    radial-gradient(circle 2px at 76% 12%,#fff 0%,transparent 100%),
+    radial-gradient(circle 1px at 82% 25%,#fff 0%,transparent 100%),
+    radial-gradient(circle 2px at 88% 8%,#fff 0%,transparent 100%),
+    radial-gradient(circle 1px at 94% 20%,#fff 0%,transparent 100%),
+    radial-gradient(circle 1px at 8% 55%,#fff 0%,transparent 100%),
+    radial-gradient(circle 1px at 22% 68%,#fff 0%,transparent 100%),
+    radial-gradient(circle 2px at 35% 58%,#fff 0%,transparent 100%),
+    radial-gradient(circle 1px at 48% 72%,#fff 0%,transparent 100%),
+    radial-gradient(circle 1px at 62% 55%,#fff 0%,transparent 100%),
+    radial-gradient(circle 2px at 75% 68%,#fff 0%,transparent 100%),
+    radial-gradient(circle 1px at 88% 58%,#fff 0%,transparent 100%),
+    radial-gradient(circle 1px at 15% 85%,#fff 0%,transparent 100%),
+    radial-gradient(circle 2px at 40% 92%,#fff 0%,transparent 100%),
+    radial-gradient(circle 1px at 65% 88%,#fff 0%,transparent 100%),
+    radial-gradient(circle 1px at 90% 82%,#fff 0%,transparent 100%),
+    radial-gradient(circle 2.5px at 20% 30%,rgba(0,220,255,0.95) 0%,transparent 100%),
+    radial-gradient(circle 2.5px at 75% 20%,rgba(255,60,140,0.95) 0%,transparent 100%),
+    radial-gradient(circle 2px at 50% 60%,rgba(180,60,255,0.9) 0%,transparent 100%),
+    radial-gradient(circle 2.5px at 30% 75%,rgba(0,255,180,0.9) 0%,transparent 100%),
+    radial-gradient(circle 2px at 85% 50%,rgba(255,140,0,0.85) 0%,transparent 100%),
+    radial-gradient(circle 3px at 45% 15%,rgba(255,60,140,0.7) 0%,transparent 100%),
+    radial-gradient(circle 2px at 92% 70%,rgba(0,220,255,0.85) 0%,transparent 100%);
+}
+
+/* Sidebar */
+.sidebar{background:linear-gradient(180deg,rgba(60,0,100,0.95),rgba(30,0,70,0.98) 40%,rgba(10,0,40,1)) !important;border-right:1px solid rgba(192,64,255,0.25) !important;box-shadow:4px 0 40px rgba(0,0,0,0.8),inset -1px 0 0 rgba(255,60,140,0.1) !important;}
+.nav-item{color:rgba(180,150,255,0.6) !important;transition:all 0.2s !important;}
+.nav-item:hover{color:#E0C8FF !important;background:rgba(180,60,255,0.1) !important;text-shadow:0 0 12px rgba(180,60,255,0.5) !important;}
+.nav-item.active{background:linear-gradient(90deg,rgba(180,60,255,0.2),rgba(255,60,140,0.1)) !important;color:#F0D0FF !important;border-left:2px solid #C040FF !important;text-shadow:0 0 16px rgba(180,60,255,0.6) !important;}
+.sidebar-title{letter-spacing:4px !important;background:linear-gradient(135deg,#F0D0FF,#FF60A0,#C040FF) !important;-webkit-background-clip:text !important;-webkit-text-fill-color:transparent !important;background-clip:text !important;}
+
+/* Cards */
+.card,.kpi-card,.chart-card,.filter-card,.upload-card,.table-wrap,.modal-box,.busca-card{
+  background:linear-gradient(135deg,rgba(40,5,80,0.92),rgba(20,2,50,0.95) 50%,rgba(5,0,30,0.97)) !important;
+  border:1px solid rgba(192,64,255,0.2) !important;border-radius:16px !important;
+  box-shadow:0 4px 30px rgba(0,0,0,0.6),inset 0 1px 0 rgba(255,255,255,0.04) !important;
+  backdrop-filter:blur(12px) !important;
+}
+
+/* KPI — NÃO força font-size */
+.kpi-card::before{background:linear-gradient(180deg,#C040FF,#FF60A0) !important;}
+.kpi-card.critico::before,.kpi-card.vermelho::before{background:linear-gradient(180deg,#FF2060,#FF6040) !important;}
+.kpi-card.atencao::before,.kpi-card.amarelo::before{background:linear-gradient(180deg,#FF8C00,#FFB040) !important;}
+.kpi-card.ok::before,.kpi-card.verde::before{background:linear-gradient(180deg,#00FFB0,#00D4FF) !important;}
+.kpi-card.ciano::before{background:linear-gradient(180deg,#00C8FF,#00FFB0) !important;}
+.kpi-card.sl::before{background:linear-gradient(180deg,#C040FF,#7000CC) !important;}
+.kpi-value{
+  color:#F0D0FF !important;
+  text-shadow:0 0 20px rgba(180,60,255,0.3) !important;
+  word-break:normal !important;white-space:nowrap !important;
+  overflow:hidden !important;text-overflow:ellipsis !important;
+}
+.kpi-label{color:rgba(180,150,255,0.6) !important;font-weight:700 !important;text-transform:uppercase !important;letter-spacing:.1em !important;}
+.kpi-sub{color:rgba(180,150,255,0.5) !important;}
+
+/* Badges */
+.badge{border-radius:8px !important;font-weight:700 !important;}
+.badge-critico{background:rgba(255,32,96,0.18) !important;color:#FF80A8 !important;border:1px solid rgba(255,32,96,0.45) !important;box-shadow:0 0 12px rgba(255,32,96,0.2) !important;text-shadow:0 0 8px rgba(255,60,120,0.6) !important;}
+.badge-atencao{background:rgba(255,140,0,0.18) !important;color:#FFB060 !important;border:1px solid rgba(255,140,0,0.45) !important;}
+.badge-ok{background:rgba(0,255,176,0.15) !important;color:#40FFD0 !important;border:1px solid rgba(0,255,176,0.4) !important;box-shadow:0 0 12px rgba(0,255,176,0.2) !important;text-shadow:0 0 8px rgba(0,255,176,0.5) !important;}
+.badge-sl{background:rgba(192,64,255,0.2) !important;color:#E080FF !important;border:1px solid rgba(192,64,255,0.5) !important;box-shadow:0 0 14px rgba(192,64,255,0.3) !important;text-shadow:0 0 10px rgba(192,64,255,0.7) !important;}
+
+/* Botões */
+.btn-primary,.btn-save,.btn-buscar{background:linear-gradient(135deg,#7000CC,#C040FF,#FF60A0) !important;border:none !important;box-shadow:0 4px 20px rgba(192,64,255,0.5) !important;color:#fff !important;font-weight:700 !important;transition:all 0.2s !important;}
+.btn-primary:hover,.btn-save:hover,.btn-buscar:hover{transform:translateY(-2px) !important;box-shadow:0 8px 30px rgba(192,64,255,0.7) !important;}
+.btn-logout{background:rgba(255,32,96,0.12) !important;color:#FF80A8 !important;border:1px solid rgba(255,32,96,0.25) !important;}
+
+/* Tabela */
+table thead th{background:rgba(5,0,25,0.95) !important;color:#9060CC !important;font-weight:700 !important;letter-spacing:.1em !important;font-size:10px !important;border-bottom:1px solid rgba(192,64,255,0.2) !important;}
+table tbody tr:hover{background:rgba(192,64,255,0.07) !important;}
+table tbody td{border-bottom:1px solid rgba(255,255,255,0.03) !important;color:#D0C0F0 !important;}
+
+/* Inputs */
+input,select,textarea,.td-input,.td-date,.td-select,.td-textarea,.busca-input{
+  background:rgba(20,5,50,0.9) !important;border:1px solid rgba(192,64,255,0.25) !important;
+  color:#E8D8FF !important;border-radius:8px !important;transition:all 0.2s !important;
+}
+input::placeholder,.busca-input::placeholder{color:rgba(180,150,255,0.4) !important;}
+input:focus,select:focus,textarea:focus,.td-input:focus,.td-date:focus,.td-select:focus,.busca-input:focus{
+  border-color:#C040FF !important;box-shadow:0 0 0 3px rgba(192,64,255,0.2),0 0 15px rgba(192,64,255,0.2) !important;outline:none !important;
+}
+
+/* Filtros */
+.filtro-btn,.acao-filtro-btn{background:rgba(192,64,255,0.08) !important;border:1px solid rgba(192,64,255,0.25) !important;color:rgba(180,130,255,0.8) !important;border-radius:10px !important;}
+.filtro-btn:hover,.acao-filtro-btn:hover{border-color:#C040FF !important;background:rgba(192,64,255,0.18) !important;color:#E8D8FF !important;box-shadow:0 0 15px rgba(192,64,255,0.2) !important;}
+.filtro-btn.ativo,.acao-filtro-btn.tem-filtro{background:rgba(192,64,255,0.22) !important;border-color:#C040FF !important;color:#F0D8FF !important;box-shadow:0 0 20px rgba(192,64,255,0.3) !important;}
+
+/* Tags busca */
+.lista-sugestoes{background:linear-gradient(135deg,rgba(30,5,60,0.98),rgba(15,2,40,0.99)) !important;border:1px solid rgba(192,64,255,0.3) !important;border-radius:10px !important;box-shadow:0 8px 32px rgba(0,0,0,0.7) !important;}
+.sugestao-item:hover{background:rgba(192,64,255,0.12) !important;}
+.produto-tag{background:rgba(0,200,255,0.1) !important;border:1px solid rgba(0,200,255,0.3) !important;color:#60E8FF !important;border-radius:20px !important;}
+.filtro-tag{background:rgba(192,64,255,0.1) !important;border:1px solid rgba(192,64,255,0.3) !important;color:#C8B8FF !important;}
+.drill-bar{background:rgba(0,200,255,0.06) !important;border:1px solid rgba(0,200,255,0.2) !important;}
+.drill-tag{background:rgba(0,200,255,0.1) !important;border:1px solid rgba(0,200,255,0.3) !important;color:#60E8FF !important;}
+
+/* Dias vencimento */
+.dias-critico{color:#FF5090 !important;font-weight:800 !important;text-shadow:0 0 10px rgba(255,32,96,0.6) !important;}
+.dias-atencao{color:#FFB060 !important;font-weight:700 !important;text-shadow:0 0 8px rgba(255,140,0,0.5) !important;}
+.dias-ok{color:#40FFD0 !important;font-weight:600 !important;text-shadow:0 0 8px rgba(0,255,176,0.5) !important;}
+
+/* Tags comparação */
+.tag-novo{background:rgba(255,32,96,0.2) !important;color:#FF80B0 !important;border:1px solid rgba(255,32,96,0.5) !important;border-radius:6px !important;text-shadow:0 0 8px rgba(255,60,120,0.5) !important;}
+.tag-aumentou{background:rgba(0,200,255,0.15) !important;color:#60E8FF !important;border:1px solid rgba(0,200,255,0.4) !important;border-radius:6px !important;}
+.tag-reduziu{background:rgba(0,255,176,0.12) !important;color:#40FFD0 !important;border:1px solid rgba(0,255,176,0.35) !important;border-radius:6px !important;}
+.tag-anterior{background:rgba(120,80,180,0.12) !important;color:rgba(180,150,255,0.6) !important;border:1px solid rgba(120,80,180,0.25) !important;border-radius:6px !important;}
+
+/* Row states */
+.row-novo{background:rgba(255,32,96,0.08) !important;border-left:3px solid #FF2060 !important;box-shadow:inset 3px 0 12px rgba(255,32,96,0.1) !important;}
+.row-sl-novo{background:rgba(192,64,255,0.08) !important;border-left:3px solid #C040FF !important;box-shadow:inset 3px 0 12px rgba(192,64,255,0.12) !important;}
+.row-aumentou{background:rgba(0,200,255,0.05) !important;}
+.row-reduziu{background:rgba(0,255,176,0.04) !important;}
+
+/* Upload */
+.upload-card{border:1px dashed rgba(192,64,255,0.35) !important;background:rgba(40,5,80,0.4) !important;}
+.upload-card:hover{border-color:#C040FF !important;box-shadow:0 0 30px rgba(192,64,255,0.2) !important;}
+
+/* Dropdowns */
+.acao-dropdown,.vend-dropdown,[class*="dropdown"]{background:linear-gradient(135deg,rgba(40,5,80,0.98),rgba(20,2,50,0.99)) !important;border:1px solid rgba(192,64,255,0.3) !important;border-radius:12px !important;box-shadow:0 12px 40px rgba(0,0,0,0.8) !important;}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:#02000A;}
+::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#7000CC,#C040FF);border-radius:3px;box-shadow:0 0 6px rgba(192,64,255,0.5);}
+
+/* Textos */
+h1,h2,.page-title{color:#F0D0FF !important;text-shadow:0 0 20px rgba(192,64,255,0.2) !important;}
+body,p,span,div,td,th,li,label{color:#D0C0F0;}
+.muted,[class*="muted"]{color:rgba(180,150,255,0.55) !important;}
+
+/* Logo glow */
+.sidebar-logo,.sidebar svg{
+  filter:drop-shadow(0 0 8px rgba(192,64,255,0.6)) drop-shadow(0 0 16px rgba(255,60,140,0.3)) !important;
+  animation:logoGlow 3s ease-in-out infinite !important;
+}
+@keyframes logoGlow{
+  0%,100%{filter:drop-shadow(0 0 6px rgba(192,64,255,0.5)) drop-shadow(0 0 12px rgba(255,60,140,0.25));}
+  50%{filter:drop-shadow(0 0 14px rgba(192,64,255,0.9)) drop-shadow(0 0 28px rgba(255,60,140,0.5));}
+}
+</style>
+</head>
+<body>
+<!-- LOADING ÁTOMO -->
+<div class="loading-global" id="loadingGlobal">
+  <div class="lo-particles"></div>
+  <div class="loading-scene">
+    <svg class="lo-atom-svg" viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="ngLO" cx="40%" cy="35%">
+          <stop offset="0%" stop-color="#F0D0FF"/>
+          <stop offset="40%" stop-color="#C040FF"/>
+          <stop offset="100%" stop-color="#5A00AA"/>
+        </radialGradient>
+        <filter id="gfLO" x="-100%" y="-100%" width="300%" height="300%">
+          <feGaussianBlur stdDeviation="5" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="gfEL" x="-200%" y="-200%" width="500%" height="500%">
+          <feGaussianBlur stdDeviation="3" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+      <!-- Órbita 1 — horizontal -->
+      <g class="lo-group-1">
+        <ellipse cx="160" cy="160" rx="140" ry="50" fill="none" stroke="#FF3C8C" stroke-width="1" stroke-dasharray="6 10" opacity="0.4"/>
+        <circle cx="300" cy="160" r="7" fill="#FF3C8C" filter="url(#gfEL)" class="lo-electron lo-electron-1"/>
+      </g>
+      <!-- Órbita 2 — 60° -->
+      <g class="lo-group-2" style="transform:rotate(60deg);transform-origin:160px 160px;">
+        <ellipse cx="160" cy="160" rx="140" ry="50" fill="none" stroke="#00C8FF" stroke-width="1" stroke-dasharray="6 10" opacity="0.4"/>
+        <circle cx="300" cy="160" r="6" fill="#00C8FF" filter="url(#gfEL)" class="lo-electron lo-electron-2"/>
+      </g>
+      <!-- Órbita 3 — 120° -->
+      <g class="lo-group-3" style="transform:rotate(120deg);transform-origin:160px 160px;">
+        <ellipse cx="160" cy="160" rx="140" ry="50" fill="none" stroke="#C040FF" stroke-width="1" stroke-dasharray="6 10" opacity="0.4"/>
+        <circle cx="300" cy="160" r="6" fill="#C040FF" filter="url(#gfEL)" class="lo-electron lo-electron-3"/>
+      </g>
+      <!-- Núcleo -->
+      <circle cx="160" cy="160" r="28" fill="rgba(192,64,255,0.12)" filter="url(#gfLO)"/>
+      <circle cx="160" cy="160" r="18" fill="url(#ngLO)" filter="url(#gfLO)" class="lo-nucleus-circle"/>
+      <circle cx="153" cy="153" r="7" fill="rgba(255,255,255,0.22)"/>
+    </svg>
+  </div>
+  <div class="lo-text">
+    <span class="lo-title">ÁTOMO</span>
+    <span class="lo-sub">Feito de estrelas.</span>
+  </div>
+  <div class="lo-progress"><div class="lo-progress-bar"></div></div>
+</div>
+<div class="sidebar">
+  
+  <div class="sidebar-title">ÁTOMO</div>
+  <div class="nav-section">Menu</div>
+    <a class="nav-item" href="home.html"><span class="icon">🏠</span> Página Inicial</a>
+  <a class="nav-item" href="visao-geral.html"><span class="icon">📊</span> Visão Geral</a>
+  <a class="nav-item" href="vendedor.html"><span class="icon">👤</span> Análise Vendedor</a>
+  <a class="nav-item" href="regiao.html"><span class="icon">🗺️</span> Análise Região</a>
+  <a class="nav-item" href="marcas.html"><span class="icon">🏷️</span> Análise Marcas</a>
+  <a class="nav-item" href="produtos.html"><span class="icon">📦</span> Top Produtos</a>
+  <a class="nav-item" href="carteira.html"><span class="icon">👥</span> Carteira Clientes</a>
+  <a class="nav-item" href="shelflife.html"><span class="icon">⏳</span> Shelf Life</a>
+  <div class="sidebar-divider"></div>
+  <button class="btn-logout" onclick="location.href='index.html'">⏻ Sair</button>
+</div>
+
+<div class="main">
+  <h1 style="font-size:20px;font-weight:700;margin-bottom:20px;">👤 Análise Vendedor</h1>
+
+  <div class="nota">⚠️ Faturamento calculado considerando apenas <strong>Vendas e Devoluções</strong>. Bonificações desconsideradas.</div>
+
+  <!-- SELETOR -->
+  <div class="selector-bar">
+    <label>👤 Vendedor:</label>
+    <select class="sel-vendedor" id="selVendedor">
+      <option value="">Todos os vendedores</option>
+    </select>
+    <button class="btn-ver" onclick="aplicar()">Ver análise →</button>
+  </div>
+
+  <!-- DRILL DOWN BAR -->
+  <div class="drill-bar" id="drillBar">
+    <span>🔍 Filtro por clique:</span>
+    <span id="drillTags" style="display:flex;gap:8px;flex-wrap:wrap;"></span>
+    <button class="drill-clear" onclick="limparDrill()">✕ Limpar</button>
+  </div>
+
+  <!-- HEADER DO VENDEDOR -->
+  <div class="v-header" id="vHeader" style="display:none">
+    <div class="v-avatar" id="vAvatar">?</div>
+    <div>
+      <div class="v-nome" id="vNome">—</div>
+      <div class="v-sub" id="vSub">Análise individual de performance</div>
+    </div>
+    <div class="v-badges">
+      <span class="badge badge-unidades" id="vUnidades"></span>
+    </div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpi-grid">
+    <div class="kpi-card verde"><div class="kpi-icon">💰</div><div class="kpi-label">Fat. Bruto</div><div class="kpi-value" id="kFat">...</div><div class="kpi-sub">Vendas no período</div></div>
+    <div class="kpi-card vermelho"><div class="kpi-icon">↩️</div><div class="kpi-label">Devoluções</div><div class="kpi-value" id="kDev">...</div><div class="kpi-sub" id="kDevPct">% do fat.</div></div>
+    <div class="kpi-card"><div class="kpi-icon">📈</div><div class="kpi-label">Fat. Líquido</div><div class="kpi-value" id="kLiq">...</div><div class="kpi-sub">Vendas - Dev.</div></div>
+    <div class="kpi-card ciano"><div class="kpi-icon">🛒</div><div class="kpi-label">Ticket Médio</div><div class="kpi-value" id="kTkt">...</div><div class="kpi-sub">Por venda</div></div>
+    <div class="kpi-card amarelo"><div class="kpi-icon">📦</div><div class="kpi-label">Qtd. Vendas</div><div class="kpi-value" id="kVendas">...</div><div class="kpi-sub">Pedidos</div></div>
+    <div class="kpi-card"><div class="kpi-icon">👥</div><div class="kpi-label">Clientes Ativos</div><div class="kpi-value" id="kCli">...</div><div class="kpi-sub">No período</div></div>
+    <div class="kpi-card roxo"><div class="kpi-icon">📋</div><div class="kpi-label">Carteira</div><div class="kpi-value" id="kCarteira">...</div><div class="kpi-sub">Clientes cadastrados</div></div>
+    <div class="kpi-card verde">
+      <div class="kpi-label">✅ Positivação</div>
+      <div class="kpi-value" id="kPositiv" style="font-size:22px;color:var(--success)">...</div>
+      <div class="kpi-sub" id="kPositivSub">atendidos / carteira</div>
+    </div>
+    <div class="kpi-card"><div class="kpi-icon">📊</div><div class="kpi-label">Margem Média</div><div class="kpi-value" id="kMargem">...</div><div class="kpi-sub">% do período</div></div>
+  </div>
+
+  <!-- MENSAL + UNIDADE -->
+  <div class="charts-row col-3">
+    <div class="chart-card">
+      <div class="chart-title">📈 Evolução Mensal <span id="lblMensal" style="font-size:11px;color:var(--muted);font-weight:400;"></span></div>
+      <div class="chart-subtitle">Clique num mês para filtrar • Vendas vs Devoluções</div>
+      <canvas id="chartMensal"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">🏢 Por Unidade</div>
+      <div class="chart-subtitle">Clique para filtrar por unidade</div>
+      <canvas id="chartUnidade"></canvas>
+    </div>
+  </div>
+
+  <!-- TOP PRODUTOS + TOP CLIENTES -->
+  <div class="charts-row col-2">
+    <div class="chart-card">
+      <div class="chart-title">📦 Top Produtos</div>
+      <div class="chart-subtitle">Produtos mais vendidos no período</div>
+      <canvas id="chartProdutos"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">🏆 Top Clientes</div>
+      <div class="chart-subtitle">Maiores compradores no período</div>
+      <div class="table-wrap" id="tblClientes">
+        <div class="loading"><div class="spinner"></div> Carregando...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- COMPARATIVO -->
+  <div class="chart-card" id="cardComparativo" style="margin-bottom:16px;display:none">
+    <div class="chart-title">⚖️ Comparativo com Média Geral</div>
+    <div class="chart-subtitle">Vendedor selecionado vs média de todos os vendedores</div>
+    <div id="comparativo"></div>
+  </div>
+
+</div>
+
+<script>
+var API = 'https://horus-production.up.railway.app';
+var MESES = ['','Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+var MESES_EXT = ['','Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+var cMensal=null, cUnidade=null, cProdutos=null;
+var drillMes=null, drillUnidade=null;
+var vendedorAtual = '';
+var kpisGerais = null;
+
+// PARTÍCULAS
+function gerarParticulas() {
+  var container = document.getElementById('loParticles');
+  if (!container) return;
+  var colors = ['#015FB8','#00c3ff','#00ff88','#ffffff','#0172db'];
+  function criarParticula() {
+    var p = document.createElement('div');
+    var size = Math.random()*4+1, color = colors[Math.floor(Math.random()*colors.length)];
+    var angle = Math.random()*Math.PI*2, dist = 60+Math.random()*80, duration = 2000+Math.random()*2000;
+    p.style.cssText = 'position:absolute;border-radius:50%;width:'+size+'px;height:'+size+'px;background:'+color+';left:50%;top:50%;transform:translate(-50%,-50%);box-shadow:0 0 '+(size*2)+'px '+color+';opacity:0;';
+    container.appendChild(p);
+    function animar() {
+      var endX=Math.cos(angle)*dist, endY=Math.sin(angle)*dist, st=null;
+      setTimeout(function() {
+        function step(ts) {
+          if (!st) st=ts;
+          var prog=(ts-st)/duration;
+          if (prog>=1) { angle=Math.random()*Math.PI*2; dist=60+Math.random()*80; endX=Math.cos(angle)*dist; endY=Math.sin(angle)*dist; st=null; setTimeout(function(){requestAnimationFrame(step);},Math.random()*500); return; }
+          var e=prog<0.5?2*prog*prog:-1+(4-2*prog)*prog;
+          var op=prog<0.2?prog/0.2:prog>0.8?(1-prog)/0.2:1;
+          p.style.transform='translate(calc(-50% + '+(endX*e)+'px),calc(-50% + '+(endY*e)+'px))';
+          p.style.opacity=(op*0.8).toString();
+          requestAnimationFrame(step);
+        }
+        requestAnimationFrame(step);
+      }, Math.random()*2000);
+    }
+    animar();
+  }
+  for (var i=0;i<15;i++) criarParticula();
+}
+
+// UTILS
+function getFiltros() { var s=localStorage.getItem('horus_filtros'); return s?JSON.parse(s):{}; }
+function brl(v,c) {
+  var n=parseFloat(v)||0;
+  if (c&&Math.abs(n)>=1e6) return 'R$ '+(n/1e6).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})+'M';
+  if (c&&Math.abs(n)>=1e3) return 'R$ '+(n/1e3).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})+'K';
+  return new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(n);
+}
+function num(v) { return new Intl.NumberFormat('pt-BR').format(v||0); }
+function pct(a,b) { if (!b) return '0,0%'; return ((Math.abs(a)/Math.abs(b))*100).toFixed(1).replace('.',',')+'%'; }
+
+function montarParams() {
+  var filtros = getFiltros();
+  var p = new URLSearchParams();
+  if (filtros.ano)  p.append('ano', filtros.ano);
+  if (filtros.mes)  p.append('mes', filtros.mes);
+  if (filtros.unidade) p.append('unidade', filtros.unidade);
+  if (filtros.marca)   p.append('marca', filtros.marca);
+  if (vendedorAtual)   p.append('vendedor', vendedorAtual);
+  if (drillMes)     p.set('mes', drillMes);
+  if (drillUnidade) p.set('unidade', drillUnidade);
+  return p.toString();
+}
+
+// DRILL DOWN
+function atualizarDrillBar() {
+  var tags=[], bar=document.getElementById('drillBar'), el=document.getElementById('drillTags');
+  if (drillMes)     tags.push('Mês: '+MESES_EXT[drillMes]);
+  if (drillUnidade) tags.push('Unidade: '+drillUnidade);
+  if (tags.length) { bar.classList.add('show'); el.innerHTML=tags.map(function(t){return '<span class="drill-tag">'+t+'</span>';}).join(''); }
+  else { bar.classList.remove('show'); el.innerHTML=''; }
+}
+function limparDrill() { drillMes=null; drillUnidade=null; atualizarDrillBar(); recarregar(); }
+
+// APLICA SELEÇÃO DE VENDEDOR
+function aplicar() {
+  vendedorAtual = document.getElementById('selVendedor').value;
+  drillMes=null; drillUnidade=null;
+  atualizarDrillBar();
+  atualizarHeader();
+  recarregar();
+}
+
+function atualizarHeader() {
+  var header = document.getElementById('vHeader');
+  if (vendedorAtual) {
+    header.style.display = 'flex';
+    document.getElementById('vNome').textContent = vendedorAtual;
+    document.getElementById('vAvatar').textContent = vendedorAtual.charAt(0).toUpperCase();
+    document.getElementById('vSub').textContent = 'Análise individual de performance';
+    document.getElementById('cardComparativo').style.display = 'block';
+  } else {
+    header.style.display = 'none';
+    document.getElementById('cardComparativo').style.display = 'none';
+  }
+}
+
+async function recarregar() {
+  var loader = document.getElementById('loadingGlobal');
+  loader.classList.add('show');
+  var params = montarParams();
+  await Promise.all([
+    carregarKPIs(params),
+    carregarMensal(params),
+    carregarUnidade(params),
+    carregarProdutos(params),
+    carregarClientes(params),
+    carregarCarteiraMargem(params),
+  ]);
+  if (vendedorAtual) await carregarComparativo();
+  loader.classList.remove('show');
+}
+
+// KPIs
+async function carregarKPIs(params) {
+  var res=await fetch(API+'/api/kpis?'+params);
+  var d=await res.json();
+  var fat=parseFloat(d.faturamento)||0, dev=parseFloat(d.devolucoes)||0, liq=fat+dev;
+  document.getElementById('kFat').textContent    = brl(fat,true);
+  document.getElementById('kDev').textContent    = brl(Math.abs(dev),true);
+  document.getElementById('kDevPct').textContent = pct(dev,fat)+' do fat.';
+  document.getElementById('kLiq').textContent    = brl(liq,true);
+  document.getElementById('kTkt').textContent    = brl(d.ticket_medio);
+  document.getElementById('kVendas').textContent = num(d.qtd_vendas);
+  document.getElementById('kCli').textContent    = num(d.total_clientes);
+  if (!vendedorAtual) kpisGerais = d;
+}
+
+// CARTEIRA + MARGEM
+async function carregarCarteiraMargem(params) {
+  try {
+    var res=await fetch(API+'/api/resumo-carteira?'+params);
+    var d=await res.json();
+    var cart=d.total_carteira||0;
+    var atend=parseInt((document.getElementById('kCli').textContent||'0').replace(/[^0-9]/g,''))||0;
+    var pos=cart>0?((atend/cart)*100).toFixed(1):'0.0';
+    document.getElementById('kCarteira').textContent    = num(cart);
+    document.getElementById('kPositiv').textContent     = pos+'%';
+    document.getElementById('kPositivSub').textContent  = num(atend)+' atendidos / '+num(cart)+' carteira';
+    document.getElementById('kMargem').textContent      = (d.margem_media||0).toFixed(2).replace('.',',')+'%';
+  } catch(e) {}
+}
+
+// MENSAL
+async function carregarMensal(params) {
+  var res=await fetch(API+'/api/faturamento-mensal?'+params);
+  var raw=await res.json();
+  var data=raw.filter(function(d){return d.mes>=1&&d.mes<=12;});
+  document.getElementById('lblMensal').textContent='('+data.length+' meses)';
+  if (cMensal) cMensal.destroy();
+  cMensal = new Chart(document.getElementById('chartMensal'),{
+    type:'bar',
+    data:{
+      labels:data.map(function(d){return MESES[d.mes]+'/'+String(d.ano).slice(2);}),
+      datasets:[
+        {label:'Faturamento',data:data.map(function(d){return d.faturamento;}),backgroundColor:'rgba(1,95,184,0.75)',borderColor:'#015FB8',borderWidth:1,borderRadius:4,order:2},
+        {label:'Devoluções',data:data.map(function(d){return Math.abs(d.devolucoes);}),type:'line',borderColor:'#ff4d4d',backgroundColor:'rgba(255,77,77,0.1)',tension:0.4,pointRadius:4,pointBackgroundColor:'#ff4d4d',fill:false,order:1}
+      ]
+    },
+    options:{
+      responsive:true,
+      onClick:function(e,els){
+        if (!els.length) return;
+        var d=data[els[0].index];
+        drillMes=(drillMes==d.mes)?null:d.mes;
+        atualizarDrillBar(); recarregar();
+      },
+      plugins:{legend:{labels:{color:'#a0aec0',font:{size:11}}},tooltip:{callbacks:{label:function(c){return ' '+c.dataset.label+': '+brl(c.raw);}}}},
+      scales:{
+        x:{ticks:{color:'#a0aec0',font:{size:10}},grid:{color:'rgba(255,255,255,0.04)'}},
+        y:{ticks:{color:'#a0aec0',font:{size:10},callback:function(v){return 'R$'+(v/1e6).toFixed(1)+'M';}},grid:{color:'rgba(255,255,255,0.04)'}}
+      }
+    }
+  });
+}
+
+// UNIDADE
+async function carregarUnidade(params) {
+  try {
+    var res=await fetch(API+'/api/faturamento-por-unidade?'+params);
+    var data=await res.json();
+    if (!data||!data.length) return;
+    var labels=data.map(function(d){return d.unidade;});
+    var valores=data.map(function(d){return Math.max(0,(parseFloat(d.faturamento)||0)+(parseFloat(d.devolucoes)||0));});
+    if (cUnidade) cUnidade.destroy();
+    cUnidade = new Chart(document.getElementById('chartUnidade'),{
+      type:'doughnut',
+      data:{labels:labels,datasets:[{data:valores,backgroundColor:['#015FB8','#00c3ff','#00ff88','#ffaa00','#ff4d4d','#a78bfa'],borderWidth:0}]},
+      options:{
+        responsive:true,maintainAspectRatio:true,
+        onClick:function(e,els){
+          if (!els.length) return;
+          var u=labels[els[0].index];
+          drillUnidade=(drillUnidade===u)?null:u;
+          atualizarDrillBar(); recarregar();
+        },
+        plugins:{legend:{position:'bottom',labels:{color:'#a0aec0',font:{size:10},padding:8,boxWidth:12}},tooltip:{callbacks:{label:function(c){return ' '+c.label+': '+brl(c.raw,true);}}}},
+      }
+    });
+  } catch(e) {}
+}
+
+// PRODUTOS
+async function carregarProdutos(params) {
+  var res=await fetch(API+'/api/top-produtos?'+params+'&limite=8');
+  var data=await res.json();
+  if (cProdutos) cProdutos.destroy();
+  cProdutos = new Chart(document.getElementById('chartProdutos'),{
+    type:'bar',indexAxis:'y',
+    data:{
+      labels:data.map(function(d){return d.produto.length>28?d.produto.slice(0,28)+'...':d.produto;}),
+      datasets:[{label:'Faturamento',data:data.map(function(d){return d.faturamento;}),backgroundColor:['#015FB8','#00c3ff','#00ff88','#ffaa00','#ff4d4d','#a78bfa','#34d399','#fb923c'],borderRadius:4,borderWidth:0}]
+    },
+    options:{
+      responsive:true,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return ' '+brl(c.raw);}}}},
+      scales:{
+        x:{ticks:{color:'#a0aec0',font:{size:10},callback:function(v){return 'R$'+(v/1e6).toFixed(1)+'M';}},grid:{color:'rgba(255,255,255,0.04)'}},
+        y:{ticks:{color:'#F5F5F5',font:{size:11}},grid:{display:false}}
+      }
+    }
+  });
+}
+
+// CLIENTES
+async function carregarClientes(params) {
+  var res=await fetch(API+'/api/top-clientes?'+params+'&limite=10');
+  var data=await res.json();
+  if (!data||!data.length) { document.getElementById('tblClientes').innerHTML='<div class="loading">Sem dados</div>'; return; }
+  var maxF=data[0].faturamento;
+  var html='<table><thead><tr><th>#</th><th>Cliente</th><th>Faturamento</th><th>Compras</th></tr></thead><tbody>';
+  data.forEach(function(c,i){
+    var p=((c.faturamento/maxF)*100).toFixed(1);
+    html+='<tr><td class="rank">'+(i+1)+'°</td><td>'+c.cliente+'<div class="progress-bar"><div class="progress-fill" style="width:'+p+'%"></div></div></td><td>'+brl(c.faturamento,true)+'</td><td>'+num(c.qtd_vendas)+'</td></tr>';
+  });
+  html+='</tbody></table>';
+  document.getElementById('tblClientes').innerHTML=html;
+}
+
+// COMPARATIVO
+async function carregarComparativo() {
+  try {
+    var filtros=getFiltros();
+    var pGeral=new URLSearchParams();
+    if (filtros.ano) pGeral.append('ano',filtros.ano);
+    if (filtros.mes) pGeral.append('mes',filtros.mes);
+    var [rVend, rGeral, cartVend, cartGeral] = await Promise.all([
+      fetch(API+'/api/kpis?'+montarParams()).then(function(r){return r.json();}),
+      fetch(API+'/api/kpis?'+pGeral.toString()).then(function(r){return r.json();}),
+      fetch(API+'/api/resumo-carteira?'+montarParams()).then(function(r){return r.json();}),
+      fetch(API+'/api/resumo-carteira?'+pGeral.toString()).then(function(r){return r.json();}),
+    ]);
+
+    var fatV=parseFloat(rVend.faturamento)||0, fatG=parseFloat(rGeral.faturamento)||0;
+    var tktV=parseFloat(rVend.ticket_medio)||0, tktG=parseFloat(rGeral.ticket_medio)||0;
+    var mrgV=parseFloat(cartVend.margem_media)||0, mrgG=parseFloat(cartGeral.margem_media)||0;
+    var cliV=parseInt(rVend.total_clientes)||0, cliG=parseInt(rGeral.total_clientes)||0;
+
+    // Positivação
+    var cartV2=cartVend.total_carteira||0, cartG2=cartGeral.total_carteira||0;
+    var posV=cartV2>0?((cliV/cartV2)*100).toFixed(1):'0.0';
+    var posG=cartG2>0?((cliG/cartG2)*100).toFixed(1):'0.0';
+
+    function diffHtml(v, g) {
+      if (!g) return '<span class="comp-diff">—</span>';
+      var d=((v-g)/Math.abs(g)*100).toFixed(1);
+      var cls=parseFloat(d)>=0?'comp-up':'comp-down';
+      return '<span class="comp-diff '+cls+'">'+(parseFloat(d)>=0?'▲':'▼')+Math.abs(d)+'%</span>';
+    }
+
+    document.getElementById('comparativo').innerHTML = [
+      ['💰 Fat. Bruto',   brl(fatV,true), brl(fatG,true), diffHtml(fatV,fatG)],
+      ['🛒 Ticket Médio', brl(tktV),      brl(tktG),      diffHtml(tktV,tktG)],
+      ['📊 Margem',       mrgV.toFixed(1)+'%', mrgG.toFixed(1)+'%', diffHtml(mrgV,mrgG)],
+      ['✅ Positivação',  posV+'%',       posG+'%',       diffHtml(parseFloat(posV),parseFloat(posG))],
+    ].map(function(r){
+      return '<div class="comp-row"><span class="comp-label">'+r[0]+'</span><span class="comp-vendedor">'+r[1]+'</span><span class="comp-media">Média: '+r[2]+'</span>'+r[3]+'</div>';
+    }).join('');
+  } catch(e) {}
+}
+
+// INIT
+window.onload = async function() {
+  gerarParticulas();
+  var loader=document.getElementById('loadingGlobal');
+  loader.classList.add('show');
+
+  // Carrega lista de vendedores
+  try {
+    var res=await fetch(API+'/api/filtros');
+    var data=await res.json();
+    var sel=document.getElementById('selVendedor');
+    data.vendedores.forEach(function(v){
+      var o=document.createElement('option');
+      o.value=v; o.text=v; sel.appendChild(o);
+    });
+    // Se filtro global tem vendedor, seleciona automaticamente
+    var filtros=getFiltros();
+    if (filtros.vendedor) {
+      sel.value=filtros.vendedor;
+      vendedorAtual=filtros.vendedor;
+      atualizarHeader();
+    }
+  } catch(e) {}
+
+  await recarregar();
+  loader.classList.remove('show');
+};
+</script>
+</body>
+</html>
