@@ -1816,7 +1816,7 @@ function exportarExcel() {
     var url  = URL.createObjectURL(blob);
     var a    = document.createElement('a');
     a.href   = url;
-    a.download = 'Horus-ShelfLife-'+new Date().toISOString().slice(0,10)+'.xlsx';
+    a.download = 'Átomo-ShelfLife-'+new Date().toISOString().slice(0,10)+'.xlsx';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
