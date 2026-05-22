@@ -873,13 +873,13 @@ async function carregarSemanas() {
   try {
     var res=await fetch(API+'/api/shelflife/semanas');
     if(!res.ok) {
-      console.error('[HORUS] carregarSemanas HTTP erro:', res.status, res.statusText);
+      console.error('[Átomo] carregarSemanas HTTP erro:', res.status, res.statusText);
       var errText = await res.text().catch(function(){return'';});
-      console.error('[HORUS] Resposta:', errText.slice(0,300));
+      console.error('[Átomo] Resposta:', errText.slice(0,300));
       return;
     }
     var data=await res.json();
-    console.log('[HORUS] Semanas carregadas:', data.length);
+    console.log('[Átomo] Semanas carregadas:', data.length);
     var sel=document.getElementById('semanaSel');
     sel.innerHTML='<option value="">Selecione a semana</option>';
     data.forEach(function(s){
@@ -891,7 +891,7 @@ async function carregarSemanas() {
     });
     if(data.length) sel.selectedIndex=1;
   } catch(e){
-    console.error('[HORUS] Erro ao carregar semanas:', e);
+    console.error('[Átomo] Erro ao carregar semanas:', e);
   }
 }
 
@@ -911,8 +911,8 @@ async function carregarDados() {
     dadosCompletos=Array.isArray(_json)?_json:[];
     // DEBUG: mostra os primeiros registros com data_inconsistencia para diagnóstico
     var comData = dadosCompletos.filter(function(d){ return d.data_inconsistencia; });
-    console.log('[HORUS] Total registros:', dadosCompletos.length, '| Com data_inconsistencia:', comData.length);
-    if(comData.length) console.log('[HORUS] Exemplo data_inconsistencia:', JSON.stringify(comData[0].data_inconsistencia));
+    console.log('[Átomo] Total registros:', dadosCompletos.length, '| Com data_inconsistencia:', comData.length);
+    if(comData.length) console.log('[Átomo] Exemplo data_inconsistencia:', JSON.stringify(comData[0].data_inconsistencia));
 
     if(!todosVendedores.length){
       var rv=await fetch(API+'/api/filtros');
@@ -1816,7 +1816,7 @@ function exportarExcel() {
     var url  = URL.createObjectURL(blob);
     var a    = document.createElement('a');
     a.href   = url;
-    a.download = 'Horus-ShelfLife-'+new Date().toISOString().slice(0,10)+'.xlsx';
+    a.download = 'Átomo-ShelfLife-'+new Date().toISOString().slice(0,10)+'.xlsx';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -2103,10 +2103,10 @@ window.onload=async function(){
       });
     }
     if(!usuarioEmail) {
-      usuarioEmail = localStorage.getItem('horus_user_email') || '';
+      usuarioEmail = localStorage.getItem('atomo_user_email') || '';
     }
   } catch(e) {
-    usuarioEmail = localStorage.getItem('horus_user_email') || '';
+    usuarioEmail = localStorage.getItem('atomo_user_email') || '';
   }
 
   // 2. Verifica acesso ao Shelf Life no backend
