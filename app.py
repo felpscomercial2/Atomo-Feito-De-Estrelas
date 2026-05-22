@@ -178,7 +178,7 @@ _aquecer_cache()
 
 @app.route('/')
 def home():
-    return jsonify({"status": "online", "mensagem": "API Horus funcionando!"})
+    return jsonify({"status": "online", "mensagem": "API Átomo funcionando!"})
 
 @app.route('/api/filtros')
 def filtros():
