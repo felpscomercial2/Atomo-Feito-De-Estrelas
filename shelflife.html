@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Átomo — Shelf Life</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{--bg:#F0F2F5;--card:#FFFFFF;--sidebar:#FFFFFF;--accent:#015FB8;--accent2:#0078D4;--text:#1C1E21;--muted:#65676B;--border:rgba(0,0,0,0.08);--success:#00A400;--danger:#FA383E;--warning:#FFBA00;--sl:#1976D2;}
+body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;}
+.sidebar{width:220px;background:var(--sidebar);position:fixed;top:0;left:0;height:100vh;display:flex;flex-direction:column;align-items:center;padding:24px 12px;border-right:1px solid var(--border);z-index:100;}
+.sidebar-logo{width:100px;margin-bottom:4px;filter:invert(1) brightness(0);}
+.sidebar-title{font-size:10px;letter-spacing:3px;color:var(--muted);margin-bottom:28px;}
+.nav-section{width:100%;font-size:10px;letter-spacing:1px;color:var(--muted);text-transform:uppercase;padding:0 8px;margin-bottom:6px;}
+.nav-item{width:100%;display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--muted);transition:all 0.2s;border:1px solid transparent;text-decoration:none;margin-bottom:2px;}
+.nav-item:hover{background:rgba(1,95,184,0.05);color:var(--accent);border-color:rgba(1,95,184,0.1);}
+.nav-item.active{background:rgba(1,95,184,0.1);color:var(--accent);border-color:var(--accent);font-weight:600;}
+.nav-item .icon{font-size:16px;width:20px;text-align:center;}
+.sidebar-divider{width:100%;height:1px;background:var(--border);margin:16px 0;}
+.btn-logout{margin-top:auto;width:100%;padding:10px;border-radius:8px;background:rgba(255,77,77,0.1);color:var(--danger);border:1px solid rgba(255,77,77,0.2);cursor:pointer;font-size:13px;}
+.main{margin-left:220px;flex:1;padding:28px;}
+.upload-card{background:var(--card);border:1px dashed var(--border);border-radius:10px;padding:10px 18px;margin-bottom:16px;transition:all 0.2s;cursor:pointer;display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+.upload-card:hover{border-color:var(--accent);background:rgba(1,95,184,0.02);}
+.upload-icon{font-size:22px;opacity:0.7;flex-shrink:0;}
+.upload-title{font-size:13px;font-weight:600;margin:0;}
+.upload-sub{font-size:11px;color:var(--muted);margin:0;}
+.upload-info{display:flex;flex-direction:column;gap:1px;flex:1;}
+.upload-input{display:none;}
+.btn-upload{display:inline-block;padding:7px 16px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;white-space:nowrap;flex-shrink:0;}
+.unidade-wrap{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.unidade-wrap label{font-size:11px;color:var(--muted);}
+.unidade-wrap select{padding:5px 10px;background:#fff;border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:11px;outline:none;}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:20px;}
+.kpi-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;position:relative;overflow:hidden;}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;border-radius:12px 0 0 12px;}
+.kpi-card.total::before{background:var(--accent);}
+.kpi-card.critico::before{background:var(--danger);}
+.kpi-card.atencao::before{background:var(--warning);}
+.kpi-card.ok::before{background:var(--success);}
+.kpi-card.sl::before{background:var(--sl);}
+.kpi-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;}
+.kpi-value{font-size:22px;font-weight:800;}
+.filtros-bar{display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap;}
+.filtro-btn{padding:6px 14px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-size:12px;font-weight:600;transition:all 0.2s;}
+.filtro-btn.ativo-todos{background:rgba(1,95,184,0.3);border-color:var(--accent);color:#fff;}
+.filtro-btn.ativo-critico{background:rgba(255,77,77,0.2);border-color:var(--danger);color:var(--danger);}
+.filtro-btn.ativo-atencao{background:rgba(255,170,0,0.2);border-color:var(--warning);color:var(--warning);}
+.filtro-btn.ativo-ok{background:rgba(0,255,136,0.2);border-color:var(--success);color:var(--success);}
+.filtro-btn.ativo-sl{background:rgba(100,181,246,0.2);border-color:var(--sl);color:var(--sl);}
+.semana-sel{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);}
+.acao-filtro-wrap{position:relative;}
+.acao-filtro-btn{padding:6px 14px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-size:12px;font-weight:600;transition:all 0.2s;display:flex;align-items:center;gap:6px;}
+.acao-filtro-btn:hover{border-color:var(--accent);color:var(--text);}
+.acao-filtro-btn.tem-filtro{background:rgba(1,95,184,0.2);border-color:var(--accent);color:var(--accent2);}
+.acao-dropdown{display:none;position:absolute;top:calc(100% + 6px);left:0;background:#1C2333;border:1px solid rgba(255,255,255,0.12);border-radius:10px;z-index:200;min-width:220px;box-shadow:0 8px 24px rgba(0,0,0,0.45);padding:8px;}
+.acao-dropdown.show{display:block;}
+.acao-opcao{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:6px;cursor:pointer;font-size:13px;transition:background 0.15s;color:#E4E6EB;}
+.acao-opcao:hover{background:rgba(1,95,184,0.3);}
+.acao-opcao input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--accent);}
+.acao-limpar{width:100%;padding:7px;background:rgba(250,56,62,0.2);color:#ff6b6b;border:1px solid rgba(250,56,62,0.4);border-radius:6px;cursor:pointer;font-size:12px;margin-top:6px;}
+.semana-sel select{padding:6px 10px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;outline:none;}
+.table-wrap{overflow:auto;border-radius:12px;border:1px solid var(--border);max-height:calc(100vh - 420px);}
+.table-wrap::-webkit-scrollbar{width:10px;height:14px;}
+.table-wrap::-webkit-scrollbar-track{background:rgba(0,0,0,0.05);border-radius:8px;}
+.table-wrap::-webkit-scrollbar-thumb{background:rgba(1,95,184,0.45);border-radius:8px;border:2px solid transparent;background-clip:padding-box;}
+.table-wrap::-webkit-scrollbar-thumb:hover{background:rgba(1,95,184,0.75);border:2px solid transparent;background-clip:padding-box;}
+.table-wrap::-webkit-scrollbar-corner{background:transparent;}
+table{width:100%;border-collapse:collapse;font-size:14px;white-space:nowrap;}
+thead{position:sticky;top:0;z-index:5;}
+th{background:#F8F9FA;padding:11px 12px;text-align:left;font-weight:600;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:1px;border-bottom:2px solid var(--border);}
+th:nth-child(13){min-width:150px;}
+td{padding:11px 12px;border-bottom:1px solid var(--border);vertical-align:middle;}
+tr:hover td{background:rgba(255,255,255,0.02);}
+.badge{display:inline-flex;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700;}
+.badge-critico{background:rgba(255,77,77,0.15);color:var(--danger);border:1px solid rgba(255,77,77,0.3);}
+.badge-atencao{background:rgba(255,170,0,0.15);color:var(--warning);border:1px solid rgba(255,170,0,0.3);}
+.badge-ok{background:rgba(0,255,136,0.15);color:var(--success);border:1px solid rgba(0,255,136,0.3);}
+.badge-sl{background:rgba(100,181,246,0.15);color:var(--sl);border:1px solid rgba(100,181,246,0.3);}
+.td-input{padding:7px 10px;background:#fff;border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:13px;width:90px;outline:none;}
+.td-input:focus{border-color:var(--accent);}
+.td-date{padding:7px 10px;background:#fff;border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:13px;outline:none;min-width:140px;}
+.td-date:focus{border-color:var(--accent);}
+.td-select{padding:7px 10px;background:#1C2333;border:1px solid rgba(255,255,255,0.15);border-radius:5px;color:#E4E6EB;font-size:13px;outline:none;cursor:pointer;max-width:160px;}
+.td-select:focus{border-color:var(--accent);}
+.td-select option{background:#1C2333;color:#E4E6EB;}
+.td-ta{padding:7px 10px;background:#fff;border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:13px;width:170px;resize:none;outline:none;}
+.td-ta:focus{border-color:var(--accent);}
+.btn-save{padding:7px 14px;background:rgba(0,255,136,0.15);color:var(--success);border:1px solid rgba(0,255,136,0.3);border-radius:5px;cursor:pointer;font-size:13px;font-weight:600;}
+.btn-save:hover{background:rgba(0,255,136,0.25);}
+	.btn-delete{padding:7px 10px;background:rgba(250,56,62,0.1);color:var(--danger);border:1px solid rgba(250,56,62,0.2);border-radius:5px;cursor:pointer;font-size:13px;font-weight:600;margin-left:4px;}
+	.btn-delete:hover{background:rgba(250,56,62,0.2);}
+.dias-critico{color:var(--danger);font-weight:700;}
+.dias-atencao{color:var(--warning);font-weight:600;}
+.dias-ok{color:var(--success);}
+.row-novo{background:rgba(255,60,60,0.1)!important;border-left:4px solid #FF4D4D!important;animation:pulse-novo 2s infinite;}
+.row-novo td:first-child{font-weight:700;}
+.row-aumentou{background:rgba(0,120,255,0.08)!important;border-left:3px solid #0078FF!important;}
+.row-aumentou td{color:#0055cc!important;}
+.row-reduziu{background:rgba(0,164,0,0.06)!important;border-left:3px solid var(--success)!important;}
+.row-sl-novo{background:rgba(100,181,246,0.08)!important;border-left:3px solid var(--sl)!important;}
+.row-anterior{background:rgba(180,180,180,0.06)!important;border-left:3px solid #aaa!important;}
+.row-excluido{background:rgba(250,56,62,0.06)!important;border-left:3px solid var(--danger)!important;opacity:0.75;}
+.row-unsaved{outline:2px solid rgba(255,170,0,0.6)!important;outline-offset:-2px;}
+@keyframes pulse-novo{0%,100%{opacity:1;}50%{opacity:0.6;}}
+.row-novo{outline:2px solid rgba(255,77,77,0.5)!important;outline-offset:-2px;}
+.prev-ok{background:rgba(0,255,136,0.15);color:#00c878;border:1px solid rgba(0,255,136,0.3);padding:2px 7px;border-radius:10px;font-size:11px;font-weight:700;white-space:nowrap;}
+.prev-risco{background:rgba(255,170,0,0.15);color:#FFA500;border:1px solid rgba(255,170,0,0.3);padding:2px 7px;border-radius:10px;font-size:11px;font-weight:700;white-space:nowrap;}
+.prev-critico{background:rgba(255,77,77,0.15);color:#FF4D4D;border:1px solid rgba(255,77,77,0.3);padding:2px 7px;border-radius:10px;font-size:11px;font-weight:700;white-space:nowrap;}
+.prev-sem{color:var(--muted);font-size:11px;}
+.row-unsaved td:first-child::after{content:"●";color:#FFA500;font-size:8px;vertical-align:super;margin-left:2px;}
+.tag-novo{display:inline-flex;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;background:rgba(255,140,0,0.2);color:#FF8C00;border:1px solid #FF8C00;margin-left:4px;}
+.tag-aumentou{display:inline-flex;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;background:rgba(0,120,255,0.2);color:#0078FF;border:1px solid #0078FF;margin-left:4px;}
+.tag-reduziu{display:inline-flex;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;background:rgba(0,164,0,0.15);color:var(--success);border:1px solid var(--success);margin-left:4px;}
+.tag-sl-novo{display:inline-flex;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;background:rgba(100,181,246,0.2);color:var(--sl);border:1px solid var(--sl);margin-left:4px;}
+.tag-anterior{display:inline-flex;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;background:rgba(180,180,180,0.2);color:#999;border:1px solid #aaa;margin-left:4px;}
+.btn-export{padding:8px 16px;background:rgba(0,255,136,0.1);color:var(--success);border:1px solid rgba(0,255,136,0.2);border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;}
+\n\n' +
+      'COLUNAS: cod|produto|marca|qtd|dias_venc|status|venda_mes|venda_3m|media_3m|dias_est|is_sl|acao|validade\n' +
+      linhas;
+  }
+
+  function iaAddMsg(texto, tipo) {
+    var div = document.createElement('div');
+    div.className = 'ia-msg ' + tipo;
+    var html = texto
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/^- (.+)$/gm, '<li>$1</li>')
+      .replace(/(<li>[\s\S]*<\/li>)/g, '<ul>$1</ul>')
+      .replace(/\n/g, '<br>');
+    div.innerHTML = html;
+    document.getElementById('iaMessages').appendChild(div);
+    document.getElementById('iaMessages').scrollTop = 99999;
+    return div;
+  }
+
+  function iaAddTyping() {
+    var div = document.createElement('div');
+    div.className = 'ia-typing';
+    div.id = 'iaTyping';
+    div.innerHTML = '<span></span><span></span><span></span>';
+    document.getElementById('iaMessages').appendChild(div);
+    document.getElementById('iaMessages').scrollTop = 99999;
+  }
+
+  function iaRemoveTyping() {
+    var t = document.getElementById('iaTyping');
+    if (t) t.remove();
+  }
+
+  async function iaPesquisarProduto(nome) {
+    try {
+      var API = window.API || 'https://horus-production.up.railway.app';
+      var r = await fetch(API + '/api/valter/pesquisar?produto=' + encodeURIComponent(nome));
+      if (!r.ok) return '';
+      var data = await r.json();
+      if (!data.resultados || !data.resultados.length) return '';
+      var txt = 'INFORMACOES DO PRODUTO "' + nome + '":\n';
+      data.resultados.forEach(function(res) {
+        txt += '[' + res.fonte + '] ' + res.titulo + '\n';
+        if (res.descricao) txt += res.descricao.substring(0, 300) + '\n';
+        txt += '\n';
+      });
+      return txt;
+    } catch(e) { return ''; }
+  }
+
+  function iaDetectarProduto(pergunta) {
+    var dados = window.dadosCompletos || [];
+    var pLow = pergunta.toLowerCase();
+    var nomes = dados.map(function(d) { return d.produto || ''; }).filter(function(n) { return n.length > 4; });
+    for (var i = 0; i < nomes.length; i++) {
+      if (pLow.indexOf(nomes[i].toLowerCase()) >= 0) return nomes[i];
+    }
+    var kw = ['receita', 'como usar', 'o que fazer', 'sugestao', 'sugestão', 'ideia', 'preparo'];
+    for (var k = 0; k < kw.length; k++) {
+      if (pLow.indexOf(kw[k]) >= 0) {
+        var crit = dados.find(function(d) { return d.status_logistica === 'Critico'; });
+        return crit ? crit.produto : null;
+      }
+    }
+    return null;
+  }
+
+  async function iaChamarAPI(pergunta, contexto) {
+    var systemPrompt = 'Seu nome é Valter. Você é especialista em shelf life e produtos alimentícios para a Alimentare, sistema Átomo. ' +
+      'Na sua primeira mensagem, apresente-se como Valter e diga que já analisou os dados da semana. ' +
+      'Analise os dados de shelf life e dê recomendações práticas em português. ' +
+      'Quando receber informações de produto dos sites da Alimentare, use-as para sugerir receitas, formas de uso e ideias criativas. ' +
+      'Identifique produtos que precisam virar código SL, produtos críticos, e sugira ações concretas. ' +
+      'Use **negrito** para destacar produtos e listas com - para sugestões. Seja direto e prático.';
+
+    var infoProduto = '';
+    var prod = iaDetectarProduto(pergunta);
+    if (prod) infoProduto = await iaPesquisarProduto(prod);
+
+    var userMsg = 'DADOS DO SHELF LIFE:\n' + contexto;
+    if (infoProduto) userMsg += '\n\n' + infoProduto;
+    userMsg += '\n\nPERGUNTA: ' + pergunta;
+
+    try {
+      var API_BASE = window.API || 'https://horus-production.up.railway.app';
+      var resp = await fetch(API_BASE + '/api/valter/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          system: systemPrompt,
+          messages: iaHistorico.concat([{ role: 'user', content: userMsg }])
+        })
+      });
+      var data = await resp.json();
+      var resposta = data.content && data.content[0] ? data.content[0].text : 'Erro ao obter resposta.';
+      iaHistorico.push({ role: 'user', content: pergunta });
+      iaHistorico.push({ role: 'assistant', content: resposta });
+      if (iaHistorico.length > 12) iaHistorico = iaHistorico.slice(-12);
+      return resposta;
+    } catch(e) {
+      return 'Erro de conexão. Tente novamente.';
+    }
+  }
+
+  async function iaAnalisarAutomatico() {
+    var dados = window.dadosCompletos || [];
+    document.getElementById('iaSubtitle').textContent = dados.length + ' produtos carregados';
+    if (!dados.length) {
+      iaAddMsg('Nenhum dado carregado ainda. Selecione uma semana! 📋', 'bot');
+      return;
+    }
+    iaAddTyping();
+    document.getElementById('iaSendBtn').disabled = true;
+    var ctx = iaResumoContexto();
+    var r = await iaChamarAPI('Apresente-se e faça uma análise rápida do shelf life desta semana. Destaque os pontos mais urgentes e produtos que recomenda para código SL.', ctx);
+    iaRemoveTyping();
+    document.getElementById('iaSendBtn').disabled = false;
+    iaAddMsg(r, 'bot');
+  }
+
+  async function iaSendMensagem(texto) {
+    iaAddMsg(texto, 'user');
+    iaAddTyping();
+    document.getElementById('iaSendBtn').disabled = true;
+    var ctx = iaResumoContexto();
+    var r = await iaChamarAPI(texto, ctx);
+    iaRemoveTyping();
+    document.getElementById('iaSendBtn').disabled = false;
+    iaAddMsg(r, 'bot');
+  }
+
+  // Registra eventos após página carregar
+  window.addEventListener('load', function() {
+    var fab     = document.getElementById('iaFab');
+    var closeB  = document.getElementById('iaCloseBtn');
+    var input   = document.getElementById('iaInput');
+    var sendB   = document.getElementById('iaSendBtn');
+    var q1      = document.getElementById('iaQ1');
+    var q2      = document.getElementById('iaQ2');
+    var q3      = document.getElementById('iaQ3');
+    var q4      = document.getElementById('iaQ4');
+
+    if (fab)    fab.addEventListener('click', iaToggle);
+    if (closeB) closeB.addEventListener('click', iaToggle);
+    if (sendB)  sendB.addEventListener('click', function() {
+      var v = document.getElementById('iaInput').value.trim();
+      if (v) { document.getElementById('iaInput').value = ''; iaSendMensagem(v); }
+    });
+    if (input)  input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        var v = input.value.trim();
+        if (v) { input.value = ''; iaSendMensagem(v); }
+      }
+    });
+    if (q1) q1.addEventListener('click', function() { iaSendMensagem('Quais produtos preciso reclassificar como SL agora?'); });
+    if (q2) q2.addEventListener('click', function() { iaSendMensagem('Quais produtos estão críticos e precisam de ação imediata?'); });
+    if (q3) q3.addEventListener('click', function() { iaSendMensagem('Faça um resumo geral da situação do shelf life desta semana.'); });
+    if (q4) q4.addEventListener('click', function() { iaSendMensagem('Quais produtos têm maior risco de vencer sem saída?'); });
+  });
+
+})();
+</script>
+
+
+<!-- ══════════════════════════════════════════════════════
+     VALTER v2
+     ══════════════════════════════════════════════════════ -->
+<button class="ia-fab" id="iaFab" title="Valter — Assistente Átomo">
+  🤖
+  <span class="ia-badge" id="iaBadge"></span>
+</button>
+
+<div class="ia-panel" id="iaPanel">
+  <div class="ia-header">
+    <div class="ia-avatar" id="iaAvatar">🤖</div>
+    <div class="ia-header-info">
+      <div class="ia-header-name">Valter</div>
+      <div class="ia-header-status">
+        <span class="ia-status-dot"></span>
+        <span id="iaStatus">Assistente Átomo</span>
+      </div>
+    </div>
+    <div class="ia-header-actions">
+      <button class="ia-header-btn" id="iaResetBtn" title="Reiniciar conversa">↺</button>
+      <button class="ia-header-btn" id="iaCloseBtn" title="Fechar">✕</button>
+    </div>
+  </div>
+  <div id="iaAlertArea"></div>
+  <div class="ia-messages" id="iaMessages"></div>
+  <div id="iaModeMenu" style="display:none"></div>
+  <div class="ia-quick-bar" id="iaQuickBar" style="display:none"></div>
+  <div class="ia-input-area" id="iaInputArea" style="display:none">
+    <input class="ia-input" id="iaInput" placeholder="Digite sua pergunta...">
+    <button class="ia-send-btn" id="iaSendBtn">➤</button>
+  </div>
+</div>
+
+<script>
+(function() {
+  var API_BASE  = (typeof API !== 'undefined') ? API : 'https://horus-production.up.railway.app';
+  var STORAGE_KEY = 'valter_session_v2';
+
+  var state = {
+    open:      false,
+    iniciado:  false,
+    mode:      null,
+    historico: [],
+    contexto:  '',
+    pagina:    document.title.replace('Átomo — ','').replace('Atomo — ','').trim(),
+  };
+
+  /* ── PERSISTÊNCIA ──────────────────────────────────────── */
+  function salvarSessao() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        mode:      state.mode,
+        historico: state.historico.slice(-10),
+        contexto:  state.contexto,
+        ts:        Date.now(),
+      }));
+    } catch(e) {}
+  }
+
+  function carregarSessao() {
+    try {
+      var s = localStorage.getItem(STORAGE_KEY);
+      if (!s) return null;
+      var d = JSON.parse(s);
+      // Expira após 4 horas
+      if (Date.now() - d.ts > 4 * 60 * 60 * 1000) return null;
+      return d;
+    } catch(e) { return null; }
+  }
+
+  /* ── DOM HELPERS ───────────────────────────────────────── */
+  function el(id) { return document.getElementById(id); }
+
+  function setStatus(txt) {
+    el('iaStatus').textContent = txt;
+  }
+
+  function setThinking(on) {
+    el('iaAvatar').classList.toggle('thinking', on);
+    el('iaSendBtn').disabled = on;
+    el('iaFab').classList.toggle('ia-thinking', on && !state.open);
+  }
+
+  function showBadge(n) {
+    var b = el('iaBadge');
+    if (n > 0) {
+      b.textContent = n;
+      b.style.display = 'block';
+      el('iaFab').classList.add('ia-pulsing');
+    } else {
+      b.style.display = 'none';
+      el('iaFab').classList.remove('ia-pulsing');
+    }
+  }
+
+  /* ── MENSAGENS ─────────────────────────────────────────── */
+  function iaAddMsg(texto, tipo, streaming) {
+    var wrap = document.createElement('div');
+    wrap.className = 'ia-msg ' + tipo;
+
+    var bubble = document.createElement('div');
+    bubble.className = 'ia-msg-bubble';
+
+    if (!streaming) {
+      bubble.innerHTML = iaFormatarTexto(texto);
+    }
+    wrap.appendChild(bubble);
+
+    if (tipo === 'bot') {
+      var feedback = document.createElement('div');
+      feedback.className = 'ia-msg-feedback';
+      feedback.innerHTML =
+        '<button class="ia-feedback-btn" data-v="1" title="Útil">👍</button>' +
+        '<button class="ia-feedback-btn" data-v="-1" title="Não útil">👎</button>';
+      feedback.addEventListener('click', function(e) {
+        var btn = e.target.closest('.ia-feedback-btn');
+        if (!btn) return;
+        feedback.querySelectorAll('.ia-feedback-btn').forEach(function(b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+      });
+      wrap.appendChild(feedback);
+    }
+
+    el('iaMessages').appendChild(wrap);
+    el('iaMessages').scrollTop = el('iaMessages').scrollHeight;
+    return bubble;
+  }
+
+  function iaFormatarTexto(texto) {
+    return texto
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/^### (.+)$/gm, '<strong style="color:#60A5FA;font-size:12px;text-transform:uppercase;letter-spacing:0.5px">$1</strong>')
+      .replace(/^- (.+)$/gm, '<li>$1</li>')
+      .replace(/(<li>[\s\S]*?<\/li>)/g, '<ul style="margin:6px 0 6px 16px">$1</ul>')
+      .replace(/\n/g, '<br>');
+  }
+
+  function iaAddTag(texto) {
+    var tag = document.createElement('div');
+    tag.className = 'ia-mode-tag';
+    tag.textContent = texto;
+    el('iaMessages').appendChild(tag);
+    el('iaMessages').scrollTop = el('iaMessages').scrollHeight;
+  }
+
+  function iaAddTyping() {
+    var div = document.createElement('div');
+    div.className = 'ia-typing'; div.id = 'iaTyping';
+    div.innerHTML = '<span></span><span></span><span></span>';
+    el('iaMessages').appendChild(div);
+    el('iaMessages').scrollTop = el('iaMessages').scrollHeight;
+  }
+
+  function iaRemoveTyping() { var t = el('iaTyping'); if (t) t.remove(); }
+
+  /* ── ALERTAS PROATIVOS ─────────────────────────────────── */
+  async function iaVerificarAlertas() {
+    try {
+      var r = await fetch(API_BASE + '/api/valter/alertas');
+      if (!r.ok) return;
+      var data = await r.json();
+      if (data.alertas && data.alertas.length) {
+        showBadge(data.alertas.length);
+        var area = el('iaAlertArea');
+        area.innerHTML = '';
+        data.alertas.slice(0,2).forEach(function(a) {
+          var div = document.createElement('div');
+          div.className = 'ia-alert';
+          div.innerHTML = '<span class="ia-alert-icon">' + (a.icone||'⚠️') + '</span><span>' + a.texto + '</span>';
+          div.addEventListener('click', function() {
+            if (!state.open) iaToggle();
+            setTimeout(function() { iaSendMensagem(a.pergunta || a.texto); }, 400);
+          });
+          area.appendChild(div);
+        });
+      }
+    } catch(e) {}
+  }
+
+  /* ── TOGGLE ────────────────────────────────────────────── */
+  function iaToggle() {
+    state.open = !state.open;
+    el('iaPanel').classList.toggle('open', state.open);
+
+    if (state.open) {
+      showBadge(0);
+      if (!state.iniciado) {
+        state.iniciado = true;
+        setTimeout(iaIniciar, 300);
+      }
+    }
+  }
+  window.iaToggle = iaToggle;
+
+  /* ── INICIAR / RESTAURAR SESSÃO ────────────────────────── */
+  async function iaIniciar() {
+    setStatus('Carregando dados...');
+    setThinking(true);
+
+    // Busca contexto do sistema
+    try {
+      var r = await fetch(API_BASE + '/api/valter/contexto');
+      var d = await r.json();
+      if (d.contexto) state.contexto = d.contexto;
+    } catch(e) {}
+
+    // Adiciona contexto da página atual
+    state.contexto += '\n\nPÁGINA ATUAL: ' + state.pagina;
+
+    setThinking(false);
+
+    // Tenta restaurar sessão anterior
+    var sessao = carregarSessao();
+    if (sessao && sessao.mode && sessao.historico.length) {
+      state.mode      = sessao.mode;
+      state.historico = sessao.historico;
+      state.contexto  = sessao.contexto || state.contexto;
+
+      setStatus(state.mode === 'sl' ? '📦 Shelf Life' : '💬 Dúvidas Gerais');
+      iaAddMsg('Bem-vindo de volta! Continuando nossa conversa sobre **' +
+        (state.mode === 'sl' ? 'Shelf Life' : 'Dúvidas Gerais') + '**.', 'bot');
+
+      // Reexibe últimas 2 mensagens do histórico
+      var ultimas = state.historico.slice(-4);
+      ultimas.forEach(function(m) {
+        iaAddMsg(m.content, m.role === 'user' ? 'user' : 'bot');
+      });
+
+      iaShowInput(state.mode);
+    } else {
+      iaApresentar();
+    }
+  }
+
+  async function iaApresentar() {
+    setStatus('Pronto');
+    iaAddMsg('Olá! Sou o **Valter**, assistente inteligente do sistema Átomo. Estou aqui para te ajudar com análises, dúvidas e insights da Alimentare.\n\nO que você precisa hoje?', 'bot');
+    iaShowMenu();
+  }
+
+  /* ── MENU ──────────────────────────────────────────────── */
+  function iaShowMenu() {
+    var menu = el('iaModeMenu');
+    el('iaQuickBar').style.display = 'none';
+    el('iaInputArea').style.display = 'none';
+
+    menu.innerHTML =
+      '<div class="ia-mode-menu">' +
+        '<button class="ia-mode-btn" id="iaBtnSL">' +
+          '<div class="ia-mode-icon">📦</div>' +
+          '<div><div class="ia-mode-label">Shelf Life</div>' +
+          '<div class="ia-mode-desc">Validade, produtos críticos e ações SL</div></div>' +
+          '<span class="ia-mode-arrow">›</span>' +
+        '</button>' +
+        '<button class="ia-mode-btn" id="iaBtnGeral">' +
+          '<div class="ia-mode-icon">💬</div>' +
+          '<div><div class="ia-mode-label">Dúvidas Gerais</div>' +
+          '<div class="ia-mode-desc">Faturamento, vendedores, marcas, carteira</div></div>' +
+          '<span class="ia-mode-arrow">›</span>' +
+        '</button>' +
+      '</div>';
+    menu.style.display = 'block';
+
+    el('iaBtnSL').addEventListener('click', function() { iaEscolherModo('sl'); });
+    el('iaBtnGeral').addEventListener('click', function() { iaEscolherModo('geral'); });
+  }
+
+  function iaHideMenu() {
+    el('iaModeMenu').style.display = 'none';
+  }
+
+  /* ── ESCOLHER MODO ─────────────────────────────────────── */
+  async function iaEscolherModo(modo) {
+    state.mode = modo;
+    state.historico = [];
+    iaHideMenu();
+    el('iaMessages').innerHTML = '';
+
+    var label = modo === 'sl' ? '📦 Shelf Life' : '💬 Dúvidas Gerais';
+    setStatus(label);
+    iaAddTag(label);
+    iaAddTyping();
+    setThinking(true);
+
+    var ctx = state.contexto;
+    var prompt = '';
+
+    if (modo === 'sl') {
+      if (typeof dadosCompletos !== 'undefined' && dadosCompletos.length) {
+        ctx += iaContextoSL();
+      }
+      prompt = 'Apresente-se rapidamente como Valter e faça uma análise focada do shelf life. ' +
+        'Destaque os pontos mais urgentes e os produtos que recomenda para código SL com justificativa.';
+    } else {
+      prompt = 'Apresente-se brevemente como Valter e diga que pode ajudar com faturamento, ' +
+        'vendedores, marcas, carteira de clientes, produtos e shelf life da Alimentare. ' +
+        'Mencione 2-3 insights interessantes do contexto fornecido.';
+    }
+
+    var resp = await iaChamarAPI(prompt, ctx, modo);
+    iaRemoveTyping();
+    setThinking(false);
+    iaAddMsg(resp, 'bot');
+    salvarSessao();
+
+    iaShowInput(modo);
+  }
+
+  function iaContextoSL() {
+    var dados = dadosCompletos || [];
+    var criticos = dados.filter(function(d){ return d.dias_vencimento <= 30; });
+    var sl       = dados.filter(function(d){ return d.is_sl; });
+    var semSaida = dados.filter(function(d){ return (!d.venda_mes||d.venda_mes==0)&&d.quantidade_log>0; });
+    var linhas   = dados.slice(0,60).map(function(d){
+      var med = d.venda_3meses ? (parseFloat(d.venda_3meses)/3).toFixed(1) : '0';
+      var qtd = parseFloat(d.quantidade_log||0);
+      var est = parseFloat(med)>0 ? Math.round(qtd/(parseFloat(med)/30)) : 999;
+      return [d.cod_produto||'',d.produto||'',d.marca||'',qtd,
+              d.dias_vencimento||'?',d.status_logistica||'',
+              d.venda_mes?parseFloat(d.venda_mes).toFixed(0):'0',
+              d.venda_3meses?parseFloat(d.venda_3meses).toFixed(0):'0',
+              med, est<999?est+'d':'sem_giro',
+              d.is_sl?'SIM':'NAO',d.acao||''].join('|');
+    }).join('\n');
+    return '\n\nDADOS SHELF LIFE ATUAL:\n' +
+      'Total:'+dados.length+' | Criticos:'+criticos.length+' | SL:'+sl.length+' | SemSaida:'+semSaida.length+'\n' +
+      'COLUNAS:cod|produto|marca|qtd|dias_venc|status|venda_mes|venda_3m|media_3m|dias_est|is_sl|acao\n' + linhas;
+  }
+
+  /* ── INPUT E AÇÕES RÁPIDAS ─────────────────────────────── */
+  function iaShowInput(modo) {
+    var qb = el('iaQuickBar');
+    var ia = el('iaInputArea');
+    ia.style.display = 'flex';
+    qb.style.display = 'flex';
+    qb.innerHTML = '';
+
+    var btns = modo === 'sl' ? [
+      {l:'🏷️ Reclassificar SL', m:'Quais produtos devo reclassificar para código SL agora?'},
+      {l:'🚨 Críticos',          m:'Quais produtos estão críticos e precisam de ação imediata?'},
+      {l:'📊 Resumo',            m:'Faça um resumo geral do shelf life desta semana.'},
+      {l:'⚠️ Risco de vencer',   m:'Quais produtos têm maior risco de vencer sem saída?'},
+    ] : [
+      {l:'📈 Faturamento',    m:'Como está o faturamento do ano atual?'},
+      {l:'🏆 Top vendedores', m:'Quais são os top vendedores do ano?'},
+      {l:'🏷️ Top marcas',     m:'Quais marcas têm maior faturamento?'},
+      {l:'👥 Carteira',       m:'Me dê insights sobre a carteira de clientes.'},
+    ];
+
+    // Botões dinâmicos baseados no contexto
+    if (modo === 'sl' && typeof dadosCompletos !== 'undefined') {
+      var criticos = dadosCompletos.filter(function(d){ return d.dias_vencimento<=15; }).length;
+      if (criticos > 0) {
+        btns.unshift({l:'🚨 '+criticos+' vencem em 15d', m:'Liste os '+criticos+' produtos que vencem em 15 dias e sugira ações urgentes.'});
+      }
+    }
+
+    btns.forEach(function(b) {
+      var btn = document.createElement('button');
+      btn.className = 'ia-quick'; btn.textContent = b.l;
+      btn.addEventListener('click', function(){ iaSendMensagem(b.m); });
+      qb.appendChild(btn);
+    });
+
+    var back = document.createElement('button');
+    back.className = 'ia-back-btn'; back.textContent = '← Menu';
+    back.addEventListener('click', iaReset);
+    qb.appendChild(back);
+
+    el('iaInput').focus();
+  }
+
+  /* ── RESET ─────────────────────────────────────────────── */
+  function iaReset() {
+    state.mode = null; state.historico = [];
+    try { localStorage.removeItem(STORAGE_KEY); } catch(e) {}
+    el('iaMessages').innerHTML = '';
+    el('iaQuickBar').style.display = 'none';
+    el('iaInputArea').style.display = 'none';
+    setStatus('Assistente Átomo');
+    iaApresentar();
+  }
+
+  /* ── PESQUISA DE PRODUTO ───────────────────────────────── */
+  async function iaPesquisarProduto(nome) {
+    try {
+      var r = await fetch(API_BASE + '/api/valter/pesquisar?produto=' + encodeURIComponent(nome));
+      if (!r.ok) return '';
+      var data = await r.json();
+      if (!data.resultados || !data.resultados.length) return '';
+      var txt = 'INFORMACOES DO PRODUTO "' + nome + '":\n';
+      data.resultados.forEach(function(res) {
+        txt += '[' + res.fonte + '] ' + res.titulo + '\n';
+        if (res.descricao) txt += res.descricao.substring(0,300) + '\n\n';
+      });
+      return txt;
+    } catch(e) { return ''; }
+  }
+
+  function iaDetectarProduto(pergunta) {
+    var dados = (typeof dadosCompletos !== 'undefined') ? dadosCompletos : [];
+    var pLow  = pergunta.toLowerCase();
+    var nomes = dados.map(function(d){ return d.produto||''; }).filter(function(n){ return n.length>4; });
+    for (var i=0;i<nomes.length;i++) { if (pLow.indexOf(nomes[i].toLowerCase())>=0) return nomes[i]; }
+    var kw = ['receita','como usar','o que fazer','sugestao','sugestão','ideia','preparo'];
+    for (var k=0;k<kw.length;k++) { if (pLow.indexOf(kw[k])>=0 && dados.length) return dados[0].produto||null; }
+    return null;
+  }
+
+  /* ── CHAMAR API ────────────────────────────────────────── */
+  async function iaChamarAPI(pergunta, contexto, modo) {
+    var sys = 'Seu nome é Valter. Você é o assistente inteligente do sistema Átomo da Alimentare, ' +
+      'distribuidora de alimentos. Responda sempre em português, de forma direta, prática e objetiva. ' +
+      'Use **negrito** para destacar dados importantes. Use listas com - para sugestões. ' +
+      'Seja conciso mas completo. Nunca invente dados — use apenas o contexto fornecido.';
+
+    if (modo === 'sl') {
+      sys += ' Você está no modo Shelf Life. Foque em: produtos críticos, sugestões de reclassificação SL, ' +
+        'receitas e ideias para girar estoques próximos do vencimento.';
+    } else {
+      sys += ' Você está no modo Dúvidas Gerais. Responda sobre qualquer tema do sistema: faturamento, ' +
+        'vendedores, marcas, produtos, carteira. Quando perguntado sobre produtos específicos, ' +
+        'use as informações dos sites da Alimentare que serão fornecidas.';
+    }
+
+    var infoProduto = '';
+    var prod = iaDetectarProduto(pergunta);
+    if (prod) { setStatus('Pesquisando '+prod+'...'); infoProduto = await iaPesquisarProduto(prod); }
+
+    setStatus('Pensando...');
+    var userMsg = 'CONTEXTO:\n' + contexto;
+    if (infoProduto) userMsg += '\n\n' + infoProduto;
+    userMsg += '\n\nPERGUNTA: ' + pergunta;
+
+    try {
+      var resp = await fetch(API_BASE + '/api/valter/chat', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          system: sys,
+          messages: state.historico.concat([{role:'user',content:userMsg}])
+        })
+      });
+      var data = await resp.json();
+      var texto = data.content&&data.content[0] ? data.content[0].text : 'Erro ao obter resposta.';
+      state.historico.push({role:'user',content:pergunta});
+      state.historico.push({role:'assistant',content:texto});
+      if (state.historico.length>12) state.historico=state.historico.slice(-12);
+      setStatus(modo==='sl'?'📦 Shelf Life':'💬 Dúvidas Gerais');
+      return texto;
+    } catch(e) {
+      setStatus('Erro de conexão');
+      return 'Erro de conexão. Tente novamente.';
+    }
+  }
+
+  /* ── ENVIAR MENSAGEM ───────────────────────────────────── */
+  async function iaSendMensagem(texto) {
+    if (!texto.trim()) return;
+    iaAddMsg(texto, 'user');
+    iaAddTyping();
+    setThinking(true);
+    var ctx = state.contexto;
+    if (state.mode==='sl' && typeof dadosCompletos!=='undefined' && dadosCompletos.length) {
+      ctx += iaContextoSL();
+    }
+    var r = await iaChamarAPI(texto, ctx, state.mode||'geral');
+    iaRemoveTyping();
+    setThinking(false);
+    iaAddMsg(r, 'bot');
+    salvarSessao();
+  }
+
+  /* ── EVENTOS ───────────────────────────────────────────── */
+  window.addEventListener('load', function() {
+    el('iaFab').addEventListener('click', iaToggle);
+    el('iaCloseBtn').addEventListener('click', iaToggle);
+    el('iaResetBtn').addEventListener('click', iaReset);
+    el('iaSendBtn').addEventListener('click', function() {
+      var v = el('iaInput').value.trim();
+      if (v) { el('iaInput').value=''; iaSendMensagem(v); }
+    });
+    el('iaInput').addEventListener('keydown', function(e) {
+      if (e.key==='Enter' && !e.shiftKey) {
+        e.preventDefault();
+        var v = el('iaInput').value.trim();
+        if (v) { el('iaInput').value=''; iaSendMensagem(v); }
+      }
+    });
+
+    // Verifica alertas proativos após 3s
+    setTimeout(iaVerificarAlertas, 3000);
+  });
+
+})();
+</script>
+\n</body>
