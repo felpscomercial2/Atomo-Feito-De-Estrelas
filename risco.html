@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Átomo — Clientes em Risco</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<style>
+:root{--bg:#0D1117;--card:#161B22;--border:rgba(255,255,255,0.08);--text:#E6EDF3;--muted:#8B949E;--accent:#1976D2;--accent2:#00C8FF;--danger:#FF4D4D;--warning:#F5A800;--success:#22C55E;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif;display:flex;min-height:100vh;}
+.sidebar{width:200px;flex-shrink:0;padding:20px 12px;background:rgba(0,0,0,0.3);border-right:1px solid var(--border);display:flex;flex-direction:column;gap:4px;position:fixed;top:0;bottom:0;left:0;overflow-y:auto;}
+.sidebar-logo{display:block;margin:0 auto 16px;width:60px;}
+.sidebar-title{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;padding:0 8px;margin:12px 0 4px;}
+.nav-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;color:var(--muted);text-decoration:none;font-size:13px;transition:all 0.15s;}
+.nav-item:hover,.nav-item.active{background:rgba(25,118,210,0.15);color:var(--text);}
+.nav-item.active{color:#60A5FA;font-weight:600;}
+.nav-item .icon{font-size:15px;width:20px;text-align:center;}
+.btn-logout{margin-top:auto;width:100%;padding:10px;border-radius:8px;background:rgba(255,77,77,0.1);color:var(--danger);border:1px solid rgba(255,77,77,0.2);cursor:pointer;font-size:13px;}
+.main{margin-left:200px;flex:1;padding:28px;max-width:1200px;}
+h1{font-size:22px;font-weight:700;margin-bottom:4px;}
+.subtitulo{color:var(--muted);font-size:13px;margin-bottom:24px;}
+
+/* KPIs */
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:24px;}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;}
+.kpi-valor{font-size:26px;font-weight:700;margin-bottom:4px;}
+.kpi-label{font-size:12px;color:var(--muted);}
+.kpi.vermelho .kpi-valor{color:var(--danger);}
+.kpi.amarelo .kpi-valor{color:var(--warning);}
+.kpi.verde .kpi-valor{color:var(--success);}
+
+/* Filtros */
+.filtros{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:20px;padding:14px 16px;background:var(--card);border:1px solid var(--border);border-radius:12px;}
+.filtros label{font-size:12px;color:var(--muted);}
+.filtros select,.filtros input{background:rgba(255,255,255,0.06);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:7px 12px;font-size:13px;}
+.btn-aplicar{padding:8px 18px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;}
+.btn-aplicar:hover{background:#1565C0;}
+.btn-exportar{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:rgba(34,197,94,0.12);color:#4ADE80;border:1px solid rgba(34,197,94,0.25);border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;margin-left:auto;}
+.btn-exportar:hover{background:rgba(34,197,94,0.22);}
+
+/* Tabela */
+.tabela-wrap{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+.tabela-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);}
+.tabela-titulo{font-size:14px;font-weight:600;}
+.tabela-count{font-size:12px;color:var(--muted);}
+table{width:100%;border-collapse:collapse;}
+th{padding:10px 14px;text-align:left;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border);background:rgba(0,0,0,0.2);}
+td{padding:11px 14px;font-size:13px;border-bottom:1px solid rgba(255,255,255,0.03);}
+tr:hover td{background:rgba(25,118,210,0.05);}
+tr:last-child td{border-bottom:none;}
+.badge-dias{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;}
+.badge-critico{background:rgba(255,77,77,0.15);color:#FF6B6B;}
+.badge-atencao{background:rgba(245,168,0,0.15);color:#F5A800;}
+.badge-alerta{background:rgba(0,200,255,0.12);color:#00C8FF;}
+.loading{text-align:center;padding:40px;color:var(--muted);}
+
+/* ══════════════════════════════════════════════════════════
+   VALTER v2 — Design System
+   ══════════════════════════════════════════════════════════ */
+
+/* Botão flutuante */
+.ia-fab {
+  position: fixed; bottom: 28px; right: 28px;
+  width: 56px; height: 56px; border-radius: 50%;
+  background: linear-gradient(135deg, #015FB8, #0096FF);
+  color: #fff; border: none; cursor: pointer; font-size: 24px;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 24px rgba(1,95,184,0.5);
+  z-index: 900; transition: all 0.25s cubic-bezier(0.34,1.56,0.64,1);
+}
+.ia-fab:hover { transform: scale(1.12); box-shadow: 0 6px 32px rgba(1,95,184,0.7); }
+.ia-fab.ia-pulsing { animation: ia-pulse 2s infinite; }
+.ia-fab.ia-thinking { animation: ia-spin 1s linear infinite; }
+@keyframes ia-pulse {
+  0%,100% { box-shadow: 0 4px 24px rgba(1,95,184,0.5); }
+  50% { box-shadow: 0 4px 32px rgba(245,168,0,0.8), 0 0 0 8px rgba(245,168,0,0.15); }
+}
+@keyframes ia-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Badge de alerta no botão */
+.ia-badge {
+  position: absolute; top: -4px; right: -4px;
+  background: #F5A800; color: #000; font-size: 10px; font-weight: 800;
+  padding: 2px 6px; border-radius: 10px; min-width: 18px; text-align: center;
+  display: none; animation: ia-badge-pop 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes ia-badge-pop { from { transform: scale(0); } to { transform: scale(1); } }
+
+/* Painel principal */
+.ia-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.75);
+  backdrop-filter: blur(4px);
+  z-index: 940;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.ia-overlay.open { opacity: 1; pointer-events: all; }
+.ia-panel {
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%) scale(0.92);
+  width: min(520px, 95vw);
+  height: min(680px, 90vh);
+  background: #080C14;
+  border: 1px solid rgba(0,150,255,0.2);
+  border-radius: 20px;
+  display: flex; flex-direction: column;
+  z-index: 950;
+  opacity: 0; pointer-events: none;
+  transition: all 0.35s cubic-bezier(0.34,1.56,0.64,1);
+  box-shadow:
+    0 0 0 1px rgba(0,150,255,0.1),
+    0 0 40px rgba(0,96,255,0.15),
+    0 40px 80px rgba(0,0,0,0.6);
+  overflow: hidden;
+}
+.ia-panel::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0,150,255,0.6), rgba(245,168,0,0.4), transparent);
+}
+.ia-panel.open {
+  opacity: 1; pointer-events: all;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+/* Header */
+.ia-header {
+  padding: 16px 20px;
+  background: linear-gradient(135deg, rgba(0,96,255,0.12), rgba(0,0,0,0));
+  border-bottom: 1px solid rgba(0,150,255,0.15);
+  display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+  position: relative;
+}
+.ia-header::after {
+  content: '';
+  position: absolute; bottom: -1px; left: 20px; width: 60px; height: 1px;
+  background: linear-gradient(90deg, rgba(0,150,255,0.8), transparent);
+}
+.ia-avatar {
+  width: 38px; height: 38px; border-radius: 50%;
+  background: linear-gradient(135deg, #015FB8, #0096FF);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; flex-shrink: 0;
+  box-shadow: 0 2px 12px rgba(1,95,184,0.4);
+}
+.ia-avatar.thinking { animation: ia-avatar-pulse 1.2s ease-in-out infinite; }
+@keyframes ia-avatar-pulse {
+  0%,100% { box-shadow: 0 2px 12px rgba(1,95,184,0.4); }
+  50% { box-shadow: 0 2px 20px rgba(0,150,255,0.8); }
+}
+.ia-header-info { flex: 1; min-width: 0; }
+.ia-header-name { font-size: 14px; font-weight: 700; color: #F1F3F5; }
+.ia-header-status {
+  font-size: 11px; color: #6B7280; margin-top: 2px;
+  display: flex; align-items: center; gap: 5px;
+}
+.ia-status-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: #22C55E; flex-shrink: 0;
+  box-shadow: 0 0 6px rgba(34,197,94,0.6);
+}
+.ia-header-actions { display: flex; gap: 6px; }
+.ia-header-btn {
+  background: rgba(255,255,255,0.06); border: none;
+  color: #6B7280; cursor: pointer; width: 30px; height: 30px;
+  border-radius: 8px; font-size: 14px; display: flex;
+  align-items: center; justify-content: center; transition: all 0.15s;
+}
+.ia-header-btn:hover { background: rgba(255,255,255,0.12); color: #F1F3F5; }
+
+/* Área de mensagens */
+.ia-messages {
+  flex: 1; overflow-y: auto; padding: 16px;
+  display: flex; flex-direction: column; gap: 14px;
+  scroll-behavior: smooth;
+}
+.ia-messages::-webkit-scrollbar { width: 3px; }
+.ia-messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+
+/* Mensagens */
+.ia-msg { max-width: 88%; display: flex; flex-direction: column; gap: 4px; }
+.ia-msg.bot { align-self: flex-start; }
+.ia-msg.user { align-self: flex-end; }
+.ia-msg-bubble {
+  padding: 10px 14px; border-radius: 16px;
+  font-size: 13px; line-height: 1.6;
+}
+.ia-msg.bot .ia-msg-bubble {
+  background: rgba(0,96,255,0.06);
+  border: 1px solid rgba(0,150,255,0.12);
+  color: #D1D5DB;
+  border-radius: 4px 16px 16px 16px;
+  border-left: 2px solid rgba(0,150,255,0.3);
+}
+.ia-msg.user .ia-msg-bubble {
+  background: linear-gradient(135deg, #015FB8, #0078D4);
+  color: #fff;
+  border-radius: 16px 4px 16px 16px;
+}
+.ia-msg.bot .ia-msg-bubble strong { color: #F5A800; }
+.ia-msg.bot .ia-msg-bubble ul { margin: 8px 0 4px 16px; }
+.ia-msg.bot .ia-msg-bubble li { margin-bottom: 4px; color: #D1D5DB; }
+.ia-msg.bot .ia-msg-bubble a { color: #60A5FA; text-decoration: none; }
+.ia-msg.bot .ia-msg-bubble a:hover { text-decoration: underline; }
+
+/* Feedback 👍👎 */
+.ia-msg-feedback {
+  display: flex; gap: 6px; padding: 0 4px;
+  opacity: 0; transition: opacity 0.2s;
+}
+.ia-msg:hover .ia-msg-feedback { opacity: 1; }
+.ia-feedback-btn {
+  background: none; border: none; cursor: pointer;
+  font-size: 13px; padding: 2px 6px; border-radius: 6px;
+  color: #4B5563; transition: all 0.15s;
+}
+.ia-feedback-btn:hover { background: rgba(255,255,255,0.06); color: #9CA3AF; }
+.ia-feedback-btn.active { color: #F5A800; }
+
+/* Typing indicator */
+.ia-typing {
+  align-self: flex-start;
+  background: #151B2A;
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 4px 16px 16px 16px;
+  padding: 12px 16px;
+  display: flex; gap: 5px; align-items: center;
+}
+.ia-typing span {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: #4B5563; animation: ia-bounce 1.4s infinite;
+}
+.ia-typing span:nth-child(2) { animation-delay: 0.2s; }
+.ia-typing span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes ia-bounce {
+  0%,60%,100% { transform: translateY(0); background: #4B5563; }
+  30% { transform: translateY(-6px); background: #0096FF; }
+}
+
+/* Menu de modos */
+.ia-mode-menu {
+  padding: 14px;
+  display: flex; flex-direction: column; gap: 8px;
+  border-top: 1px solid rgba(255,255,255,0.05);
+  flex-shrink: 0;
+}
+.ia-mode-btn {
+  padding: 14px 16px; border-radius: 12px;
+  border: 1px solid rgba(0,150,255,0.1);
+  background: rgba(0,96,255,0.04);
+  color: #D1D5DB; cursor: pointer; text-align: left;
+  transition: all 0.25s; display: flex; align-items: center; gap: 14px;
+  position: relative; overflow: hidden;
+}
+.ia-mode-btn::before {
+  content: ''; position: absolute;
+  left: 0; top: 0; bottom: 0; width: 2px;
+  background: rgba(0,150,255,0.4);
+  transform: scaleY(0);
+  transition: transform 0.2s;
+}
+.ia-mode-btn:hover {
+  background: rgba(0,96,255,0.1);
+  border-color: rgba(0,150,255,0.35);
+  transform: translateX(4px);
+}
+.ia-mode-btn:hover::before { transform: scaleY(1); }
+.ia-mode-icon {
+  font-size: 22px; width: 40px; height: 40px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 10px; flex-shrink: 0;
+}
+.ia-mode-btn:nth-child(1) .ia-mode-icon { background: rgba(245,168,0,0.1); }
+.ia-mode-btn:nth-child(2) .ia-mode-icon { background: rgba(1,95,184,0.15); }
+.ia-mode-label { font-weight: 600; font-size: 13px; margin-bottom: 2px; }
+.ia-mode-desc { font-size: 11px; color: #6B7280; }
+.ia-mode-arrow { margin-left: auto; color: #374151; font-size: 16px; }
+.ia-mode-btn:hover .ia-mode-arrow { color: #60A5FA; }
+
+/* Barra de ações rápidas */
+.ia-quick-bar {
+  padding: 10px 14px;
+  display: flex; flex-wrap: wrap; gap: 6px;
+  border-top: 1px solid rgba(255,255,255,0.05);
+  flex-shrink: 0;
+}
+.ia-quick {
+  padding: 6px 12px; border-radius: 20px;
+  border: 1px solid rgba(1,95,184,0.3);
+  background: rgba(1,95,184,0.08);
+  color: #60A5FA; font-size: 11px; cursor: pointer;
+  transition: all 0.15s; white-space: nowrap;
+}
+.ia-quick:hover { background: rgba(1,95,184,0.2); border-color: #015FB8; color: #fff; }
+.ia-back-btn {
+  padding: 6px 12px; border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: transparent; color: #4B5563;
+  font-size: 11px; cursor: pointer; transition: all 0.15s;
+}
+.ia-back-btn:hover { color: #9CA3AF; border-color: rgba(255,255,255,0.2); }
+
+/* Input */
+.ia-input-area {
+  padding: 12px 16px;
+  border-top: 1px solid rgba(0,150,255,0.1);
+  display: flex; gap: 8px; flex-shrink: 0;
+  background: rgba(0,0,0,0.3);
+}
+.ia-input {
+  flex: 1;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 22px; padding: 10px 16px;
+  color: #F1F3F5; font-size: 13px; outline: none;
+  transition: border-color 0.2s; resize: none;
+  font-family: inherit;
+}
+.ia-input:focus { border-color: rgba(1,95,184,0.6); background: rgba(1,95,184,0.05); }
+.ia-input::placeholder { color: #374151; }
+.ia-send-btn {
+  background: linear-gradient(135deg, #015FB8, #0078D4);
+  border: none; border-radius: 50%; width: 40px; height: 40px;
+  color: #fff; cursor: pointer; font-size: 16px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: all 0.2s; align-self: flex-end;
+}
+.ia-send-btn:hover { transform: scale(1.08); box-shadow: 0 4px 12px rgba(1,95,184,0.5); }
+.ia-send-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; box-shadow: none; }
+
+/* Alerta proativo */
+.ia-alert {
+  margin: 8px 14px;
+  padding: 10px 14px;
+  background: rgba(245,168,0,0.08);
+  border: 1px solid rgba(245,168,0,0.25);
+  border-radius: 10px; border-left: 3px solid #F5A800;
+  font-size: 12px; color: #D97706;
+  display: flex; align-items: center; gap: 8px; cursor: pointer;
+  transition: background 0.15s; flex-shrink: 0;
+}
+.ia-alert:hover { background: rgba(245,168,0,0.12); }
+.ia-alert-icon { font-size: 16px; flex-shrink: 0; }
+
+/* Separador de modo */
+.ia-mode-tag {
+  align-self: center;
+  padding: 4px 12px; border-radius: 20px;
+  background: rgba(1,95,184,0.1);
+  border: 1px solid rgba(1,95,184,0.2);
+  color: #60A5FA; font-size: 11px; font-weight: 600;
+}
+.ia-msg.bot .ia-msg-bubble{color:#F1F5F9;}.ia-msg.bot .ia-msg-bubble strong{color:#93C5FD;}.ia-msg.bot .ia-msg-bubble li,.ia-msg.bot .ia-msg-bubble ul{color:#E2E8F0;}.ia-header-name{color:#F8FAFC;font-size:15px;}.ia-mode-label{color:#F1F5F9;}.ia-quick{font-size:12px;}.ia-fab{overflow:hidden;display:flex;align-items:center;justify-content:center;}.ia-avatar{overflow:hidden;}.ia-badge{z-index:1;}
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <svg class="sidebar-logo" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="50" cy="50" r="10" fill="#1976D2"/>
+    <ellipse cx="50" cy="50" rx="42" ry="15" fill="none" stroke="#42A5F5" stroke-width="1.5" opacity="0.85"/>
+    <ellipse cx="50" cy="50" rx="42" ry="15" fill="none" stroke="#1976D2" stroke-width="1.5" opacity="0.75" transform="rotate(60,50,50)"/>
+    <ellipse cx="50" cy="50" rx="42" ry="15" fill="none" stroke="#00C8FF" stroke-width="1.5" opacity="0.6" transform="rotate(120,50,50)"/>
+    <circle cx="92" cy="50" r="4" fill="#42A5F5"/>
+    <circle cx="29" cy="26" r="3" fill="#1976D2"/>
+    <circle cx="71" cy="73" r="3" fill="#00C8FF"/>
+  </svg>
+  <div class="sidebar-title">Menu</div>
+  <a class="nav-item" href="home.html"><span class="icon">🏠</span> Página Inicial</a>
+  <a class="nav-item" href="visao-geral.html"><span class="icon">📊</span> Visão Geral</a>
+  <a class="nav-item" href="vendedor.html"><span class="icon">👤</span> Análise Vendedor</a>
+  <a class="nav-item" href="regiao.html"><span class="icon">🗺️</span> Análise Região</a>
+  <a class="nav-item" href="marcas.html"><span class="icon">🏷️</span> Análise Marcas</a>
+  <a class="nav-item" href="produtos.html"><span class="icon">📦</span> Top Produtos</a>
+  <a class="nav-item" href="carteira.html"><span class="icon">👥</span> Carteira Clientes</a>
+  <a class="nav-item active" href="risco.html"><span class="icon">⚠️</span> Clientes em Risco</a>
+  <a class="nav-item" href="shelflife.html"><span class="icon">⏳</span> Shelf Life</a>
+  <button class="btn-logout" onclick="location.href='index.html'">⏻ Sair</button>
+</div>
+
+<div class="main">
+  <h1>⚠️ Clientes em Risco</h1>
+  <p class="subtitulo">Clientes que não compram há um determinado período — oportunidades de reativação</p>
+
+  <div class="kpi-row">
+    <div class="kpi vermelho"><div class="kpi-valor" id="kpiTotal">—</div><div class="kpi-label">Clientes em Risco</div></div>
+    <div class="kpi amarelo"><div class="kpi-valor" id="kpiMedia">—</div><div class="kpi-label">Dias Médios Sem Compra</div></div>
+    <div class="kpi"><div class="kpi-valor" id="kpiFat">—</div><div class="kpi-label">Fat. Total em Risco (R$)</div></div>
+    <div class="kpi vermelho"><div class="kpi-valor" id="kpiCriticos">—</div><div class="kpi-label">Críticos (+120 dias)</div></div>
+    <div class="kpi amarelo"><div class="kpi-valor" id="kpiAtencao">—</div><div class="kpi-label">Atenção (60-120 dias)</div></div>
+  </div>
+
+  <div class="filtros">
+    <label>Sem comprar há mais de:</label>
+    <select id="selDias">
+      <option value="30">30 dias</option>
+      <option value="60" selected>60 dias</option>
+      <option value="90">90 dias</option>
+      <option value="120">120 dias</option>
+      <option value="180">180 dias</option>
+    </select>
+    <label>Vendedor:</label>
+    <select id="selVendedor"><option value="">Todos</option></select>
+    <label>Limite:</label>
+    <select id="selLimite">
+      <option value="50">50</option>
+      <option value="100" selected>100</option>
+      <option value="200">200</option>
+      <option value="500">500</option>
+    </select>
+    <button class="btn-aplicar" onclick="carregar()">Aplicar</button>
+    <button class="btn-exportar" onclick="exportar()">⬇ Exportar Excel</button>
+  </div>
+
+  <div class="tabela-wrap">
+    <div class="tabela-header">
+      <span class="tabela-titulo">Lista de Clientes em Risco</span>
+      <span class="tabela-count" id="tabelaCount"></span>
+    </div>
+    <div id="tabelaBody"><div class="loading">Carregando...</div></div>
+  </div>
+</div>
+
+<script>
+var API = 'https://horus-production.up.railway.app';
+var dadosClientes = [];
+
+function brl(v) {
+  return (parseFloat(v)||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+}
+
+function badgeDias(d) {
+  if (d >= 120) return '<span class="badge-dias badge-critico">'+d+'d</span>';
+  if (d >= 60)  return '<span class="badge-dias badge-atencao">'+d+'d</span>';
+  return '<span class="badge-dias badge-alerta">'+d+'d</span>';
+}
+
+async function carregarVendedores() {
+  try {
+    var r = await fetch(API + '/api/filtros');
+    var d = await r.json();
+    var sel = document.getElementById('selVendedor');
+    (d.vendedores || []).forEach(function(v) {
+      var opt = document.createElement('option');
+      opt.value = v; opt.textContent = v;
+      sel.appendChild(opt);
+    });
+  } catch(e) {}
+}
+
+async function carregar() {
+  document.getElementById('tabelaBody').innerHTML = '<div class="loading">Carregando...</div>';
+  var dias   = document.getElementById('selDias').value;
+  var limite = document.getElementById('selLimite').value;
+  var vend   = document.getElementById('selVendedor').value;
+
+  try {
+    var url = API + '/api/clientes-em-risco?dias='+dias+'&limite='+limite;
+    var r   = await fetch(url);
+    var d   = await r.json();
+    dadosClientes = d.clientes || [];
+
+    // Filtra por vendedor no frontend
+    if (vend) dadosClientes = dadosClientes.filter(function(c){ return c.vendedor === vend; });
+
+    // KPIs
+    var total    = dadosClientes.length;
+    var mediaDias = total ? Math.round(dadosClientes.reduce(function(s,c){ return s+c.dias_sem_compra; },0)/total) : 0;
+    var fatTotal  = dadosClientes.reduce(function(s,c){ return s+c.fat_total; },0);
+    var criticos  = dadosClientes.filter(function(c){ return c.dias_sem_compra >= 120; }).length;
+    var atencao   = dadosClientes.filter(function(c){ return c.dias_sem_compra >= 60 && c.dias_sem_compra < 120; }).length;
+
+    document.getElementById('kpiTotal').textContent    = total.toLocaleString('pt-BR');
+    document.getElementById('kpiMedia').textContent    = mediaDias + 'd';
+    document.getElementById('kpiFat').textContent      = brl(fatTotal);
+    document.getElementById('kpiCriticos').textContent = criticos.toLocaleString('pt-BR');
+    document.getElementById('kpiAtencao').textContent  = atencao.toLocaleString('pt-BR');
+    document.getElementById('tabelaCount').textContent = total + ' clientes';
+
+    if (!dadosClientes.length) {
+      document.getElementById('tabelaBody').innerHTML = '<div class="loading">Nenhum cliente encontrado para os filtros selecionados.</div>';
+      return;
+    }
+
+    var html = '<table><thead><tr><th>Código</th><th>Cliente</th><th>Vendedor</th><th>Última Compra</th><th>Dias Sem Compra</th><th>Fat. Total</th><th>Pedidos</th></tr></thead><tbody>';
+    dadosClientes.forEach(function(c) {
+      html += '<tr>' +
+        '<td style="color:var(--muted);font-size:12px">' + (c.cod_cliente||'—') + '</td>' +
+        '<td><strong>' + (c.cliente||'—') + '</strong></td>' +
+        '<td style="color:var(--muted);font-size:12px">' + (c.vendedor||'—') + '</td>' +
+        '<td>' + (c.ultima_compra||'—') + '</td>' +
+        '<td>' + badgeDias(c.dias_sem_compra) + '</td>' +
+        '<td>' + brl(c.fat_total) + '</td>' +
+        '<td style="text-align:center">' + c.num_pedidos + '</td>' +
+        '</tr>';
+    });
+    html += '</tbody></table>';
+    document.getElementById('tabelaBody').innerHTML = html;
+  } catch(e) {
+    document.getElementById('tabelaBody').innerHTML = '<div class="loading">Erro ao carregar: ' + e.message + '</div>';
+  }
+}
+
+function exportar() {
+  if (!dadosClientes.length) return;
+  var dados = [['Código','Cliente','Vendedor','Última Compra','Dias Sem Compra','Faturamento Total','Nº Pedidos']];
+  dadosClientes.forEach(function(c) {
+    dados.push([c.cod_cliente,c.cliente,c.vendedor,c.ultima_compra,c.dias_sem_compra,c.fat_total,c.num_pedidos]);
+  });
+  var wb = XLSX.utils.book_new();
+  var ws = XLSX.utils.aoa_to_sheet(dados);
+  ws['!cols'] = [{wch:12},{wch:35},{wch:25},{wch:15},{wch:18},{wch:18},{wch:12}];
+  XLSX.utils.book_append_sheet(wb, ws, 'Clientes em Risco');
+  XLSX.writeFile(wb, 'Atomo-ClientesRisco-'+new Date().toISOString().slice(0,10)+'.xlsx');
+}
+
+window.onload = async function() {
+  await carregarVendedores();
+  carregar();
+};
+</script>
