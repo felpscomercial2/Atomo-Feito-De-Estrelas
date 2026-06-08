@@ -1,0 +1,1604 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Átomo — Portal</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:      #0A1628;
+  --card:    #0E2048;
+  --sidebar: #0D2558;
+  --accent:  #1976D2;
+  --accent2: #64B5F6;
+  --text:    #F5F5F5;
+  --muted:   #a0aec0;
+  --border:  rgba(255,255,255,0.07);
+  --success: #00ff88;
+  --danger:  #ff4d4d;
+  --warning: #ffaa00;
+}
+body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg); color: var(--text); display: flex; min-height: 100vh; }
+
+/* SIDEBAR */
+.sidebar { width:220px; background:var(--sidebar); position:fixed; top:0; left:0; height:100vh; display:flex; flex-direction:column; align-items:center; padding:24px 12px; border-right:1px solid var(--border); z-index:100; }
+.sidebar-logo { width:100px; margin-bottom:4px; filter:drop-shadow(0 2px 8px rgba(1,95,184,0.4)); }
+.sidebar-title { font-size:10px; letter-spacing:3px; color:var(--muted); margin-bottom:28px; }
+.nav-section { width:100%; font-size:10px; letter-spacing:1px; color:var(--muted); text-transform:uppercase; padding:0 8px; margin-bottom:6px; }
+.nav-item { width:100%; display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:8px; cursor:pointer; font-size:13px; color:var(--muted); transition:all 0.2s; border:1px solid transparent; text-decoration:none; margin-bottom:2px; }
+.nav-item:hover { background:rgba(1,95,184,0.1); color:var(--text); border-color:rgba(1,95,184,0.2); }
+.nav-item.active { background:rgba(1,95,184,0.2); color:#fff; border-color:var(--accent); }
+.nav-item .icon { font-size:16px; width:20px; text-align:center; }
+.sidebar-divider { width:100%; height:1px; background:var(--border); margin:16px 0; }
+.btn-logout { margin-top:auto; width:100%; padding:10px; border-radius:8px; background:rgba(255,77,77,0.1); color:var(--danger); border:1px solid rgba(255,77,77,0.2); cursor:pointer; font-size:13px; transition:all 0.2s; }
+.btn-logout:hover { background:rgba(255,77,77,0.2); }
+
+/* MAIN */
+.main { margin-left:220px; flex:1; padding:32px; }
+
+/* HEADER */
+.header { margin-bottom:32px; }
+.header h1 { font-size:22px; font-weight:700; }
+.header p { font-size:13px; color:var(--muted); margin-top:4px; }
+
+/* FILTROS */
+.filtros-card { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:28px; margin-bottom:32px; }
+.filtros-titulo { font-size:14px; font-weight:600; margin-bottom:20px; display:flex; align-items:center; gap:8px; }
+.filtros-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:16px; margin-bottom:20px; }
+.filtro-group label { display:block; font-size:11px; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin-bottom:6px; }
+.filtro-select { width:100%; padding:10px 32px 10px 14px; background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:13px; outline:none; cursor:pointer; transition:border 0.2s; appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23a0aec0' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 12px center; }
+.filtro-select:focus { border-color:var(--accent); }
+.filtro-select option { background:#1A1D2D; }
+.filtros-actions { display:flex; gap:12px; justify-content:flex-end; padding-top:16px; border-top:1px solid var(--border); }
+.btn-limpar { padding:10px 20px; border-radius:8px; background:transparent; color:var(--muted); border:1px solid var(--border); cursor:pointer; font-size:13px; font-weight:500; transition:all 0.2s; }
+.btn-limpar:hover { border-color:var(--muted); color:var(--text); }
+.btn-aplicar { padding:10px 28px; border-radius:8px; background:var(--accent); color:#fff; border:none; cursor:pointer; font-size:13px; font-weight:600; transition:all 0.2s; }
+.btn-aplicar:hover { background:#0172db; transform:translateY(-1px); }
+
+/* TAGS */
+.filtros-ativos { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:32px; align-items:center; }
+.filtro-tag { display:flex; align-items:center; gap:6px; background:rgba(1,95,184,0.15); border:1px solid rgba(1,95,184,0.3); border-radius:20px; padding:4px 12px; font-size:12px; color:var(--accent2); }
+.filtro-tag button { background:none; border:none; color:var(--accent2); cursor:pointer; font-size:14px; line-height:1; padding:0; opacity:0.7; }
+.filtro-tag button:hover { opacity:1; }
+
+/* NAV CARDS */
+.nav-cards { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:16px; }
+.nav-card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:24px; text-align:center; cursor:pointer; text-decoration:none; color:var(--text); transition:all 0.2s; display:flex; flex-direction:column; align-items:center; gap:12px; }
+.nav-card:hover { border-color:var(--accent); transform:translateY(-3px); box-shadow:0 8px 24px rgba(1,95,184,0.2); }
+.nav-card .nav-icon { font-size:36px; }
+.nav-card .nav-label { font-size:13px; font-weight:600; }
+.nav-card .nav-desc { font-size:11px; color:var(--muted); }
+
+/* LOADING */
+@keyframes ringRotate { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
+@keyframes logoFloat {
+  0%,100% { transform:scale(1) translateY(0);     filter:drop-shadow(0 0 15px rgba(1,95,184,0.8)) drop-shadow(0 0 40px rgba(0,195,255,0.4)); }
+  25%      { transform:scale(1.06) translateY(-4px); filter:drop-shadow(0 0 30px rgba(0,195,255,1)) drop-shadow(0 0 60px rgba(0,195,255,0.6)); }
+  50%      { transform:scale(0.97) translateY(2px);  filter:drop-shadow(0 0 10px rgba(1,95,184,0.5)); }
+  75%      { transform:scale(1.04) translateY(-2px); filter:drop-shadow(0 0 25px rgba(0,255,200,0.8)); }
+}
+@keyframes glowPulse { 0%,100% { transform:scale(1); opacity:0.6; } 50% { transform:scale(1.8); opacity:0.2; } }
+@keyframes textGlow {
+  0%,100% { text-shadow:0 0 10px rgba(1,95,184,0.8), 0 0 20px rgba(1,95,184,0.4); }
+  50%      { text-shadow:0 0 20px rgba(0,195,255,1), 0 0 40px rgba(0,195,255,0.6); }
+}
+@keyframes subFade { 0%,100%{opacity:0.4;} 50%{opacity:1;} }
+@keyframes beamSlide { 0% { transform:translateX(-100%); } 100% { transform:translateX(400%); } }
+.loading-overlay { display:none; position:fixed; inset:0; background:radial-gradient(ellipse at center, #010d1f 0%, #000508 100%); z-index:999; align-items:center; justify-content:center; flex-direction:column; gap:16px; }
+.loading-scene { position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:24px; width:320px; height:320px; }
+.lo-ring { position:absolute; border-radius:50%; border:1px solid transparent; animation:ringRotate linear infinite; }
+.lo-ring-1 { width:260px; height:260px; border-top-color:#015FB8; border-right-color:rgba(1,95,184,0.3); animation-duration:3s; box-shadow:0 0 20px rgba(1,95,184,0.3); }
+.lo-ring-2 { width:210px; height:210px; border-bottom-color:#00c3ff; border-left-color:rgba(0,195,255,0.3); animation-duration:2s; animation-direction:reverse; box-shadow:0 0 15px rgba(0,195,255,0.3); }
+.lo-ring-3 { width:160px; height:160px; border-top-color:rgba(0,255,200,0.6); border-right-color:rgba(0,255,200,0.2); animation-duration:1.5s; }
+.lo-logo-wrap { position:relative; z-index:10; display:flex; align-items:center; justify-content:center; }
+.lo-logo { width:100px; position:relative; z-index:2; animation:logoFloat 3s ease-in-out infinite; }
+.lo-glow { position:absolute; width:120px; height:120px; border-radius:50%; background:radial-gradient(circle, rgba(0,195,255,0.15) 0%, transparent 70%); animation:glowPulse 2s ease-in-out infinite; z-index:1; }
+.lo-particles { position:absolute; inset:0; pointer-events:none; }
+.lo-text { position:absolute; bottom:-60px; left:50%; transform:translateX(-50%); display:flex; flex-direction:column; align-items:center; gap:6px; white-space:nowrap; }
+.lo-title { font-size:18px; font-weight:800; letter-spacing:8px; color:#fff; animation:textGlow 2s ease-in-out infinite; }
+.lo-sub { font-size:9px; letter-spacing:4px; color:#00c3ff; opacity:0.7; animation:subFade 2s ease-in-out infinite; }
+.lo-track { width:160px; height:2px; background:rgba(255,255,255,0.08); border-radius:2px; overflow:hidden; margin-top:4px; }
+.lo-beam { height:100%; width:30%; border-radius:2px; background:linear-gradient(90deg, transparent, #00c3ff, #015FB8, transparent); animation:beamSlide 1.5s ease-in-out infinite; }
+.loading-overlay.show { display:flex; }
+.spinner { width:36px; height:36px; border:3px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin 0.8s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+
+/* ═══ ÁTOMO — Loading Screen ═══ */
+.loading-overlay,.loading-global{
+  display:none;position:fixed;inset:0;z-index:9999;
+  align-items:center;justify-content:center;flex-direction:column;gap:28px;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 0%,   rgba(25,118,210,0.18) 0%,transparent 55%),
+    radial-gradient(ellipse 60% 50% at -10% 60%,  rgba(33,150,243,0.14) 0%,transparent 50%),
+    radial-gradient(ellipse 60% 50% at 110% 60%,  rgba(0,200,255,0.12) 0%,transparent 50%),
+    radial-gradient(ellipse 80% 40% at 50% 110%,  rgba(13,71,161,0.18) 0%,transparent 55%),
+    #0A1628;
+}
+.loading-overlay.show,.loading-global.show{display:flex;}
+.lo-particles{
+  position:absolute;inset:0;pointer-events:none;
+  background-image:
+    radial-gradient(circle 1px at 8% 12%,rgba(255,255,255,0.9) 0%,transparent 100%),
+    radial-gradient(circle 1.5px at 20% 5%,rgba(100,181,246,0.8) 0%,transparent 100%),
+    radial-gradient(circle 1px at 33% 18%,rgba(255,255,255,0.7) 0%,transparent 100%),
+    radial-gradient(circle 1px at 48% 8%,rgba(0,220,255,0.8) 0%,transparent 100%),
+    radial-gradient(circle 1.5px at 62% 15%,rgba(255,255,255,0.6) 0%,transparent 100%),
+    radial-gradient(circle 1px at 75% 6%,rgba(21,101,192,0.8) 0%,transparent 100%),
+    radial-gradient(circle 1px at 88% 20%,rgba(255,255,255,0.7) 0%,transparent 100%),
+    radial-gradient(circle 1px at 5% 45%,rgba(255,255,255,0.6) 0%,transparent 100%),
+    radial-gradient(circle 1.5px at 15% 60%,rgba(66,165,245,0.7) 0%,transparent 100%),
+    radial-gradient(circle 1px at 42% 55%,rgba(0,200,255,0.7) 0%,transparent 100%),
+    radial-gradient(circle 1.5px at 58% 68%,rgba(255,255,255,0.8) 0%,transparent 100%),
+    radial-gradient(circle 1px at 72% 50%,rgba(21,101,192,0.6) 0%,transparent 100%),
+    radial-gradient(circle 1px at 90% 48%,rgba(0,255,180,0.6) 0%,transparent 100%),
+    radial-gradient(circle 1.5px at 35% 90%,rgba(100,181,246,0.7) 0%,transparent 100%),
+    radial-gradient(circle 1px at 80% 88%,rgba(0,200,255,0.6) 0%,transparent 100%);
+}
+.loading-scene{position:relative;width:320px;height:320px;display:flex;align-items:center;justify-content:center;}
+.lo-atom-svg{position:absolute;top:0;left:0;width:320px;height:320px;overflow:visible;}
+.lo-nucleus-circle{animation:nucleusPulse 2.5s ease-in-out infinite;transform-origin:160px 160px;}
+@keyframes nucleusPulse{
+  0%,100%{filter:drop-shadow(0 0 8px rgba(25,118,210,1)) drop-shadow(0 0 20px rgba(66,165,245,0.6));}
+  50%{filter:drop-shadow(0 0 16px rgba(25,118,210,1)) drop-shadow(0 0 40px rgba(66,165,245,0.8));}
+}
+.lo-group-1{animation:groupSpin1 3s linear infinite;transform-origin:160px 160px;}
+.lo-group-2{animation:groupSpin2 5s linear infinite;transform-origin:160px 160px;}
+.lo-group-3{animation:groupSpin3 7s linear infinite;transform-origin:160px 160px;}
+@keyframes groupSpin1{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+@keyframes groupSpin2{from{transform:rotate(60deg);}to{transform:rotate(420deg);}}
+@keyframes groupSpin3{from{transform:rotate(120deg);}to{transform:rotate(480deg);}}
+.lo-electron{animation:electronPulse 1.5s ease-in-out infinite;}
+.lo-electron-1{animation-delay:0s;}
+.lo-electron-2{animation-delay:0.5s;}
+.lo-electron-3{animation-delay:1s;}
+@keyframes electronPulse{0%,100%{opacity:1;}50%{opacity:0.6;}}
+.lo-text{display:flex;flex-direction:column;align-items:center;gap:8px;z-index:10;}
+.lo-title{
+  font-family:'Space Grotesk',sans-serif !important;
+  font-size:24px;font-weight:700;letter-spacing:8px;text-transform:uppercase;
+  background:linear-gradient(135deg,#BBDEFB 0%,#64B5F6 35%,#1976D2 65%,#00C8FF 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  background-size:200% auto;animation:titleShimmer 3s linear infinite;
+}
+@keyframes titleShimmer{0%{background-position:0% center;}100%{background-position:200% center;}}
+.lo-sub{font-size:11px;letter-spacing:5px;color:rgba(25,118,210,0.8);text-transform:uppercase;text-shadow:0 0 10px rgba(25,118,210,0.5);}
+.lo-progress{width:200px;height:2px;background:rgba(25,118,210,0.1);border-radius:2px;overflow:hidden;position:relative;}
+.lo-progress-bar{position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,#1976D2,#42A5F5,#00C8FF,transparent);animation:progressSlide 2s linear infinite;box-shadow:0 0 10px rgba(25,118,210,0.8);}
+@keyframes progressSlide{0%{left:-100%;}100%{left:100%;}}
+
+/* ═══════════════════════════════════════════════════
+   ÁTOMO — Galáxia Vibrante · Feito de estrelas.
+═══════════════════════════════════════════════════ */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+body,*{font-family:'DM Sans',system-ui,sans-serif !important;}
+h1,h2,h3,.page-title,.sidebar-title,.lo-title{font-family:'Space Grotesk',system-ui,sans-serif !important;}
+
+body{
+  background-color:#0A1628 !important;
+  background-image:
+    radial-gradient(ellipse 65% 45% at -5% 15%,rgba(33,150,243,0.12) 0%,rgba(25,118,210,0.06) 35%,transparent 65%),
+    radial-gradient(ellipse 55% 55% at 105% 35%,rgba(0,220,255,0.10) 0%,rgba(0,150,220,0.05) 40%,transparent 65%),
+    radial-gradient(ellipse 80% 45% at 50% 105%,rgba(13,71,161,0.15) 0%,rgba(13,71,161,0.07) 40%,transparent 60%),
+    radial-gradient(ellipse 70% 35% at 50% -8%,rgba(13,71,161,0.12) 0%,rgba(13,71,161,0.05) 40%,transparent 60%),
+    #0A1628 !important;
+}
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:
+    radial-gradient(circle 1px at 5% 8%,#fff 0%,transparent 100%),
+    radial-gradient(circle 1px at 12% 22%,#fff 0%,transparent 100%),
+    radial-gradient(circle 2px at 18% 5%,#fff 0%,transparent 100%),
+    radial-gradient(circle 1px at 25% 35%,#fff 0%,transparent 100%),
+    radial-gradient(circle 1px at 32% 14%,#fff 0%,transparent 100%),
+    radial-gradient(circle 2px at 38% 28%,#fff 0%,transparent 100%),
+    radial-gradient(circle 1px at 44% 8%,#fff 0%,transparent 100%),
+    radial-gradient(circle 1px at 50% 42%,#fff 0%,transparent 100%),
+    radial-gradient(circle 2px at 57% 18%,#fff 0%,transparent 100%),
+    radial-gradient(circle 1px at 63% 5%,#fff 0%,transparent 100%),
+    radial-gradient(circle 1px at 70% 32%,#fff 0%,transparent 100%),
+    radial-gradient(circle 2px at 76% 12%,#fff 0%,transparent 100%),
+    radial-gradient(circle 1px at 82% 25%,#fff 0%,transparent 100%),
+    radial-gradient(circle 2px at 88% 8%,#fff 0%,transparent 100%),
+    radial-gradient(circle 1px at 94% 20%,#fff 0%,transparent 100%),
+    radial-gradient(circle 1px at 8% 55%,#fff 0%,transparent 100%),
+    radial-gradient(circle 1px at 22% 68%,#fff 0%,transparent 100%),
+    radial-gradient(circle 2px at 35% 58%,#fff 0%,transparent 100%),
+    radial-gradient(circle 1px at 48% 72%,#fff 0%,transparent 100%),
+    radial-gradient(circle 1px at 62% 55%,#fff 0%,transparent 100%),
+    radial-gradient(circle 2px at 75% 68%,#fff 0%,transparent 100%),
+    radial-gradient(circle 1px at 88% 58%,#fff 0%,transparent 100%),
+    radial-gradient(circle 1px at 15% 85%,#fff 0%,transparent 100%),
+    radial-gradient(circle 2px at 40% 92%,#fff 0%,transparent 100%),
+    radial-gradient(circle 1px at 65% 88%,#fff 0%,transparent 100%),
+    radial-gradient(circle 1px at 90% 82%,#fff 0%,transparent 100%),
+    radial-gradient(circle 2.5px at 20% 30%,rgba(0,220,255,0.95) 0%,transparent 100%),
+    radial-gradient(circle 2.5px at 75% 20%,rgba(66,165,245,0.95) 0%,transparent 100%),
+    radial-gradient(circle 2px at 50% 60%,rgba(21,101,192,0.9) 0%,transparent 100%),
+    radial-gradient(circle 2.5px at 30% 75%,rgba(0,255,180,0.9) 0%,transparent 100%),
+    radial-gradient(circle 2px at 85% 50%,rgba(255,140,0,0.85) 0%,transparent 100%),
+    radial-gradient(circle 3px at 45% 15%,rgba(66,165,245,0.7) 0%,transparent 100%),
+    radial-gradient(circle 2px at 92% 70%,rgba(0,220,255,0.85) 0%,transparent 100%);
+}
+
+/* Sidebar */
+.sidebar{background:linear-gradient(180deg,rgba(10,26,75,0.95),rgba(8,18,60,0.98) 40%,rgba(0,5,40,1)) !important;border-right:1px solid rgba(25,118,210,0.25) !important;box-shadow:4px 0 40px rgba(0,0,0,0.8),inset -1px 0 0 rgba(66,165,245,0.1) !important;}
+.nav-item{color:rgba(144,202,249,0.6) !important;transition:all 0.2s !important;}
+.nav-item:hover{color:#90CAF9 !important;background:rgba(21,101,192,0.1) !important;text-shadow:0 0 12px rgba(21,101,192,0.5) !important;}
+.nav-item.active{background:linear-gradient(90deg,rgba(21,101,192,0.2),rgba(66,165,245,0.1)) !important;color:#BBDEFB !important;border-left:2px solid #1976D2 !important;text-shadow:0 0 16px rgba(21,101,192,0.6) !important;}
+.sidebar-title{letter-spacing:4px !important;background:linear-gradient(135deg,#BBDEFB,#64B5F6,#1976D2) !important;-webkit-background-clip:text !important;-webkit-text-fill-color:transparent !important;background-clip:text !important;}
+
+/* Cards */
+.card,.kpi-card,.chart-card,.filter-card,.upload-card,.table-wrap,.modal-box,.busca-card{
+  background:linear-gradient(135deg,rgba(14,32,72,0.80),rgba(10,22,58,0.85) 50%,rgba(8,16,45,0.90)) !important;
+  border:1px solid rgba(25,118,210,0.2) !important;border-radius:16px !important;
+  box-shadow:0 4px 30px rgba(0,0,0,0.6),inset 0 1px 0 rgba(255,255,255,0.04) !important;
+  backdrop-filter:blur(12px) !important;
+}
+
+/* KPI — NÃO força font-size */
+.kpi-card::before{background:linear-gradient(180deg,#1976D2,#64B5F6) !important;}
+.kpi-card.critico::before,.kpi-card.vermelho::before{background:linear-gradient(180deg,#FF2060,#FF6040) !important;}
+.kpi-card.atencao::before,.kpi-card.amarelo::before{background:linear-gradient(180deg,#FF8C00,#FFB040) !important;}
+.kpi-card.ok::before,.kpi-card.verde::before{background:linear-gradient(180deg,#00FFB0,#00D4FF) !important;}
+.kpi-card.ciano::before{background:linear-gradient(180deg,#00C8FF,#00FFB0) !important;}
+.kpi-card.sl::before{background:linear-gradient(180deg,#1976D2,#1565C0) !important;}
+.kpi-value{
+  color:#BBDEFB !important;
+  text-shadow:0 0 20px rgba(21,101,192,0.3) !important;
+  word-break:normal !important;white-space:nowrap !important;
+  overflow:hidden !important;text-overflow:ellipsis !important;
+}
+.kpi-label{color:rgba(144,202,249,0.6) !important;font-weight:700 !important;text-transform:uppercase !important;letter-spacing:.1em !important;}
+.kpi-sub{color:rgba(144,202,249,0.5) !important;}
+
+/* Badges */
+.badge{border-radius:8px !important;font-weight:700 !important;}
+.badge-critico{background:rgba(255,32,96,0.18) !important;color:#FF80A8 !important;border:1px solid rgba(255,32,96,0.45) !important;box-shadow:0 0 12px rgba(255,32,96,0.2) !important;text-shadow:0 0 8px rgba(255,60,120,0.6) !important;}
+.badge-atencao{background:rgba(255,140,0,0.18) !important;color:#FFB060 !important;border:1px solid rgba(255,140,0,0.45) !important;}
+.badge-ok{background:rgba(0,255,176,0.15) !important;color:#40FFD0 !important;border:1px solid rgba(0,255,176,0.4) !important;box-shadow:0 0 12px rgba(0,255,176,0.2) !important;text-shadow:0 0 8px rgba(0,255,176,0.5) !important;}
+.badge-sl{background:rgba(25,118,210,0.2) !important;color:#64B5F6 !important;border:1px solid rgba(25,118,210,0.5) !important;box-shadow:0 0 14px rgba(25,118,210,0.3) !important;text-shadow:0 0 10px rgba(25,118,210,0.7) !important;}
+
+/* Botões */
+.btn-primary,.btn-save,.btn-buscar{background:linear-gradient(135deg,#1565C0,#1976D2,#64B5F6) !important;border:none !important;box-shadow:0 4px 20px rgba(25,118,210,0.5) !important;color:#fff !important;font-weight:700 !important;transition:all 0.2s !important;}
+.btn-primary:hover,.btn-save:hover,.btn-buscar:hover{transform:translateY(-2px) !important;box-shadow:0 8px 30px rgba(25,118,210,0.7) !important;}
+.btn-logout{background:rgba(255,32,96,0.12) !important;color:#FF80A8 !important;border:1px solid rgba(255,32,96,0.25) !important;}
+
+/* Tabela */
+table thead th{background:rgba(8,18,50,0.95) !important;color:#1565C0 !important;font-weight:700 !important;letter-spacing:.1em !important;font-size:10px !important;border-bottom:1px solid rgba(25,118,210,0.2) !important;}
+table tbody tr:hover{background:rgba(25,118,210,0.07) !important;}
+table tbody td{border-bottom:1px solid rgba(255,255,255,0.03) !important;color:#B3D4F5 !important;}
+
+/* Inputs */
+input,select,textarea,.td-input,.td-date,.td-select,.td-textarea,.busca-input{
+  background:rgba(10,22,58,0.9) !important;border:1px solid rgba(25,118,210,0.25) !important;
+  color:#BBDEFB !important;border-radius:8px !important;transition:all 0.2s !important;
+}
+input::placeholder,.busca-input::placeholder{color:rgba(144,202,249,0.4) !important;}
+input:focus,select:focus,textarea:focus,.td-input:focus,.td-date:focus,.td-select:focus,.busca-input:focus{
+  border-color:#1976D2 !important;box-shadow:0 0 0 3px rgba(25,118,210,0.2),0 0 15px rgba(25,118,210,0.2) !important;outline:none !important;
+}
+
+/* Filtros */
+.filtro-btn,.acao-filtro-btn{background:rgba(25,118,210,0.08) !important;border:1px solid rgba(25,118,210,0.25) !important;color:rgba(180,130,255,0.8) !important;border-radius:10px !important;}
+.filtro-btn:hover,.acao-filtro-btn:hover{border-color:#1976D2 !important;background:rgba(25,118,210,0.18) !important;color:#BBDEFB !important;box-shadow:0 0 15px rgba(25,118,210,0.2) !important;}
+.filtro-btn.ativo,.acao-filtro-btn.tem-filtro{background:rgba(25,118,210,0.22) !important;border-color:#1976D2 !important;color:#F0D8FF !important;box-shadow:0 0 20px rgba(25,118,210,0.3) !important;}
+
+/* Tags busca */
+.lista-sugestoes{background:linear-gradient(135deg,rgba(12,26,65,0.98),rgba(8,16,50,0.99)) !important;border:1px solid rgba(25,118,210,0.3) !important;border-radius:10px !important;box-shadow:0 8px 32px rgba(0,0,0,0.7) !important;}
+.sugestao-item:hover{background:rgba(25,118,210,0.12) !important;}
+.produto-tag{background:rgba(0,200,255,0.1) !important;border:1px solid rgba(0,200,255,0.3) !important;color:#60E8FF !important;border-radius:20px !important;}
+.filtro-tag{background:rgba(25,118,210,0.1) !important;border:1px solid rgba(25,118,210,0.3) !important;color:#90CAF9 !important;}
+.drill-bar{background:rgba(0,200,255,0.06) !important;border:1px solid rgba(0,200,255,0.2) !important;}
+.drill-tag{background:rgba(0,200,255,0.1) !important;border:1px solid rgba(0,200,255,0.3) !important;color:#60E8FF !important;}
+
+/* Dias vencimento */
+.dias-critico{color:#FF5090 !important;font-weight:800 !important;text-shadow:0 0 10px rgba(255,32,96,0.6) !important;}
+.dias-atencao{color:#FFB060 !important;font-weight:700 !important;text-shadow:0 0 8px rgba(255,140,0,0.5) !important;}
+.dias-ok{color:#40FFD0 !important;font-weight:600 !important;text-shadow:0 0 8px rgba(0,255,176,0.5) !important;}
+
+/* Tags comparação */
+.tag-novo{background:rgba(255,32,96,0.2) !important;color:#FF80B0 !important;border:1px solid rgba(255,32,96,0.5) !important;border-radius:6px !important;text-shadow:0 0 8px rgba(255,60,120,0.5) !important;}
+.tag-aumentou{background:rgba(0,200,255,0.15) !important;color:#60E8FF !important;border:1px solid rgba(0,200,255,0.4) !important;border-radius:6px !important;}
+.tag-reduziu{background:rgba(0,255,176,0.12) !important;color:#40FFD0 !important;border:1px solid rgba(0,255,176,0.35) !important;border-radius:6px !important;}
+.tag-anterior{background:rgba(30,90,165,0.12) !important;color:rgba(144,202,249,0.6) !important;border:1px solid rgba(30,90,165,0.25) !important;border-radius:6px !important;}
+
+/* Row states */
+.row-novo{background:rgba(255,32,96,0.08) !important;border-left:3px solid #FF2060 !important;box-shadow:inset 3px 0 12px rgba(255,32,96,0.1) !important;}
+.row-sl-novo{background:rgba(25,118,210,0.08) !important;border-left:3px solid #1976D2 !important;box-shadow:inset 3px 0 12px rgba(25,118,210,0.12) !important;}
+.row-aumentou{background:rgba(0,200,255,0.05) !important;}
+.row-reduziu{background:rgba(0,255,176,0.04) !important;}
+
+/* Upload */
+.upload-card{border:1px dashed rgba(25,118,210,0.35) !important;background:rgba(14,32,72,0.4) !important;}
+.upload-card:hover{border-color:#1976D2 !important;box-shadow:0 0 30px rgba(25,118,210,0.2) !important;}
+
+/* Dropdowns */
+.acao-dropdown,.vend-dropdown,[class*="dropdown"]{background:linear-gradient(135deg,rgba(14,32,72,0.98),rgba(10,22,58,0.99)) !important;border:1px solid rgba(25,118,210,0.3) !important;border-radius:12px !important;box-shadow:0 12px 40px rgba(0,0,0,0.8) !important;}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:#0A1628;}
+::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#1565C0,#1976D2);border-radius:3px;box-shadow:0 0 6px rgba(25,118,210,0.5);}
+
+/* Textos */
+h1,h2,.page-title{color:#BBDEFB !important;text-shadow:0 0 20px rgba(25,118,210,0.2) !important;}
+body,p,span,div,td,th,li,label{color:#B3D4F5;}
+.muted,[class*="muted"]{color:rgba(144,202,249,0.55) !important;}
+
+/* Logo glow */
+.sidebar-logo,.sidebar svg{
+  filter:drop-shadow(0 0 8px rgba(25,118,210,0.6)) drop-shadow(0 0 16px rgba(66,165,245,0.3)) !important;
+  animation:logoGlow 3s ease-in-out infinite !important;
+}
+@keyframes logoGlow{
+  0%,100%{filter:drop-shadow(0 0 6px rgba(25,118,210,0.5)) drop-shadow(0 0 12px rgba(66,165,245,0.25));}
+  50%{filter:drop-shadow(0 0 14px rgba(25,118,210,0.9)) drop-shadow(0 0 28px rgba(66,165,245,0.5));}
+}
+
+
+/* HAMBURGER + MOBILE */
+.hamburger{display:none;position:fixed;top:14px;left:14px;z-index:200;background:rgba(25,118,210,0.18);border:1px solid rgba(25,118,210,0.35);border-radius:8px;width:40px;height:40px;align-items:center;justify-content:center;cursor:pointer;flex-direction:column;gap:5px;padding:8px;}
+.hamburger span{width:100%;height:2px;background:#64B5F6;border-radius:2px;transition:all 0.3s;}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:99;backdrop-filter:blur(2px);}
+.sidebar-overlay.show{display:block;}
+
+/* NAV-CARD ACCENT COLORS */
+.nav-card[href="visao-geral.html"]{border-top:3px solid #1976D2;}
+.nav-card[href="visao-geral.html"]:hover{box-shadow:0 8px 24px rgba(25,118,210,0.3);}
+.nav-card[href="vendedor.html"]{border-top:3px solid #00897B;}
+.nav-card[href="vendedor.html"]:hover{box-shadow:0 8px 24px rgba(0,137,123,0.3);border-color:#00897B;}
+.nav-card[href="regiao.html"]{border-top:3px solid #E65100;}
+.nav-card[href="regiao.html"]:hover{box-shadow:0 8px 24px rgba(230,81,0,0.3);border-color:#E65100;}
+.nav-card[href="marcas.html"]{border-top:3px solid #F9A825;}
+.nav-card[href="marcas.html"]:hover{box-shadow:0 8px 24px rgba(249,168,37,0.3);border-color:#F9A825;}
+.nav-card[href="produtos.html"]{border-top:3px solid #AD1457;}
+.nav-card[href="produtos.html"]:hover{box-shadow:0 8px 24px rgba(173,20,87,0.3);border-color:#AD1457;}
+
+/* BUTTON LOADING STATE */
+.btn-aplicar{position:relative;display:inline-flex;align-items:center;gap:8px;}
+.btn-aplicar.loading{opacity:0.75;cursor:not-allowed;pointer-events:none;}
+.btn-spinner{display:none;width:14px;height:14px;border:2px solid rgba(255,255,255,0.35);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite;flex-shrink:0;}
+.btn-aplicar.loading .btn-spinner{display:block;}
+
+/* FOOTER */
+.dashboard-footer{margin-top:48px;padding:20px 0 8px;text-align:center;font-size:11px;color:var(--muted);border-top:1px solid var(--border);letter-spacing:0.5px;}
+
+/* ALERTS SECTION */
+.alerts-section{margin-bottom:24px;}
+.alert-item{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:10px;margin-bottom:8px;font-size:13px;border-left:3px solid;}
+.alert-item.warning{background:rgba(249,168,37,0.08);border-color:#F9A825;color:#FFD54F;}
+.alert-item.danger{background:rgba(255,77,77,0.08);border-color:#ff4d4d;color:#FF8A80;}
+.alert-item.info{background:rgba(25,118,210,0.08);border-color:#1976D2;color:#90CAF9;}
+.alert-icon{font-size:16px;flex-shrink:0;}
+.alert-text{flex:1;line-height:1.4;}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%);transition:transform 0.3s ease;z-index:150;}
+  .sidebar.open{transform:translateX(0);}
+  .main{margin-left:0 !important;padding:20px 16px 16px !important;}
+  .hamburger{display:flex;}
+  .header{margin-top:48px;}
+  .filtros-grid{grid-template-columns:1fr 1fr !important;}
+  .filtros-actions{flex-direction:column;}
+  .filtros-actions button{width:100%;}
+  .nav-cards{grid-template-columns:1fr 1fr !important;}
+}
+@media(max-width:480px){
+  .filtros-grid{grid-template-columns:1fr !important;}
+  .nav-cards{grid-template-columns:1fr !important;}
+  .main{padding:16px 12px !important;}
+  .header{margin-top:52px;}
+}
+
+/* ══ VALTER — Popup Central Futurista ══ */
+.ia-fab{position:fixed;bottom:28px;right:28px;width:58px;height:58px;border-radius:50%;background:linear-gradient(135deg,#015FB8,#0096FF);color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 0 rgba(0,150,255,0.4),0 4px 24px rgba(1,95,184,0.5);z-index:900;transition:transform 0.25s cubic-bezier(0.34,1.56,0.64,1);overflow:hidden;}
+.ia-fab:hover{transform:scale(1.12);box-shadow:0 0 0 8px rgba(0,150,255,0.15),0 8px 32px rgba(1,95,184,0.7);}
+.ia-fab.ia-pulsing{animation:ia-pulse 2s infinite;}
+.ia-fab.ia-thinking{animation:ia-spin 1s linear infinite;}
+@keyframes ia-pulse{0%,100%{box-shadow:0 0 0 0 rgba(0,150,255,0.4),0 4px 24px rgba(1,95,184,0.5);}50%{box-shadow:0 0 0 12px rgba(245,168,0,0.15),0 4px 32px rgba(245,168,0,0.6);}}
+@keyframes ia-spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+.ia-badge{position:absolute;top:-4px;right:-4px;background:#F5A800;color:#000;font-size:10px;font-weight:800;padding:2px 6px;border-radius:10px;min-width:18px;text-align:center;display:none;z-index:1;}
+
+/* Overlay */
+.ia-overlay{display:none;position:fixed;inset:0;background:rgba(0,5,20,0.75);z-index:950;align-items:center;justify-content:center;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
+.ia-overlay.open{display:flex;}
+
+/* Painel central */
+.ia-panel{
+  position:relative;
+  background:linear-gradient(160deg,#0a1628 0%,#071020 60%,#040c18 100%);
+  border:1px solid rgba(0,150,255,0.3);
+  border-radius:24px;
+  width:560px;max-width:96vw;height:720px;max-height:93vh;
+  display:flex;flex-direction:column;
+  box-shadow:0 0 0 1px rgba(0,150,255,0.1),0 40px 100px rgba(0,0,0,0.9),0 0 60px rgba(0,100,255,0.06);
+  transform:scale(0.88) translateY(32px);opacity:0;
+  transition:transform 0.35s cubic-bezier(0.34,1.4,0.64,1),opacity 0.25s ease;
+  overflow:hidden;
+}
+.ia-panel::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 30% at 50% 0%,rgba(0,120,255,0.12),transparent 60%);pointer-events:none;border-radius:24px;}
+.ia-overlay.open .ia-panel{transform:scale(1) translateY(0);opacity:1;}
+
+/* Header */
+.ia-header{padding:20px 22px 16px;background:linear-gradient(135deg,rgba(0,100,255,0.12),rgba(0,150,255,0.06));border-bottom:1px solid rgba(0,150,255,0.12);border-radius:24px 24px 0 0;display:flex;align-items:center;gap:14px;flex-shrink:0;position:relative;}
+.ia-header::after{content:'';position:absolute;bottom:0;left:22px;right:22px;height:1px;background:linear-gradient(90deg,transparent,rgba(0,150,255,0.4),transparent);}
+.ia-avatar{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#013a8c,#0096FF);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 0 20px rgba(0,150,255,0.5),0 0 0 2px rgba(0,150,255,0.2);}
+.ia-avatar.thinking{animation:ia-avatar-pulse 1.2s ease-in-out infinite;}
+@keyframes ia-avatar-pulse{0%,100%{box-shadow:0 0 16px rgba(0,150,255,0.4),0 0 0 2px rgba(0,150,255,0.2);}50%{box-shadow:0 0 32px rgba(0,200,255,0.8),0 0 0 4px rgba(0,200,255,0.3);}}
+.ia-header-info{flex:1;}
+.ia-header-name{font-size:15px;font-weight:700;color:#E8F4FF;letter-spacing:0.3px;}
+.ia-header-status{font-size:11px;color:#4a7fa8;margin-top:3px;display:flex;align-items:center;gap:5px;}
+.ia-status-dot{width:6px;height:6px;border-radius:50%;background:#00ff88;flex-shrink:0;box-shadow:0 0 8px rgba(0,255,136,0.8);}
+.ia-header-actions{display:flex;gap:6px;}
+.ia-header-btn{background:rgba(0,150,255,0.06);border:1px solid rgba(0,150,255,0.15);color:#4a7fa8;cursor:pointer;width:32px;height:32px;border-radius:10px;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all 0.2s;}
+.ia-header-btn:hover{background:rgba(0,150,255,0.15);border-color:rgba(0,150,255,0.4);color:#E8F4FF;}
+
+/* Mensagens */
+.ia-messages{flex:1;overflow-y:auto;padding:16px 18px;display:flex;flex-direction:column;gap:16px;scroll-behavior:smooth;}
+.ia-messages::-webkit-scrollbar{width:4px;}
+.ia-messages::-webkit-scrollbar-thumb{background:rgba(0,150,255,0.3);border-radius:4px;}
+.ia-msg{max-width:92%;display:flex;flex-direction:column;gap:5px;}
+.ia-msg.bot{align-self:flex-start;}
+.ia-msg.user{align-self:flex-end;}
+.ia-msg-bubble{padding:13px 17px;border-radius:18px;font-size:14px;line-height:1.75;letter-spacing:0.1px;}
+.ia-msg.bot .ia-msg-bubble{
+  background:#0f1e3d;
+  border:1px solid rgba(60,130,255,0.25);
+  color:#ddeeff;
+  border-radius:4px 18px 18px 18px;
+  box-shadow:0 2px 16px rgba(0,0,0,0.4);
+}
+.ia-msg.user .ia-msg-bubble{
+  background:linear-gradient(135deg,#0d47a1,#1565c0);
+  color:#ffffff;
+  border-radius:18px 4px 18px 18px;
+  box-shadow:0 4px 16px rgba(0,100,255,0.35);
+}
+.ia-msg.bot .ia-msg-bubble strong{color:#82cfff;font-weight:700;}
+.ia-msg.bot .ia-msg-bubble ul{margin:10px 0 6px 18px;}
+.ia-msg.bot .ia-msg-bubble li{margin-bottom:6px;color:#ddeeff;line-height:1.6;}
+.ia-msg.bot .ia-msg-bubble p{margin-bottom:8px;}
+.ia-msg.bot .ia-msg-bubble p:last-child{margin-bottom:0;}
+.ia-msg-feedback{display:flex;gap:6px;padding:0 4px;opacity:0;transition:opacity 0.2s;}
+.ia-msg:hover .ia-msg-feedback{opacity:1;}
+.ia-feedback-btn{background:none;border:none;cursor:pointer;font-size:12px;padding:2px 6px;border-radius:6px;color:#2a4a6a;transition:all 0.15s;}
+.ia-feedback-btn:hover{background:rgba(0,100,255,0.1);color:#60B4FF;}
+.ia-feedback-btn.active{color:#F5A800;}
+
+/* Typing */
+.ia-typing{align-self:flex-start;background:rgba(0,30,70,0.8);border:1px solid rgba(0,100,255,0.15);border-radius:4px 18px 18px 18px;padding:14px 18px;display:flex;gap:6px;align-items:center;}
+.ia-typing span{width:7px;height:7px;border-radius:50%;background:rgba(0,150,255,0.4);animation:ia-bounce 1.4s infinite;}
+.ia-typing span:nth-child(2){animation-delay:0.2s;}
+.ia-typing span:nth-child(3){animation-delay:0.4s;}
+@keyframes ia-bounce{0%,60%,100%{transform:translateY(0);background:rgba(0,150,255,0.4);}30%{transform:translateY(-7px);background:#0096FF;}}
+
+/* Menu de modo */
+.ia-mode-menu{padding:16px;display:flex;flex-direction:column;gap:10px;border-top:1px solid rgba(0,100,255,0.1);flex-shrink:0;}
+.ia-mode-btn{padding:16px 18px;border-radius:16px;border:1px solid rgba(0,100,255,0.15);background:rgba(0,20,50,0.5);color:#C8DFF5;cursor:pointer;text-align:left;transition:all 0.25s;display:flex;align-items:center;gap:16px;}
+.ia-mode-btn:hover{background:rgba(0,80,200,0.2);border-color:rgba(0,150,255,0.4);transform:translateX(4px);box-shadow:0 4px 20px rgba(0,100,255,0.2);}
+.ia-mode-icon{font-size:24px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;border-radius:12px;flex-shrink:0;}
+.ia-mode-btn:nth-child(1) .ia-mode-icon{background:rgba(245,168,0,0.1);border:1px solid rgba(245,168,0,0.2);}
+.ia-mode-btn:nth-child(2) .ia-mode-icon{background:rgba(0,100,255,0.12);border:1px solid rgba(0,150,255,0.2);}
+.ia-mode-label{font-weight:700;font-size:14px;color:#E8F4FF;margin-bottom:3px;}
+.ia-mode-desc{font-size:11px;color:#4a7fa8;}
+.ia-mode-arrow{margin-left:auto;color:#1a3a5c;font-size:18px;}
+.ia-mode-btn:hover .ia-mode-arrow{color:#60B4FF;}
+
+/* Quick bar */
+.ia-quick-bar{padding:11px 16px;display:flex;flex-wrap:wrap;gap:8px;border-top:1px solid rgba(0,100,255,0.1);flex-shrink:0;}
+.ia-quick{padding:7px 15px;border-radius:20px;border:1px solid rgba(0,150,255,0.3);background:rgba(0,50,120,0.2);color:#7ec8ff;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;white-space:nowrap;}
+.ia-quick:hover{background:rgba(0,100,200,0.3);border-color:rgba(0,200,255,0.6);color:#fff;box-shadow:0 0 14px rgba(0,150,255,0.25);}
+.ia-back-btn{padding:7px 15px;border-radius:20px;border:1px solid rgba(255,255,255,0.08);background:transparent;color:#2a4a6a;font-size:12px;cursor:pointer;transition:all 0.15s;}
+.ia-back-btn:hover{color:#4a7fa8;border-color:rgba(255,255,255,0.2);}
+
+/* Input */
+.ia-input-area{padding:14px 16px;border-top:1px solid rgba(0,100,255,0.1);display:flex;gap:10px;flex-shrink:0;background:rgba(0,5,15,0.6);border-radius:0 0 24px 24px;}
+.ia-input{flex:1;background:rgba(0,20,50,0.6);border:1px solid rgba(0,100,255,0.2);border-radius:24px;padding:11px 18px;color:#E8F4FF;font-size:13px;outline:none;transition:all 0.2s;font-family:inherit;}
+.ia-input:focus{border-color:rgba(0,150,255,0.5);background:rgba(0,30,80,0.5);box-shadow:0 0 20px rgba(0,100,255,0.15);}
+.ia-input::placeholder{color:#1a3a5c;}
+.ia-send-btn{background:linear-gradient(135deg,#013a8c,#0064d4);border:none;border-radius:50%;width:42px;height:42px;color:#fff;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.2s;align-self:flex-end;box-shadow:0 4px 16px rgba(0,100,255,0.4);}
+.ia-send-btn:hover{transform:scale(1.1);box-shadow:0 6px 24px rgba(0,150,255,0.6);}
+.ia-send-btn:disabled{opacity:0.3;cursor:not-allowed;transform:none;box-shadow:none;}
+
+/* Alert proativo */
+.ia-alert{margin:8px 16px;padding:11px 15px;background:rgba(245,168,0,0.08);border:1px solid rgba(245,168,0,0.25);border-radius:10px;border-left:3px solid #F5A800;font-size:13px;color:#f0b429;display:flex;align-items:center;gap:10px;cursor:pointer;transition:background 0.15s;flex-shrink:0;line-height:1.5;}
+.ia-alert:hover{background:rgba(245,168,0,0.14);}
+.ia-alert-icon{font-size:17px;flex-shrink:0;}
+.ia-mode-tag{align-self:center;padding:4px 14px;border-radius:20px;background:rgba(0,100,255,0.1);border:1px solid rgba(0,150,255,0.2);color:#60B4FF;font-size:11px;font-weight:600;letter-spacing:0.5px;}
+
+
+/* ═══ ÁTOMO NEON — Loading Screen ═══ */
+.loading-overlay,.loading-global{
+  display:none;position:fixed;inset:0;z-index:99999;
+  align-items:center;justify-content:center;flex-direction:column;gap:46px;
+  background:radial-gradient(ellipse at center,#010d1f 0%,#000508 100%);
+  perspective:1200px;
+}
+.loading-overlay.show,.loading-global.show{display:flex;}
+.atom3d{
+  position:relative;width:280px;height:280px;
+  transform-style:preserve-3d;
+  animation:atomSpin 6s linear infinite;
+}
+@keyframes atomSpin{
+  from{transform:rotateX(15deg) rotateY(0deg);}
+  to{transform:rotateX(15deg) rotateY(360deg);}
+}
+.orbit{
+  position:absolute;inset:0;border-radius:50%;
+  border:2.5px solid transparent;box-sizing:border-box;
+}
+.orbit-1{border-color:#ff1744;box-shadow:0 0 18px #ff1744,0 0 38px rgba(255,23,68,.7),inset 0 0 18px rgba(255,23,68,.6);transform:rotateY(70deg) rotateX(20deg);}
+.orbit-2{border-color:#00e676;box-shadow:0 0 18px #00e676,0 0 38px rgba(0,230,118,.7),inset 0 0 18px rgba(0,230,118,.6);transform:rotateY(-60deg) rotateX(-30deg);}
+.orbit-3{border-color:#2979ff;box-shadow:0 0 18px #2979ff,0 0 38px rgba(41,121,255,.7),inset 0 0 18px rgba(41,121,255,.6);transform:rotateY(40deg) rotateX(-65deg);}
+.orbit-4{border-color:#ffea00;box-shadow:0 0 18px #ffea00,0 0 38px rgba(255,234,0,.7),inset 0 0 18px rgba(255,234,0,.6);transform:rotateY(-25deg) rotateX(60deg);}
+.atom-core{
+  position:absolute;top:50%;left:50%;width:14px;height:14px;border-radius:50%;
+  background:#fff;transform:translate(-50%,-50%);
+  box-shadow:0 0 18px #fff,0 0 36px rgba(255,255,255,.85),0 0 60px rgba(180,220,255,.6);
+  animation:corePulse 2s ease-in-out infinite;
+}
+@keyframes corePulse{0%,100%{transform:translate(-50%,-50%) scale(1);}50%{transform:translate(-50%,-50%) scale(1.25);}}
+.lo-text{display:flex;flex-direction:column;align-items:center;gap:10px;z-index:10;}
+.lo-title{
+  font-family:'Space Grotesk',system-ui,sans-serif !important;
+  font-size:26px;font-weight:700;letter-spacing:10px;text-transform:uppercase;color:#fff;
+  text-shadow:0 0 12px rgba(180,220,255,.7),0 0 28px rgba(41,121,255,.5);
+}
+.lo-sub{font-family:'DM Sans',system-ui,sans-serif !important;font-size:11px;letter-spacing:5px;color:rgba(200,225,255,.7);text-transform:uppercase;}
+.lo-progress{width:220px;height:2px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden;position:relative;}
+.lo-progress-bar{position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,#ff1744,#ffea00,#00e676,#2979ff,transparent);animation:progressSlide 2.2s linear infinite;}
+@keyframes progressSlide{0%{left:-100%;}100%{left:100%;}}
+/* hide legacy atom svg if present */
+.lo-atom-svg,.lo-particles,.lo-ring,.lo-logo,.lo-glow,.lo-track,.lo-beam,.loading-scene{display:none !important;}
+
+
+/* ═══ ÁTOMO NEON v2 — Loading Screen ═══ */
+.loading-overlay,.loading-global{
+  display:none;position:fixed;inset:0;z-index:99999;
+  align-items:center;justify-content:center;flex-direction:column;gap:48px;
+  background:radial-gradient(ellipse at center,#020a1c 0%,#000308 100%);
+}
+.loading-overlay.show,.loading-global.show{display:flex;}
+
+.atom-stage{position:relative;width:320px;height:320px;display:flex;align-items:center;justify-content:center;}
+
+/* Each ring is an ellipse rotated on a different axis. */
+.ring{
+  position:absolute;top:50%;left:50%;
+  width:300px;height:110px;
+  margin:-55px 0 0 -150px;
+  border-radius:50%;
+  border:2px solid transparent;
+}
+.ring-1{border-color:#ff1744;box-shadow:0 0 12px #ff1744,0 0 28px rgba(255,23,68,.55),inset 0 0 12px rgba(255,23,68,.35);transform:rotate(0deg);animation:r1Spin 5s linear infinite;}
+.ring-2{border-color:#00e676;box-shadow:0 0 12px #00e676,0 0 28px rgba(0,230,118,.55),inset 0 0 12px rgba(0,230,118,.35);transform:rotate(60deg);animation:r2Spin 6s linear infinite;}
+.ring-3{border-color:#2979ff;box-shadow:0 0 12px #2979ff,0 0 28px rgba(41,121,255,.55),inset 0 0 12px rgba(41,121,255,.35);transform:rotate(120deg);animation:r3Spin 7s linear infinite;}
+.ring-4{border-color:#ffea00;box-shadow:0 0 12px #ffea00,0 0 28px rgba(255,234,0,.55),inset 0 0 12px rgba(255,234,0,.35);transform:rotate(-45deg);animation:r4Spin 8s linear infinite;}
+
+@keyframes r1Spin{from{transform:rotate(0deg)   scale(1);} to{transform:rotate(360deg) scale(1);} }
+@keyframes r2Spin{from{transform:rotate(60deg)  scale(1);} to{transform:rotate(420deg) scale(1);} }
+@keyframes r3Spin{from{transform:rotate(120deg) scale(1);} to{transform:rotate(480deg) scale(1);} }
+@keyframes r4Spin{from{transform:rotate(-45deg) scale(1);} to{transform:rotate(315deg) scale(1);} }
+
+/* Electrons — orbit along their ring */
+.electron-wrap{position:absolute;top:50%;left:50%;width:300px;height:110px;margin:-55px 0 0 -150px;}
+.electron-wrap.w1{animation:r1Spin 5s linear infinite;}
+.electron-wrap.w2{transform:rotate(60deg); animation:r2Spin 6s linear infinite;}
+.electron-wrap.w3{transform:rotate(120deg);animation:r3Spin 7s linear infinite;}
+.electron-wrap.w4{transform:rotate(-45deg);animation:r4Spin 8s linear infinite;}
+.electron{
+  position:absolute;top:50%;left:0;width:14px;height:14px;border-radius:50%;
+  margin:-7px 0 0 -7px;
+}
+.e1{background:#ff5577;box-shadow:0 0 12px #ff1744,0 0 24px #ff1744,0 0 40px rgba(255,23,68,.6);}
+.e2{background:#5cffa6;box-shadow:0 0 12px #00e676,0 0 24px #00e676,0 0 40px rgba(0,230,118,.6);}
+.e3{background:#6ea8ff;box-shadow:0 0 12px #2979ff,0 0 24px #2979ff,0 0 40px rgba(41,121,255,.6);}
+.e4{background:#fff58a;box-shadow:0 0 12px #ffea00,0 0 24px #ffea00,0 0 40px rgba(255,234,0,.6);}
+
+/* Núcleo */
+.nucleus{
+  position:absolute;top:50%;left:50%;width:18px;height:18px;border-radius:50%;
+  margin:-9px 0 0 -9px;background:#fff;
+  box-shadow:0 0 18px #fff,0 0 36px rgba(180,220,255,.9),0 0 70px rgba(120,180,255,.6);
+  animation:nuclPulse 2.2s ease-in-out infinite;
+}
+@keyframes nuclPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.35);}}
+
+.lo-text{display:flex;flex-direction:column;align-items:center;gap:10px;z-index:10;}
+.lo-title{
+  font-family:'Space Grotesk',system-ui,sans-serif !important;
+  font-size:26px;font-weight:700;letter-spacing:10px;text-transform:uppercase;color:#fff;
+  text-shadow:0 0 12px rgba(180,220,255,.7),0 0 28px rgba(41,121,255,.5);
+}
+.lo-sub{font-family:'DM Sans',system-ui,sans-serif !important;font-size:11px;letter-spacing:5px;color:rgba(200,225,255,.7);text-transform:uppercase;}
+.lo-progress{width:220px;height:2px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden;position:relative;}
+.lo-progress-bar{position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,#ff1744,#ffea00,#00e676,#2979ff,transparent);animation:progressSlide 2.2s linear infinite;}
+@keyframes progressSlide{0%{left:-100%;}100%{left:100%;}}
+
+/* hide legacy loader pieces */
+.lo-atom-svg,.lo-particles,.lo-ring,.lo-logo,.lo-glow,.lo-track,.lo-beam,.loading-scene,.atom3d,.orbit,.atom-core{display:none !important;}
+
+
+/* ═══ ÁTOMO NEON v3 — Loading (matches reference video) ═══ */
+.loading-overlay,.loading-global{
+  display:none;position:fixed;inset:0;z-index:99999;
+  align-items:center;justify-content:center;flex-direction:column;gap:54px;
+  background:#000;
+}
+.loading-overlay.show,.loading-global.show{display:flex;}
+
+.atom3d{
+  position:relative;width:300px;height:300px;
+  transform-style:preserve-3d;
+  animation:atomSpin 7s linear infinite;
+}
+@keyframes atomSpin{
+  0%  {transform:rotateX(15deg) rotateY(0deg)   rotateZ(0deg);}
+  100%{transform:rotateX(15deg) rotateY(360deg) rotateZ(360deg);}
+}
+.orbit{
+  position:absolute;inset:0;border-radius:50%;
+  border:2px solid;box-sizing:border-box;
+  background:transparent;
+}
+.orbit-1{border-color:#ff1744;box-shadow:0 0 14px #ff1744,0 0 32px rgba(255,23,68,.85),0 0 60px rgba(255,23,68,.55),inset 0 0 14px rgba(255,23,68,.6);transform:rotateY(70deg)  rotateX(15deg);}
+.orbit-2{border-color:#00e676;box-shadow:0 0 14px #00e676,0 0 32px rgba(0,230,118,.85),0 0 60px rgba(0,230,118,.55),inset 0 0 14px rgba(0,230,118,.6);transform:rotateY(-55deg) rotateX(-25deg);}
+.orbit-3{border-color:#2979ff;box-shadow:0 0 14px #2979ff,0 0 32px rgba(41,121,255,.85),0 0 60px rgba(41,121,255,.55),inset 0 0 14px rgba(41,121,255,.6);transform:rotateY(35deg)  rotateX(-65deg);}
+.orbit-4{border-color:#ffea00;box-shadow:0 0 14px #ffea00,0 0 32px rgba(255,234,0,.85),0 0 60px rgba(255,234,0,.55),inset 0 0 14px rgba(255,234,0,.6);transform:rotateY(-30deg) rotateX(60deg);}
+
+.lo-text{display:flex;flex-direction:column;align-items:center;gap:10px;z-index:10;}
+.lo-title{
+  font-family:'Space Grotesk',system-ui,sans-serif !important;
+  font-size:24px;font-weight:700;letter-spacing:10px;text-transform:uppercase;color:#fff;
+  text-shadow:0 0 12px rgba(180,220,255,.65),0 0 28px rgba(41,121,255,.45);
+}
+.lo-sub{font-family:'DM Sans',system-ui,sans-serif !important;font-size:10px;letter-spacing:5px;color:rgba(200,225,255,.6);text-transform:uppercase;}
+
+/* hide legacy loader pieces from older versions */
+.lo-atom-svg,.lo-particles,.lo-ring,.lo-logo,.lo-glow,.lo-track,.lo-beam,.loading-scene,
+.atom-stage,.ring,.electron-wrap,.electron,.nucleus,.atom-core,.lo-progress{display:none !important;}
+
+
+
+/* REF VIDEO LOADER START */
+.ref-loader{
+  position:fixed; inset:0; z-index:2147483647;
+  display:flex; align-items:center; justify-content:center;
+  background:#000;
+  opacity:0; visibility:hidden; pointer-events:none;
+  transition:opacity .35s ease, visibility 0s linear .35s;
+  overflow:hidden;
+}
+.ref-loader.show{opacity:1; visibility:visible; pointer-events:auto; transition:opacity .15s ease;}
+.ref-loader::before{
+  content:""; position:absolute; inset:0;
+  background:radial-gradient(circle at center, rgba(255,255,255,.02) 0%, rgba(255,255,255,0) 34%);
+}
+.ref-loader__stage{
+  position:relative;
+  width:min(58vw, 360px);
+  aspect-ratio:1;
+  display:grid;
+  place-items:center;
+}
+.ref-loader__atom{
+  width:100%;
+  height:100%;
+  overflow:visible;
+  filter:saturate(1.15) contrast(1.08);
+  animation:refLoaderSpin 6.8s linear infinite;
+}
+.ref-loader__ring{
+  fill:none;
+  stroke-linecap:round;
+  mix-blend-mode:screen;
+}
+.ref-loader__ring.back{stroke-width:10; opacity:.22; filter:url(#refLoaderBlur);}
+.ref-loader__ring.front{stroke-width:4.6; opacity:.98; filter:url(#refLoaderGlow);}
+.ref-loader__ring.red{stroke:#ff2a2a; stroke-dasharray:248 346; animation:refDashRed 4.2s linear infinite;}
+.ref-loader__ring.green{stroke:#31ff52; stroke-dasharray:230 364; animation:refDashGreen 4.8s linear infinite reverse;}
+.ref-loader__ring.blue{stroke:#2ea2ff; stroke-dasharray:214 380; animation:refDashBlue 4.4s linear infinite;}
+.ref-loader__ring.yellow{stroke:#ffe92e; stroke-dasharray:198 396; animation:refDashYellow 5s linear infinite reverse;}
+@keyframes refLoaderSpin{from{transform:rotate(0deg) scale(.94);}to{transform:rotate(360deg) scale(.94);}}
+@keyframes refDashRed{from{stroke-dashoffset:0;}to{stroke-dashoffset:-594;}}
+@keyframes refDashGreen{from{stroke-dashoffset:0;}to{stroke-dashoffset:594;}}
+@keyframes refDashBlue{from{stroke-dashoffset:0;}to{stroke-dashoffset:-594;}}
+@keyframes refDashYellow{from{stroke-dashoffset:0;}to{stroke-dashoffset:594;}}
+@media (max-width: 720px){
+  .ref-loader__stage{width:min(72vw, 300px);}
+  .ref-loader__ring.back{stroke-width:8;}
+  .ref-loader__ring.front{stroke-width:4;}
+}
+/* REF VIDEO LOADER END */
+
+</style>
+</head>
+<body>
+
+
+<!-- REF VIDEO LOADER START -->
+<div class="ref-loader show" id="refLoader" aria-hidden="true">
+  <div class="ref-loader__stage">
+    <svg class="ref-loader__atom" viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg" role="presentation">
+      <defs>
+        <filter id="refLoaderGlow" x="-120%" y="-120%" width="340%" height="340%">
+          <feGaussianBlur stdDeviation="3.2" result="blur"/>
+          <feMerge>
+            <feMergeNode in="blur"/>
+            <feMergeNode in="SourceGraphic"/>
+          </feMerge>
+        </filter>
+        <filter id="refLoaderBlur" x="-140%" y="-140%" width="380%" height="380%">
+          <feGaussianBlur stdDeviation="8"/>
+        </filter>
+      </defs>
+
+      <g transform="rotate(2 160 160)">
+        <ellipse class="ref-loader__ring back red" cx="160" cy="160" rx="118" ry="56" />
+        <ellipse class="ref-loader__ring front red" cx="160" cy="160" rx="118" ry="56" />
+      </g>
+      <g transform="rotate(92 160 160)">
+        <ellipse class="ref-loader__ring back yellow" cx="160" cy="160" rx="118" ry="56" />
+        <ellipse class="ref-loader__ring front yellow" cx="160" cy="160" rx="118" ry="56" />
+      </g>
+      <g transform="rotate(48 160 160)">
+        <ellipse class="ref-loader__ring back green" cx="160" cy="160" rx="118" ry="56" />
+        <ellipse class="ref-loader__ring front green" cx="160" cy="160" rx="118" ry="56" />
+      </g>
+      <g transform="rotate(-46 160 160)">
+        <ellipse class="ref-loader__ring back blue" cx="160" cy="160" rx="118" ry="56" />
+        <ellipse class="ref-loader__ring front blue" cx="160" cy="160" rx="118" ry="56" />
+      </g>
+    </svg>
+  </div>
+</div>
+<script>
+(function(){
+  var minVisible = 950;
+  var startedAt = Date.now();
+  function hideRefLoader(){
+    var el = document.getElementById('refLoader');
+    if(!el) return;
+    var wait = Math.max(0, minVisible - (Date.now() - startedAt));
+    setTimeout(function(){ el.classList.remove('show'); }, wait);
+  }
+  if(document.readyState === 'complete') {
+    hideRefLoader();
+  } else {
+    window.addEventListener('load', hideRefLoader, { once:true });
+  }
+})();
+</script>
+<!-- REF VIDEO LOADER END -->
+
+<!-- HAMBURGER (mobile) -->
+<button class="hamburger" id="hamburgerBtn" onclick="toggleSidebar()" aria-label="Menu">
+  <span></span><span></span><span></span>
+</button>
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+<div class="sidebar" id="mainSidebar">
+  <img class="sidebar-logo" src="logo.png" alt="Átomo" onerror="this.style.display='none'">
+  <div class="sidebar-title">ÁTOMO</div>
+  <div class="nav-section">Dashboards</div>
+  <a class="nav-item" href="visao-geral.html"><span class="icon">📊</span> Visão Geral</a>
+  <a class="nav-item" href="vendedor.html"><span class="icon">👤</span> Vendedor</a>
+  <a class="nav-item" href="regiao.html"><span class="icon">🗺️</span> Região</a>
+  <a class="nav-item" href="marcas.html"><span class="icon">🏷️</span> Marcas</a>
+  <a class="nav-item" href="produtos.html"><span class="icon">📦</span> Produtos</a>
+  <div class="sidebar-divider"></div>
+  <div class="nav-section">Gestão</div>
+  <a class="nav-item" href="carteira.html"><span class="icon">👥</span> Carteira</a>
+  <a class="nav-item" href="shelflife.html"><span class="icon">🕒</span> Shelf Life</a>
+  <a class="nav-item" href="risco.html"><span class="icon">⚠️</span> Clientes em Risco</a>
+  <div class="sidebar-divider"></div>
+  <button class="btn-logout" onclick="location.href='index.html'">🚪 Sair</button>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="header">
+    <h1>👁 Portal Átomo</h1>
+    <p>Selecione os filtros abaixo. Todas as páginas usarão esses filtros automaticamente.</p>
+  </div>
+
+  <!-- ALERTAS -->
+  <div class="alerts-section" id="alertsSection" style="display:none"></div>
+
+  <!-- FILTROS -->
+  <div class="filtros-card">
+    <div class="filtros-titulo">🔍 Filtros Globais</div>
+    <div class="filtros-grid">
+      <div class="filtro-group">
+        <label>Ano</label>
+        <select class="filtro-select" id="filtroAno">
+          <option value="">Todos os anos</option>
+        </select>
+      </div>
+      <div class="filtro-group">
+        <label>Mês</label>
+        <select class="filtro-select" id="filtroMes">
+          <option value="">Todos os meses</option>
+          <option value="1">Janeiro</option>
+          <option value="2">Fevereiro</option>
+          <option value="3">Março</option>
+          <option value="4">Abril</option>
+          <option value="5">Maio</option>
+          <option value="6">Junho</option>
+          <option value="7">Julho</option>
+          <option value="8">Agosto</option>
+          <option value="9">Setembro</option>
+          <option value="10">Outubro</option>
+          <option value="11">Novembro</option>
+          <option value="12">Dezembro</option>
+        </select>
+      </div>
+      <div class="filtro-group">
+        <label>Unidade</label>
+        <select class="filtro-select" id="filtroUnidade">
+          <option value="">Todas as unidades</option>
+        </select>
+      </div>
+      <div class="filtro-group">
+        <label>Marca</label>
+        <select class="filtro-select" id="filtroMarca">
+          <option value="">Todas as marcas</option>
+        </select>
+      </div>
+      <div class="filtro-group">
+        <label>Vendedor</label>
+        <select class="filtro-select" id="filtroVendedor">
+          <option value="">Todos os vendedores</option>
+        </select>
+      </div>
+    </div>
+    <div class="filtros-actions">
+      <button class="btn-limpar" onclick="limparFiltros()">✕ Limpar tudo</button>
+      <button class="btn-aplicar" id="btnAplicar" onclick="aplicarFiltros()"><span class="btn-spinner"></span>✓ Aplicar filtros</button>
+    </div>
+  </div>
+
+  <!-- TAGS ATIVAS -->
+  <div id="filtrosAtivos" class="filtros-ativos" style="display:none"></div>
+
+  <!-- CARDS NAVEGAÇÃO -->
+  <div class="nav-cards">
+    <a class="nav-card" href="visao-geral.html">
+      <div class="nav-icon">📊</div>
+      <div class="nav-label">Visão Geral</div>
+      <div class="nav-desc">KPIs, faturamento mensal e resumo</div>
+    </a>
+    <a class="nav-card" href="vendedor.html">
+      <div class="nav-icon">👤</div>
+      <div class="nav-label">Análise Vendedor</div>
+      <div class="nav-desc">Ranking e performance por vendedor</div>
+    </a>
+    <a class="nav-card" href="regiao.html">
+      <div class="nav-icon">🗺️</div>
+      <div class="nav-label">Análise Região</div>
+      <div class="nav-desc">Faturamento por UF e região</div>
+    </a>
+    <a class="nav-card" href="marcas.html">
+      <div class="nav-icon">🏷️</div>
+      <div class="nav-label">Análise Marcas</div>
+      <div class="nav-desc">Desempenho por marca</div>
+    </a>
+    <a class="nav-card" href="produtos.html">
+      <div class="nav-icon">📦</div>
+      <div class="nav-label">Top Produtos</div>
+      <div class="nav-desc">Ranking dos produtos mais vendidos</div>
+    </a>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="dashboard-footer" id="dashboardFooter">Selecione os filtros e clique em Aplicar.</div>
+</div>
+
+<script>
+const API = 'https://horus-production.up.railway.app';
+const MESES_EXT = ['','Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+function gerarParticulasHome() {
+  var container = document.getElementById('loParticles');
+  if (!container) return;
+  var colors = ['#015FB8','#00c3ff','#00ff88','#ffffff','#0172db'];
+  function criarParticula() {
+    var p = document.createElement('div');
+    var size = Math.random() * 4 + 1;
+    var color = colors[Math.floor(Math.random() * colors.length)];
+    var angle = Math.random() * Math.PI * 2;
+    var dist = 60 + Math.random() * 80;
+    var duration = 2000 + Math.random() * 2000;
+    var delay = Math.random() * 2000;
+    p.style.cssText = 'position:absolute;border-radius:50%;width:'+size+'px;height:'+size+'px;background:'+color+';left:50%;top:50%;transform:translate(-50%,-50%);box-shadow:0 0 '+(size*2)+'px '+color+';opacity:0;';
+    container.appendChild(p);
+    function animar() {
+      var endX = Math.cos(angle) * dist;
+      var endY = Math.sin(angle) * dist;
+      var startTime = null;
+      setTimeout(function() {
+        function step(ts) {
+          if (!startTime) startTime = ts;
+          var progress = (ts - startTime) / duration;
+          if (progress >= 1) {
+            angle = Math.random() * Math.PI * 2;
+            dist = 60 + Math.random() * 80;
+            endX = Math.cos(angle) * dist;
+            endY = Math.sin(angle) * dist;
+            startTime = null;
+            setTimeout(function() { requestAnimationFrame(step); }, Math.random() * 500);
+            return;
+          }
+          var e = progress < 0.5 ? 2*progress*progress : -1+(4-2*progress)*progress;
+          var x = endX * e, y = endY * e;
+          var op = progress < 0.2 ? progress/0.2 : progress > 0.8 ? (1-progress)/0.2 : 1;
+          p.style.transform = 'translate(calc(-50% + '+x+'px), calc(-50% + '+y+'px))';
+          p.style.opacity = (op * 0.8).toString();
+          requestAnimationFrame(step);
+        }
+        requestAnimationFrame(step);
+      }, delay);
+    }
+    animar();
+  }
+  for (var i = 0; i < 15; i++) criarParticula();
+}
+gerarParticulasHome();
+
+async function carregarOpcoes() {
+  document.getElementById('loadingOverlay').classList.add('show');
+  try {
+    const res  = await fetch(`${API}/api/filtros`);
+    const data = await res.json();
+
+    const selAno      = document.getElementById('filtroAno');
+    const selUnidade  = document.getElementById('filtroUnidade');
+    const selMarca    = document.getElementById('filtroMarca');
+    const selVendedor = document.getElementById('filtroVendedor');
+
+    data.anos.forEach(a => {
+      const o = document.createElement('option');
+      o.value = a; o.text = a; selAno.appendChild(o);
+    });
+    data.unidades.forEach(u => {
+      const o = document.createElement('option');
+      o.value = u; o.text = u; selUnidade.appendChild(o);
+    });
+    data.marcas.forEach(m => {
+      const o = document.createElement('option');
+      o.value = m; o.text = m; selMarca.appendChild(o);
+    });
+    data.vendedores.forEach(v => {
+      const o = document.createElement('option');
+      o.value = v; o.text = v; selVendedor.appendChild(o);
+    });
+
+    restaurarFiltros();
+  } catch(e) {
+    console.error('Erro ao carregar filtros:', e);
+  } finally {
+    document.getElementById('loadingOverlay').classList.remove('show');
+  }
+}
+
+function toggleSidebar() {
+  const sidebar = document.getElementById('mainSidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  const isOpen = sidebar.classList.toggle('open');
+  overlay.classList.toggle('show', isOpen);
+}
+
+function aplicarFiltros() {
+  const btn = document.getElementById('btnAplicar');
+  btn.classList.add('loading');
+  const filtros = {
+    ano:      document.getElementById('filtroAno').value,
+    mes:      document.getElementById('filtroMes').value,
+    unidade:  document.getElementById('filtroUnidade').value,
+    marca:    document.getElementById('filtroMarca').value,
+    vendedor: document.getElementById('filtroVendedor').value,
+  };
+  localStorage.setItem('horus_filtros', JSON.stringify(filtros));
+  mostrarTags(filtros);
+  atualizarFooter();
+  setTimeout(() => btn.classList.remove('loading'), 600);
+}
+
+function atualizarFooter() {
+  const el = document.getElementById('dashboardFooter');
+  if (!el) return;
+  const agora = new Date().toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+  el.textContent = '📅 Filtros aplicados em: ' + agora;
+}
+
+function exibirAlertas(alertas) {
+  const sec = document.getElementById('alertsSection');
+  if (!sec || !alertas || !alertas.length) return;
+  sec.style.display = 'block';
+  sec.innerHTML = alertas.map(a => `
+    <div class="alert-item ${a.tipo || 'info'}">
+      <span class="alert-icon">${a.icone || 'ℹ️'}</span>
+      <span class="alert-text">${a.texto}</span>
+    </div>`).join('');
+}
+
+function limparFiltros() {
+  ['filtroAno','filtroMes','filtroUnidade','filtroMarca','filtroVendedor']
+    .forEach(id => document.getElementById(id).value = '');
+  localStorage.removeItem('horus_filtros');
+  document.getElementById('filtrosAtivos').style.display = 'none';
+  document.getElementById('filtrosAtivos').innerHTML = '';
+}
+
+function valido(v) { return v && v !== 'undefined' && v !== 'null'; }
+
+function restaurarFiltros() {
+  const saved = localStorage.getItem('horus_filtros');
+  if (!saved) return;
+  const f = JSON.parse(saved);
+  if (valido(f.ano))      document.getElementById('filtroAno').value      = f.ano;
+  if (valido(f.mes))      document.getElementById('filtroMes').value      = f.mes;
+  if (valido(f.unidade))  document.getElementById('filtroUnidade').value  = f.unidade;
+  if (valido(f.marca))    document.getElementById('filtroMarca').value    = f.marca;
+  if (valido(f.vendedor)) document.getElementById('filtroVendedor').value = f.vendedor;
+  if (!valido(f.vendedor)) f.vendedor = '';
+  mostrarTags(f);
+}
+
+function mostrarTags(filtros) {
+  const container = document.getElementById('filtrosAtivos');
+  const tags = [];
+  if (filtros.ano)      tags.push({ key:'ano',      label:`Ano: ${filtros.ano}` });
+  if (filtros.mes)      tags.push({ key:'mes',      label:`Mês: ${MESES_EXT[filtros.mes]}` });
+  if (filtros.unidade)  tags.push({ key:'unidade',  label:`Unidade: ${filtros.unidade}` });
+  if (filtros.marca)    tags.push({ key:'marca',    label:`Marca: ${filtros.marca}` });
+  if (filtros.vendedor) {
+    const sel = document.getElementById('filtroVendedor');
+    const opt = sel.querySelector(`option[value="${filtros.vendedor}"]`);
+    const nome = opt ? opt.text : filtros.vendedor;
+    tags.push({ key:'vendedor', label:`Vendedor: ${nome}` });
+  }
+
+  if (!tags.length) {
+    container.style.display = 'none';
+    container.innerHTML = '';
+    return;
+  }
+
+  container.style.display = 'flex';
+  container.innerHTML =
+    '<span style="font-size:12px;color:var(--muted);align-self:center">Filtros ativos:</span>' +
+    tags.map(t => `
+      <div class="filtro-tag">
+        ${t.label}
+        <button onclick="removerFiltro('${t.key}')" title="Remover">×</button>
+      </div>
+    `).join('');
+}
+
+function removerFiltro(key) {
+  document.getElementById('filtro' + key.charAt(0).toUpperCase() + key.slice(1)).value = '';
+  aplicarFiltros();
+}
+
+function logout() {
+  localStorage.removeItem('horus_filtros');
+  location.href = 'index.html';
+}
+
+window.onload = function() {
+  gerarParticulasHome();
+  carregarOpcoes();
+  exibirAlertas([
+    { tipo:'warning', icone:'⏳', texto:'Verifique a página <b>Shelf Life</b> — produtos próximos ao vencimento podem precisar de atenção.' },
+    { tipo:'info',    icone:'🔍', texto:'Use os filtros abaixo para segmentar os dados por período, unidade, marca ou vendedor em todas as páginas.' }
+  ]);
+};
+</script>
+
+<!-- ══ VALTER FAB ══ -->
+<button class="ia-fab" id="iaFab" title="Valter — Assistente Átomo"><svg width="26" height="26" viewBox="0 0 38 38" xmlns="http://www.w3.org/2000/svg"><circle cx="19" cy="19" r="19" fill="#0A1628"/><ellipse cx="19" cy="19" rx="15" ry="5.5" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.2" transform="rotate(-40 19 19)"/><ellipse cx="19" cy="19" rx="15" ry="5.5" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.2" transform="rotate(40 19 19)"/><ellipse cx="19" cy="19" rx="15" ry="5.5" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.2" transform="rotate(90 19 19)"/><circle cx="19" cy="19" r="5" fill="#fff"/><circle cx="19" cy="19" r="3" fill="#0096FF"/><circle cx="34" cy="19" r="2.2" fill="#F5A800"/><circle cx="11.5" cy="6.5" r="2.2" fill="#F5A800"/><circle cx="11.5" cy="31.5" r="2.2" fill="#F5A800"/></svg><span class="ia-badge" id="iaBadge"></span></button>
+
+<!-- ══ VALTER OVERLAY + PAINEL CENTRAL ══ -->
+<div class="ia-overlay" id="iaOverlay">
+<div class="ia-panel" id="iaPanel">
+  <div class="ia-header">
+    <div class="ia-avatar" id="iaAvatar"><svg width="28" height="28" viewBox="0 0 38 38" xmlns="http://www.w3.org/2000/svg"><circle cx="19" cy="19" r="19" fill="#060f22"/><ellipse cx="19" cy="19" rx="15" ry="5.5" fill="none" stroke="rgba(0,200,255,0.8)" stroke-width="1.2" transform="rotate(-40 19 19)"/><ellipse cx="19" cy="19" rx="15" ry="5.5" fill="none" stroke="rgba(0,200,255,0.8)" stroke-width="1.2" transform="rotate(40 19 19)"/><ellipse cx="19" cy="19" rx="15" ry="5.5" fill="none" stroke="rgba(0,200,255,0.8)" stroke-width="1.2" transform="rotate(90 19 19)"/><circle cx="19" cy="19" r="5" fill="#fff"/><circle cx="19" cy="19" r="3" fill="#0096FF"/><circle cx="34" cy="19" r="2.2" fill="#F5A800"/><circle cx="11.5" cy="6.5" r="2.2" fill="#F5A800"/><circle cx="11.5" cy="31.5" r="2.2" fill="#F5A800"/></svg></div>
+    <div class="ia-header-info">
+      <div class="ia-header-name">Valter</div>
+      <div class="ia-header-status"><span class="ia-status-dot"></span><span id="iaStatus">Assistente Átomo</span></div>
+    </div>
+    <div class="ia-header-actions">
+      <button class="ia-header-btn" id="iaResetBtn" title="Reiniciar">↺</button>
+      <button class="ia-header-btn" id="iaCloseBtn" title="Fechar">✕</button>
+    </div>
+  </div>
+  <div id="iaAlertArea"></div>
+  <div class="ia-messages" id="iaMessages"></div>
+  <div id="iaModeMenu" style="display:none"></div>
+  <div class="ia-quick-bar" id="iaQuickBar" style="display:none"></div>
+  <div class="ia-input-area" id="iaInputArea" style="display:none">
+    <input class="ia-input" id="iaInput" placeholder="Digite sua pergunta...">
+    <button class="ia-send-btn" id="iaSendBtn">➤</button>
+  </div>
+</div>
+</div>
+
+<script>
+(function() {
+  var API_BASE  = (typeof API !== 'undefined') ? API : 'https://horus-production.up.railway.app';
+  var STORAGE_KEY = 'valter_session_v2';
+
+  var state = {
+    open:      false,
+    iniciado:  false,
+    mode:      null,
+    historico: [],
+    contexto:  '',
+    pagina:    document.title.replace('Átomo — ','').replace('Atomo — ','').trim(),
+  };
+
+  /* ── PERSISTÊNCIA ──────────────────────────────────────── */
+  function salvarSessao() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        mode:      state.mode,
+        historico: state.historico.slice(-10),
+        contexto:  state.contexto,
+        ts:        Date.now(),
+      }));
+    } catch(e) {}
+  }
+
+  function carregarSessao() {
+    try {
+      var s = localStorage.getItem(STORAGE_KEY);
+      if (!s) return null;
+      var d = JSON.parse(s);
+      // Expira após 4 horas
+      if (Date.now() - d.ts > 4 * 60 * 60 * 1000) return null;
+      return d;
+    } catch(e) { return null; }
+  }
+
+  /* ── DOM HELPERS ───────────────────────────────────────── */
+  function el(id) { return document.getElementById(id); }
+
+  function setStatus(txt) {
+    el('iaStatus').textContent = txt;
+  }
+
+  function setThinking(on) {
+    el('iaAvatar').classList.toggle('thinking', on);
+    el('iaSendBtn').disabled = on;
+    el('iaFab').classList.toggle('ia-thinking', on && !state.open);
+  }
+
+  function showBadge(n) {
+    var b = el('iaBadge');
+    if (n > 0) {
+      b.textContent = n;
+      b.style.display = 'block';
+      el('iaFab').classList.add('ia-pulsing');
+    } else {
+      b.style.display = 'none';
+      el('iaFab').classList.remove('ia-pulsing');
+    }
+  }
+
+  /* ── MENSAGENS ─────────────────────────────────────────── */
+  function iaAddMsg(texto, tipo, streaming) {
+    var wrap = document.createElement('div');
+    wrap.className = 'ia-msg ' + tipo;
+
+    var bubble = document.createElement('div');
+    bubble.className = 'ia-msg-bubble';
+
+    if (!streaming) {
+      bubble.innerHTML = iaFormatarTexto(texto);
+    }
+    wrap.appendChild(bubble);
+
+    if (tipo === 'bot') {
+      var feedback = document.createElement('div');
+      feedback.className = 'ia-msg-feedback';
+      feedback.innerHTML =
+        '<button class="ia-feedback-btn" data-v="1" title="Útil">👍</button>' +
+        '<button class="ia-feedback-btn" data-v="-1" title="Não útil">👎</button>';
+      feedback.addEventListener('click', function(e) {
+        var btn = e.target.closest('[data-v]');
+        if (!btn) return;
+        btn.classList.add('active');
+      });
+      wrap.appendChild(feedback);
+    }
+
+    el('iaMessages').appendChild(wrap);
+    el('iaMessages').scrollTop = el('iaMessages').scrollHeight;
+    return bubble;
+  }
+
+  function iaFormatarTexto(texto) {
+    return texto
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/^### (.+)$/gm, '<strong style="color:#60A5FA;font-size:12px;text-transform:uppercase;letter-spacing:0.5px">$1</strong>')
+      .replace(/^- (.+)$/gm, '<li>$1</li>')
+      .replace(/(<li>[\s\S]*?<\/li>)/g, '<ul style="margin:6px 0 6px 16px">$1</ul>')
+      .replace(/\n/g, '<br>');
+  }
+
+  function iaAddTag(texto) {
+    var tag = document.createElement('div');
+    tag.className = 'ia-mode-tag';
+    tag.textContent = texto;
+    el('iaMessages').appendChild(tag);
+    el('iaMessages').scrollTop = el('iaMessages').scrollHeight;
+  }
+
+  function iaAddTyping() {
+    var div = document.createElement('div');
+    div.className = 'ia-typing'; div.id = 'iaTyping';
+    div.innerHTML = '<span></span><span></span><span></span>';
+    el('iaMessages').appendChild(div);
+    el('iaMessages').scrollTop = el('iaMessages').scrollHeight;
+  }
+
+  function iaRemoveTyping() { var t = el('iaTyping'); if (t) t.remove(); }
+
+  /* ── ALERTAS PROATIVOS ─────────────────────────────────── */
+  async function iaVerificarAlertas() {
+    try {
+      var r = await fetch(API_BASE + '/api/valter/alertas');
+      if (!r.ok) return;
+      var data = await r.json();
+      if (data.alertas && data.alertas.length) {
+        showBadge(data.alertas.length);
+        var area = el('iaAlertArea');
+        area.innerHTML = '';
+        data.alertas.slice(0,2).forEach(function(a) {
+          var div = document.createElement('div');
+          div.className = 'ia-alert';
+          div.innerHTML = '<span class="ia-alert-icon">' + (a.icone||'⚠️') + '</span><span>' + a.texto + '</span>';
+          div.addEventListener('click', function() {
+            if (!state.open) iaToggle();
+            setTimeout(function() { iaSendMensagem(a.pergunta || a.texto); }, 400);
+          });
+          area.appendChild(div);
+        });
+      }
+    } catch(e) {}
+  }
+
+  /* ── TOGGLE ────────────────────────────────────────────── */
+  function iaToggle() {
+    state.open = !state.open;
+    document.getElementById('iaOverlay').classList.toggle('open', state.open);
+    if (state.open) {
+      showBadge(0);
+      if (!state.iniciado) { state.iniciado = true; setTimeout(iaIniciar, 300); }
+    }
+  }
+  // Fechar ao clicar fora do painel
+  document.getElementById('iaOverlay').addEventListener('click', function(e) {
+    if (e.target === document.getElementById('iaOverlay')) iaToggle();
+  });
+  window.iaToggle = iaToggle;
+
+  /* ── INICIAR / RESTAURAR SESSÃO ────────────────────────── */
+  async function iaIniciar() {
+    setStatus('Carregando dados...');
+    setThinking(true);
+
+    // Busca contexto do sistema
+    try {
+      var r = await fetch(API_BASE + '/api/valter/contexto');
+      var d = await r.json();
+      if (d.contexto) state.contexto = d.contexto;
+    } catch(e) {}
+
+    // Adiciona contexto da página atual
+    state.contexto += '\n\nPÁGINA ATUAL: ' + state.pagina;
+
+    setThinking(false);
+
+    // Tenta restaurar sessão anterior
+    var sessao = carregarSessao();
+    if (sessao && sessao.mode && sessao.historico.length) {
+      state.mode      = sessao.mode;
+      state.historico = sessao.historico;
+      state.contexto  = sessao.contexto || state.contexto;
+
+      setStatus(state.mode === 'sl' ? '📦 Shelf Life' : '💬 Dúvidas Gerais');
+      iaAddMsg('Bem-vindo de volta! Continuando nossa conversa sobre **' +
+        (state.mode === 'sl' ? 'Shelf Life' : 'Dúvidas Gerais') + '**.', 'bot');
+
+      // Reexibe últimas 2 mensagens do histórico
+      var ultimas = state.historico.slice(-4);
+      ultimas.forEach(function(m) {
+        iaAddMsg(m.content, m.role === 'user' ? 'user' : 'bot');
+      });
+
+      iaShowInput(state.mode);
+    } else {
+      iaApresentar();
+    }
+  }
+
+  async function iaApresentar() {
+    setStatus('Pronto');
+    iaAddMsg('Olá! Sou o **Valter**, assistente inteligente do sistema Átomo. Estou aqui para te ajudar com análises, dúvidas e insights da Alimentare.\n\nO que você precisa hoje?', 'bot');
+    iaEscolherModo('geral');
+  }
+
+  /* ── MENU ──────────────────────────────────────────────── */
+  function iaShowMenu() {
+    var menu = el('iaModeMenu');
+    el('iaQuickBar').style.display = 'none';
+    el('iaInputArea').style.display = 'none';
+
+    menu.innerHTML =
+      '<div class="ia-mode-menu">' +
+        '<button class="ia-mode-btn" id="iaBtnSL">' +
+          '<div class="ia-mode-icon">📦</div>' +
+          '<div><div class="ia-mode-label">Shelf Life</div>' +
+          '<div class="ia-mode-desc">Validade, produtos críticos e ações SL</div></div>' +
+          '<span class="ia-mode-arrow">›</span>' +
+        '</button>' +
+        '<button class="ia-mode-btn" id="iaBtnGeral">' +
+          '<div class="ia-mode-icon">💬</div>' +
+          '<div><div class="ia-mode-label">Dúvidas Gerais</div>' +
+          '<div class="ia-mode-desc">Faturamento, vendedores, marcas, carteira</div></div>' +
+          '<span class="ia-mode-arrow">›</span>' +
+        '</button>' +
+      '</div>';
+    menu.style.display = 'block';
+
+    el('iaBtnSL').addEventListener('click', function() { iaEscolherModo('sl'); });
+    el('iaBtnGeral').addEventListener('click', function() { iaEscolherModo('geral'); });
+  }
+
+  function iaHideMenu() {
+    el('iaModeMenu').style.display = 'none';
+  }
+
+  /* ── ESCOLHER MODO ─────────────────────────────────────── */
+  async function iaEscolherModo(modo) {
+    state.mode = modo;
+    state.historico = [];
+    iaHideMenu();
+    el('iaMessages').innerHTML = '';
+
+    var label = modo === 'sl' ? '📦 Shelf Life' : '💬 Dúvidas Gerais';
+    setStatus(label);
+    iaAddTag(label);
+    iaAddTyping();
+    setThinking(true);
+
+    var ctx = state.contexto;
+    var prompt = '';
+
+    if (modo === 'sl') {
+      if (typeof dadosCompletos !== 'undefined' && dadosCompletos.length) {
+        ctx += iaContextoSL();
+      }
+      prompt = 'Apresente-se rapidamente como Valter e faça uma análise focada do shelf life. ' +
+        'Destaque os pontos mais urgentes e os produtos que recomenda para código SL com justificativa.';
+    } else {
+      prompt = 'Apresente-se brevemente como Valter e diga que pode ajudar com faturamento, ' +
+        'vendedores, marcas, carteira de clientes, produtos e shelf life da Alimentare. ' +
+        'Mencione 2-3 insights interessantes do contexto fornecido.';
+    }
+
+    var resp = await iaChamarAPI(prompt, ctx, modo);
+    iaRemoveTyping();
+    setThinking(false);
+    iaAddMsg(resp, 'bot');
+    salvarSessao();
+
+    iaShowInput(modo);
+  }
+
+  function iaContextoSL() {
+    var dados = dadosCompletos || [];
+    var criticos = dados.filter(function(d){ return d.dias_vencimento <= 30; });
+    var sl       = dados.filter(function(d){ return d.is_sl; });
+    var semSaida = dados.filter(function(d){ return (!d.venda_mes||d.venda_mes==0)&&d.quantidade_log>0; });
+    var linhas   = dados.slice(0,60).map(function(d){
+      var med = d.venda_3meses ? (parseFloat(d.venda_3meses)/3).toFixed(1) : '0';
+      var qtd = parseFloat(d.quantidade_log||0);
+      var est = parseFloat(med)>0 ? Math.round(qtd/(parseFloat(med)/30)) : 999;
+      return [d.cod_produto||'',d.produto||'',d.marca||'',qtd,
+              d.dias_vencimento||'?',d.status_logistica||'',
+              d.venda_mes?parseFloat(d.venda_mes).toFixed(0):'0',
+              d.venda_3meses?parseFloat(d.venda_3meses).toFixed(0):'0',
+              med, est<999?est+'d':'sem_giro',
+              d.is_sl?'SIM':'NAO',d.acao||''].join('|');
+    }).join('\n');
+    return '\n\nDADOS SHELF LIFE ATUAL:\n' +
+      'Total:'+dados.length+' | Criticos:'+criticos.length+' | SL:'+sl.length+' | SemSaida:'+semSaida.length+'\n' +
+      'COLUNAS:cod|produto|marca|qtd|dias_venc|status|venda_mes|venda_3m|media_3m|dias_est|is_sl|acao\n' + linhas;
+  }
+
+  /* ── INPUT E AÇÕES RÁPIDAS ─────────────────────────────── */
+  function iaShowInput(modo) {
+    var qb = el('iaQuickBar');
+    var ia = el('iaInputArea');
+    ia.style.display = 'flex';
+    qb.style.display = 'flex';
+    qb.innerHTML = '';
+
+    var btns = modo === 'sl' ? [
+      {l:'🏷️ Reclassificar SL', m:'Quais produtos devo reclassificar para código SL agora?'},
+      {l:'🚨 Críticos',          m:'Quais produtos estão críticos e precisam de ação imediata?'},
+      {l:'📊 Resumo',            m:'Faça um resumo geral do shelf life desta semana.'},
+      {l:'⚠️ Risco de vencer',   m:'Quais produtos têm maior risco de vencer sem saída?'},
+    ] : [
+      {l:'📈 Faturamento',    m:'Como está o faturamento do ano atual?'},
+      {l:'🏆 Top vendedores', m:'Quais são os top vendedores do ano?'},
+      {l:'🏷️ Top marcas',     m:'Quais marcas têm maior faturamento?'},
+      {l:'👥 Carteira',       m:'Me dê insights sobre a carteira de clientes.'},
+    ];
+
+    // Botões dinâmicos baseados no contexto
+    if (modo === 'sl' && typeof dadosCompletos !== 'undefined') {
+      var criticos = dadosCompletos.filter(function(d){ return d.dias_vencimento<=15; }).length;
+      if (criticos > 0) {
+        btns.unshift({l:'🚨 '+criticos+' vencem em 15d', m:'Liste os '+criticos+' produtos que vencem em 15 dias e sugira ações urgentes.'});
+      }
+    }
+
+    btns.forEach(function(b) {
+      var btn = document.createElement('button');
+      btn.className = 'ia-quick'; btn.textContent = b.l;
+      btn.addEventListener('click', function(){ iaSendMensagem(b.m); });
+      qb.appendChild(btn);
+    });
+
+    var back = document.createElement('button');
+    back.className = 'ia-back-btn'; back.textContent = '← Menu';
+    back.addEventListener('click', iaReset);
+    qb.appendChild(back);
+
+    el('iaInput').focus();
+  }
+
+  /* ── RESET ─────────────────────────────────────────────── */
+  function iaReset() {
+    state.mode = null; state.historico = [];
+    try { localStorage.removeItem(STORAGE_KEY); } catch(e) {}
+    el('iaMessages').innerHTML = '';
+    el('iaQuickBar').style.display = 'none';
+    el('iaInputArea').style.display = 'none';
+    setStatus('Assistente Átomo');
+    iaApresentar();
+  }
+
+  /* ── PESQUISA DE PRODUTO ───────────────────────────────── */
+  async function iaPesquisarProduto(nome) {
+    try {
+      var r = await fetch(API_BASE + '/api/valter/pesquisar?produto=' + encodeURIComponent(nome));
+      if (!r.ok) return '';
+      var data = await r.json();
+      if (!data.resultados || !data.resultados.length) return '';
+      var txt = 'INFORMACOES DO PRODUTO "' + nome + '":\n';
+      data.resultados.forEach(function(res) {
+        txt += '[' + res.fonte + '] ' + res.titulo + '\n';
+        if (res.descricao) txt += res.descricao.substring(0,300) + '\n\n';
+      });
+      return txt;
+    } catch(e) { return ''; }
+  }
+
+  function iaDetectarProduto(pergunta) {
+    // SEMPRE pesquisa se a pergunta tem mais de 3 palavras relevantes
+    // Remove apenas artigos e preposições curtíssimas
+    var stopwords = ['o','a','os','as','um','uma','do','da','de','dos','das',
+      'no','na','nos','nas','ao','com','por','para','que','se','em'];
+
+    var palavras = pergunta.split(/\s+/).filter(function(w) {
+      return w.length > 1 && stopwords.indexOf(w.toLowerCase()) < 0;
+    });
+
+    // Se a pergunta tem conteúdo suficiente, sempre pesquisa
+    if (palavras.length >= 2) {
+      return palavras.slice(0, 5).join(' ');
+    }
+
+    return palavras.length > 0 ? palavras[0] : null;
+  }
+
+  /* ── CHAMAR API ────────────────────────────────────────── */
+  async function iaChamarAPI(pergunta, contexto, modo) {
+    var sys = 'Seu nome é Valter. Você é o assistente inteligente do sistema Átomo da Alimentare, ' +
+      'distribuidora de alimentos. Responda sempre em português, de forma direta, prática e objetiva. ' +
+      'Use **negrito** para destacar dados importantes. Use listas com - para sugestões. ' +
+      'Seja conciso mas completo. Nunca invente dados — use apenas o contexto fornecido.';
+
+    if (modo === 'sl') {
+      sys += ' Você está no modo Shelf Life. Foque em: produtos críticos, sugestões de reclassificação SL, ' +
+        'receitas e ideias para girar estoques próximos do vencimento.';
+    } else {
+      sys += ' Você está no modo Dúvidas Gerais. Responda sobre qualquer tema do sistema: faturamento, ' +
+        'vendedores, marcas, produtos, carteira. Quando perguntado sobre produtos específicos, ' +
+        'use as informações dos sites da Alimentare que serão fornecidas.';
+    }
+
+    var infoProduto = '';
+    var prod = iaDetectarProduto(pergunta);
+    if (prod) { setStatus('Pesquisando '+prod+'...'); infoProduto = await iaPesquisarProduto(prod); }
+
+    setStatus('Pensando...');
+    var userMsg = 'CONTEXTO:\n' + contexto;
+    if (infoProduto) userMsg += '\n\n' + infoProduto;
+    userMsg += '\n\nPERGUNTA: ' + pergunta;
+
+    try {
+      var resp = await fetch(API_BASE + '/api/valter/chat', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          system: sys,
+          messages: state.historico.concat([{role:'user',content:userMsg}])
+        })
+      });
+      var data = await resp.json();
+      var texto = data.content&&data.content[0] ? data.content[0].text : 'Erro ao obter resposta.';
+      state.historico.push({role:'user',content:pergunta});
+      state.historico.push({role:'assistant',content:texto});
+      if (state.historico.length>12) state.historico=state.historico.slice(-12);
+      setStatus(modo==='sl'?'📦 Shelf Life':'💬 Dúvidas Gerais');
+      return texto;
+    } catch(e) {
+      setStatus('Erro de conexão');
+      return 'Erro de conexão. Tente novamente.';
+    }
+  }
+
+  /* ── ENVIAR MENSAGEM ───────────────────────────────────── */
+  async function iaSendMensagem(texto) {
+    if (!texto.trim()) return;
+    iaAddMsg(texto, 'user');
+    iaAddTyping();
+    setThinking(true);
+    var ctx = state.contexto;
+    if (state.mode==='sl' && typeof dadosCompletos!=='undefined' && dadosCompletos.length) {
+      ctx += iaContextoSL();
+    }
+    var r = await iaChamarAPI(texto, ctx, state.mode||'geral');
+    iaRemoveTyping();
+    setThinking(false);
+    iaAddMsg(r, 'bot');
+    salvarSessao();
+  }
+
+  /* ── EVENTOS ───────────────────────────────────────────── */
+  window.addEventListener('load', function() {
+    el('iaFab').addEventListener('click', iaToggle);
+    el('iaCloseBtn').addEventListener('click', iaToggle);
+    el('iaResetBtn').addEventListener('click', iaReset);
+    el('iaSendBtn').addEventListener('click', function() {
+      var v = el('iaInput').value.trim();
+      if (v) { el('iaInput').value=''; iaSendMensagem(v); }
+    });
+    el('iaInput').addEventListener('keydown', function(e) {
+      if (e.key==='Enter' && !e.shiftKey) {
+        e.preventDefault();
+        var v = el('iaInput').value.trim();
+        if (v) { el('iaInput').value=''; iaSendMensagem(v); }
+      }
+    });
+
+
+  });
+
+})();
+</script>
+
+</body>
+</html>
