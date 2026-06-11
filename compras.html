@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Átomo — Compras Diárias</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<style>
+/* ── DESIGN SISTEMA ÁTOMO (IDÊNTICO AO SHELFLIFE.HTML) ── */
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#F0F2F5;
+  --card:#FFFFFF;
+  --sidebar:#FFFFFF;
+  --accent:#015FB8;
+  --accent2:#0078D4;
+  --text:#1C1E21;
+  --muted:#65676B;
+  --border:rgba(0,0,0,0.08);
+  --success:#00A400;
+  --danger:#FA383E;
+  --warning:#FFBA00;
+  --sl:#1976D2;
+}
+body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;}
+
+/* Sidebar */
+.sidebar{width:220px;background:var(--sidebar);position:fixed;top:0;left:0;height:100vh;display:flex;flex-direction:column;align-items:center;padding:24px 12px;border-right:1px solid var(--border);z-index:100;}
+.sidebar-title{font-size:11px;text-transform:uppercase;letter-spacing:2px;color:var(--muted);margin-bottom:24px;font-weight:700;}
+.nav-item{width:100%;display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--text);text-decoration:none;margin-bottom:2px;transition:all 0.2s;}
+.nav-item:hover{background:rgba(0,0,0,0.04);}
+.nav-item.active{background:rgba(1,95,184,0.08);color:var(--accent);font-weight:600;}
+
+/* Main Area */
+.main{margin-left:220px;flex:1;padding:24px;max-width:1400px;}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
+.page-title{font-size:22px;font-weight:700;color:var(--text);}
+
+/* Upload Box */
+.upload-area{background:var(--card);border:2px dashed var(--border);border-radius:12px;padding:32px;text-align:center;cursor:pointer;transition:all 0.2s;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,0.02);}
+.upload-area:hover{border-color:var(--accent);background:rgba(1,95,184,0.01);}
+.upload-icon{font-size:36px;margin-bottom:8px;color:var(--accent);}
+.upload-text{font-size:15px;font-weight:600;color:var(--text);}
+.upload-sub{font-size:12px;color:var(--muted);margin-top:4px;}
+#fileInput{display:none;}
+
+/* KPI Grid */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-bottom:20px;}
+.kpi-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.02);position:relative;overflow:hidden;}
+.kpi-card::after{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;}
+.kpi-card.atual::after{background:var(--accent);}
+.kpi-card.anterior::after{background:var(--warning);}
+.kpi-card.novos::after{background:var(--success);}
+.kpi-label{font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;}
+.kpi-value{font-size:32px;font-weight:700;color:var(--text);}
+
+/* Toolbar e Botões */
+.toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:12px;}
+.btn{padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid transparent;display:flex;align-items:center;gap:8px;transition:all 0.2s;box-shadow:0 1px 2px rgba(0,0,0,0.05);}
+.btn-export{background:var(--card);border-color:var(--border);color:var(--text);}
+.btn-export:hover{background:#F8F9FA;border-color:var(--muted);}
+.btn-delete{background:rgba(250,56,62,0.08);color:var(--danger);border:1px solid transparent;}
+.btn-delete:hover{background:rgba(250,56,62,0.15);}
+
+/* Tabela Estilo Módulo */
+.table-container{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.02);}
+table{width:100%;border-collapse:collapse;text-align:left;font-size:13px;}
+th{background:#F8F9FA;padding:14px 16px;font-weight:600;color:var(--muted);border-bottom:1px solid var(--border);text-transform:uppercase;font-size:11px;letter-spacing:0.5px;}
+td{padding:14px 16px;border-bottom:1px solid var(--border);color:var(--text);font-weight:500;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:#F8F9FA;}
+.empty-state{text-align:center;padding:48px;color:var(--muted);font-size:14px;}
+
+/* ── COMPONENTE FLUTUANTE DA IA (IGUAL AO SHELFLIFE.HTML) ── */
+.ia-fab{position:fixed;bottom:24px;right:24px;width:56px;height:56px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(1,95,184,0.3);cursor:pointer;z-index:200;transition:all 0.2s;}
+.ia-fab:hover{transform:scale(1.05);box-shadow:0 6px 16px rgba(1,95,184,0.4);}
+.ia-fab svg{width:24px;height:24px;fill:#FFF;}
+.ia-box{position:fixed;bottom:96px;right:24px;width:36px;width:380px;height:500px;background:#FFF;border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,0.15);border:1px solid var(--border);display:none;flex-direction:column;z-index:200;overflow:hidden;}
+.ia-header{background:var(--accent);color:#FFF;padding:16px;display:flex;justify-content:space-between;align-items:center;}
+.ia-header-title{font-weight:600;font-size:15px;display:flex;align-items:center;gap:8px;}
+.ia-header-status{font-size:11px;opacity:0.8;font-weight:normal;margin-top:2px;}
+.ia-close{cursor:pointer;font-size:20px;opacity:0.8;transition:0.2s;}
+.ia-close:hover{opacity:1;}
+.ia-messages{flex:1;padding:16px;overflow-y:auto;background:#F8F9FA;display:flex;flex-direction:column;gap:12px;}
+.ia-msg{max-width:80%;padding:10px 14px;border-radius:12px;font-size:13px;line-height:1.4;}
+.ia-msg.user{background:var(--accent);color:#FFF;align-self:flex-end;border-bottom-right-radius:2px;}
+.ia-msg.bot{background:#FFF;color:var(--text);align-self:flex-start;border-bottom-left-radius:2px;border:1px solid var(--border);}
+.ia-input-area{padding:12px;border-top:1px solid var(--border);display:flex;gap:8px;background:#FFF;}
+.ia-input{flex:1;border:1px solid var(--border);border-radius:20px;padding:8px 16px;font-size:13px;outline:none;transition:0.2s;}
+.ia-input:focus{border-color:var(--accent);}
+.ia-send{background:var(--accent);border:none;color:#FFF;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:0.2s;}
+.ia-send:hover{background:var(--accent2);}
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="sidebar-title">Átomo System</div>
+  <a class="nav-item" href="shelflife.html">📦 Shelf Life</a>
+  <a class="nav-item active" href="#">🛒 Compras Diárias</a>
+</div>
+
+<div class="main">
+  <div class="header">
+    <div class="page-title">Fechamento de Compras Diárias</div>
+  </div>
+
+  <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+    <div class="upload-icon">📥</div>
+    <div class="upload-text">Clique aqui para importar a planilha de compras do final do dia</div>
+    <div class="upload-sub">Campos lidos: Código, Produto, Quantidade, Valor Unitário, Total</div>
+    <input type="file" id="fileInput" accept=".xlsx, .xls">
+  </div>
+
+  <div class="kpi-grid">
+    <div class="kpi-card atual">
+      <div class="kpi-label">Produtos na Planilha Atual</div>
+      <div class="kpi-value" id="kpiTotal">0</div>
+    </div>
+    <div class="kpi-card anterior">
+      <div class="kpi-label">Produtos que estavam na Anterior</div>
+      <div class="kpi-value" id="kpiAnterior">0</div>
+    </div>
+    <div class="kpi-card novos">
+      <div class="kpi-label">Quais Produtos São Novos</div>
+      <div class="kpi-value" id="kpiNovos">0</div>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <button class="btn btn-export" id="btnExport" onclick="exportarExcel()" style="display: none;">📊 Exportar para Excel</button>
+    <button class="btn btn-delete" id="btnDelete" onclick="excluirPlanilha()" style="display: none;">🗑️ Excluir Planilha do Banco</button>
+  </div>
+
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Produto</th>
+          <th>Quantidade</th>
+          <th>Valor Unitário</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody">
+        <tr>
+          <td colspan="5" class="empty-state">Nenhuma planilha carregada ainda. Selecione um arquivo para começar.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="ia-fab" id="iaFab">
+  <svg viewBox="0 0 24 24"><path d="M12 2A10 10 0 0 0 2 12a9.9 9.9 0 0 0 2.2 6.2l-1.4 3.6a1 1 0 0 0 1.2 1.3l3.7-1.4A9.9 9.9 0 0 0 12 22a10 10 0 0 0 10-10A10 10 0 0 0 12 2zm1 14h-2v-2h2zm0-4h-2V7h2z"/></svg>
+</div>
+
+<div class="ia-box" id="iaBox">
+  <div class="ia-header">
+    <div>
+      <div class="ia-header-title">Átomo Inteligência</div>
+      <div class="ia-header-status" id="iaStatus">🛒 Compras Diárias</div>
+    </div>
+    <div class="ia-close" id="iaCloseBtn">&times;</div>
+  </div>
+  <div class="ia-messages" id="iaMessages">
+    <div class="ia-msg bot">Olá, Felipe! Sou o assistente do Átomo. Carregue uma planilha de fechamento de compras para começarmos a analisar as tendências e variações de hoje!</div>
+  </div>
+  <div class="ia-input-area">
+    <input type="text" class="ia-input" id="iaInput" placeholder="Pergunte sobre as compras de hoje...">
+    <button class="ia-send" id="iaSendBtn">&rarr;</button>
+  </div>
+</div>
+
+<script>
+  const API_URL = "https://horus-production.up.railway.app"; 
+  
+  let dadosAtuais = [];
+  let ultimoUploadId = null;
+
+  // Lógica de importação e processamento Excel
+  document.getElementById('fileInput').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+      const data = new Uint8Array(evt.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+      const json = XLSX.utils.sheet_to_json(worksheet);
+      
+      dadosAtuais = json.map(row => ({
+        codigoProduto: String(row['Código'] || row['codigo'] || ''),
+        nomeProduto: String(row['Produto'] || row['produto'] || ''),
+        quantidade: parseInt(row['Quantidade'] || row['quantidade'] || 0),
+        valorUnitario: parseFloat(row['Valor Unitário'] || row['valor_unitario'] || 0),
+        total: parseFloat(row['Total'] || row['total'] || 0)
+      })).filter(i => i.codigoProduto.trim() !== "");
+
+      if(!dadosAtuais.length) { 
+        alert("Nenhum dado válido encontrado na planilha!"); 
+        return; 
+      }
+
+      renderTabela(dadosAtuais);
+      salvarNoBanco(dadosAtuais);
+    };
+    reader.readAsArrayBuffer(file);
+  });
+
+  function renderTabela(lista) {
+    const tbody = document.getElementById('tableBody');
+    tbody.innerHTML = lista.map(i => `
+      <tr>
+        <td style="color:var(--accent); font-weight:600;">${i.codigoProduto}</td>
+        <td>${i.nomeProduto}</td>
+        <td>${i.quantidade}</td>
+        <td>R$ ${i.valorUnitario.toFixed(2)}</td>
+        <td>R$ ${i.total.toFixed(2)}</td>
+      </tr>
+    `).join('');
+    
+    document.getElementById('btnExport').style.display = 'flex';
+    document.getElementById('btnDelete').style.display = 'flex';
+  }
+
+  async function salvarNoBanco(itens) {
+    try {
+      const res = await fetch(`${API_URL}/api/compras/upload`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: itens })
+      });
+      const data = await res.json();
+      if(data.success) {
+        ultimoUploadId = data.uploadId;
+        document.getElementById('kpiTotal').innerText = data.analise.totalPlanilha;
+        document.getElementById('kpiAnterior').innerText = data.analise.existiamNaAnterior;
+        document.getElementById('kpiNovos').innerText = data.analise.novosProdutos;
+        
+        // IA interage após o upload
+        adicionarMensagemBot(`Ótimo! Acabei de analisar a planilha enviada. Identifiquei um total de **${data.analise.totalPlanilha} produtos** no lote. Desse total, **${data.analise.existiamNaAnterior}** já estavam presentes no fechamento imediatamente anterior e detectei **${data.analise.novosProdutos} novos produtos** inseridos de forma inédita.`);
+      } else { 
+        alert("Erro no servidor: " + data.message); 
+      }
+    } catch (e) { 
+      alert("Erro ao conectar com o servidor Horus."); 
+    }
+  }
+
+  async function excluirPlanilha() {
+    if(!ultimoUploadId || !confirm("Deseja deletar essa planilha do banco?")) return;
+    try {
+      const res = await fetch(`${API_URL}/api/compras/upload/${ultimoUploadId}`, { method: 'DELETE' });
+      const data = await res.json();
+      if(data.success) {
+        alert("Planilha excluída com sucesso do banco!");
+        location.reload();
+      }
+    } catch(e) { 
+      alert("Erro ao remover os dados."); 
+    }
+  }
+
+  function exportarExcel() {
+    const formatados = dadosAtuais.map(d => ({
+      'Código': d.codigoProduto, 'Produto': d.nomeProduto, 'Quantidade': d.quantidade, 'Valor Unitário': d.valorUnitario, 'Total': d.total
+    }));
+    const ws = XLSX.utils.json_to_sheet(formatados);
+    const wb = XLSX.utils.book_new();
+    XLSX.book_append_sheet(wb, ws, "Compras Diárias");
+    XLSX.writeFile(wb, "Fechamento_Compras_Diarias.xlsx");
+  }
+
+  /* ── SIST
