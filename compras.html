@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Átomo - Compras</title>
+  <!-- Biblioteca para ler arquivos Excel diretamente no Navegador -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  
+  <style>
+    /* --- ESTILOS GERAIS & CORES DA INTERFACE --- */
+    :root {
+      --bg-principal: #060b26;
+      --bg-sidebar: #0a1033;
+      --bg-cards: #0e1747;
+      --bg-inputs: #09113d;
+      --texto-claro: #ffffff;
+      --texto-mutado: #707eb4;
+      --borda-suave: rgba(255, 255, 255, 0.08);
+      
+      /* Cores de Destaque */
+      --cor-azul-neon: #00d2ff;
+      --cor-critico: #ff3366;
+      --cor-atencao: #ffaa00;
+      --cor-ok: #00e676;
+      --cor-em-acao: #9d4edd;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-principal);
+      color: var(--texto-claro);
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* --- SIDEBAR --- */
+    .sidebar {
+      width: 250px;
+      background-color: var(--bg-sidebar);
+      padding: 20px 0;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--borda-suave);
+      flex-shrink: 0;
+    }
+
+    .sidebar-title {
+      font-size: 11px;
+      letter-spacing: 2px;
+      color: var(--texto-mutado);
+      padding: 0 24px;
+      margin-bottom: 20px;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    .nav-section {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: rgba(255, 255, 255, 0.3);
+      padding: 15px 24px 5px 24px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      padding: 12px 24px;
+      color: var(--texto-mutado);
+      text-decoration: none;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+
+    .nav-item:hover, .nav-item.active {
+      color: var(--texto-claro);
+      background: linear-gradient(90deg, rgba(0, 210, 255, 0.1) 0%, rgba(0, 0, 0, 0) 100%);
+    }
+
+    .nav-item.active {
+      border-left: 3px solid var(--cor-azul-neon);
+      background: linear-gradient(90deg, rgba(0, 210, 255, 0.15) 0%, rgba(0, 0, 0, 0) 100%);
+    }
+
+    .nav-item .icon {
+      margin-right: 12px;
+      font-size: 16px;
+      width: 20px;
+      text-align: center;
+    }
+
+    .sidebar-divider {
+      height: 1px;
+      background-color: var(--borda-suave);
+      margin: 15px 24px;
+    }
+
+    .btn-logout {
+      margin-top: auto;
+      background: none;
+      border: none;
+      color: var(--cor-critico);
+      padding: 15px 24px;
+      text-align: left;
+      cursor: pointer;
+      font-size: 14px;
+      width: 100%;
+    }
+
+    /* --- CONTEÚDO PRINCIPAL --- */
+    .main-content {
+      flex-grow: 1;
+      padding: 24px;
+      overflow-y: auto;
+    }
+
+    .breadcrumb {
+      font-size: 12px;
+      color: var(--texto-mutado);
+      margin-bottom: 8px;
+    }
+    .breadcrumb a { color: var(--cor-azul-neon); text-decoration: none; }
+
+    .page-title {
+      font-size: 24px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    /* --- ÁREA DE UPLOAD E EXCLUSÃO --- */
+    .actions-container {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .upload-section {
+      background-color: var(--bg-cards);
+      border: 1px dashed rgba(0, 210, 255, 0.3);
+      border-radius: 8px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      flex-grow: 1;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    .upload-section:hover {
+      background-color: rgba(14, 23, 71, 0.7);
+    }
+    .upload-icon { font-size: 24px; color: #ffa500; }
+    .upload-text h4 { font-size: 14px; font-weight: 500; margin-bottom: 2px; }
+    .upload-text p { font-size: 11px; color: var(--texto-mutado); }
+
+    .btn-delete-planilha {
+      background-color: rgba(255, 51, 102, 0.1);
+      border: 1px solid rgba(255, 51, 102, 0.3);
+      color: var(--cor-critico);
+      border-radius: 8px;
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-delete-planilha:hover {
+      background-color: var(--cor-critico);
+      color: white;
+    }
+
+    /* --- LINHA DE CARDS / KPIS --- */
+    .kpi-container {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .kpi-card {
+      background-color: var(--bg-cards);
+      border-radius: 8px;
+      padding: 16px;
+      border-left: 4px solid var(--cor-azul-neon);
+      border-top: 1px solid var(--borda-suave);
+      border-right: 1px solid var(--borda-suave);
+      border-bottom: 1px solid var(--borda-suave);
+    }
+    .kpi-card.critico { border-left-color: var(--cor-critico); }
+    .kpi-card.atencao { border-left-color: var(--cor-atencao); }
+    .kpi-card.ok { border-left-color: var(--cor-ok); }
+    .kpi-card.em-acao { border-left-color: var(--cor-em-acao); }
+
+    .kpi-title {
+      font-size: 10px;
+      text-transform: uppercase;
+      font-weight: bold;
+      color: var(--texto-mutado);
+      margin-bottom: 12px;
+    }
+    .kpi-value {
+      font-size: 22px;
+      font-weight: bold;
+    }
+
+    /* --- FILTROS E PESQUISA --- */
+    .filter-bar {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .search-input-wrapper {
+      position: relative;
+      flex-grow: 1;
+    }
+    .search-input {
+      width: 100%;
+      background-color: var(--bg-inputs);
+      border: 1px solid var(--borda-suave);
+      border-radius: 6px;
+      padding: 10px 12px 10px 35px;
+      color: white;
+      font-size: 13px;
+    }
+    .search-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--texto-mutado);
+    }
+
+    .btn-filter {
+      background-color: var(--bg-inputs);
+      border: 1px solid var(--borda-suave);
+      color: var(--texto-mutado);
+      padding: 9px 16px;
+      border-radius: 20px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .btn-filter.active {
+      color: white;
+      border-color: var(--cor-azul-neon);
+      background-color: rgba(0, 210, 255, 0.1);
+    }
+
+    /* --- LEGENDAS --- */
+    .legend-bar {
+      display: flex;
+      gap: 10px;
+      font-size: 12px;
+      color: var(--texto-mutado);
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    .legend-badge {
+      padding: 4px 10px;
+      border-radius: 4px;
+      color: white;
+      font-size: 11px;
+    }
+
+    /* --- TABELA ESTILIZADA --- */
+    .table-container {
+      background-color: var(--bg-sidebar);
+      border-radius: 8px;
+      border: 1px solid var(--borda-suave);
+      overflow-x: auto;
+    }
+
+    .custom-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 12px;
+    }
+
+    .custom-table th {
+      background-color: rgba(6, 11, 38, 0.6);
+      color: var(--cor-azul-neon);
+      text-transform: uppercase;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 14px 12px;
+      border-bottom: 1px solid var(--borda-suave);
+    }
+
+    .custom-table td {
+      padding: 14px 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      vertical-align: middle;
+    }
+
+    .custom-table tr:hover {
+      background-color: rgba(255, 255, 255, 0.02);
+    }
+
+    .badge-status {
+      padding: 6px 12px;
+      border-radius: 12px;
+      font-weight: bold;
+      font-size: 10px;
+      display: inline-block;
+      text-align: center;
+      min-width: 75px;
+    }
+    .badge-status.critico { background-color: rgba(255, 51, 102, 0.2); color: var(--cor-critico); }
+    .badge-status.sugestao { background-color: rgba(0, 210, 255, 0.2); color: var(--cor-azul-neon); }
+    .badge-status.novo { background-color: rgba(255, 170, 0, 0.2); color: var(--cor-atencao); }
+
+    .product-cell { max-width: 300px; }
+    .product-title { font-weight: 500; margin-bottom: 4px; }
+    .product-tag {
+      font-size: 9px;
+      padding: 2px 6px;
+      border-radius: 3px;
+      display: inline-block;
+    }
+    .tag-alerta { background-color: rgba(255, 51, 102, 0.15); color: var(--cor-critico); }
+    .tag-ok { background-color: rgba(0, 230, 118, 0.15); color: var(--cor-ok); }
+
+    .pill-previsao {
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: bold;
+      background-color: rgba(255, 255, 255, 0.05);
+      display: inline-block;
+    }
+    .pill-previsao.critico { background-color: rgba(255, 51, 102, 0.15); color: var(--cor-critico); }
+
+    .no-data-row { text-align: center; color: var(--texto-mutado); font-size: 14px; }
+  </style>
+</head>
+<body>
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-title">ÁTOMO</div>
+    <div class="nav-section">Dashboards</div>
+    <a class="nav-item" href="visao-geral.html"><span class="icon">📊</span> Visão Geral</a>
+    <a class="nav-item" href="vendedor.html"><span class="icon">👤</span> Vendedor</a>
+    <a class="nav-item" href="regiao.html"><span class="icon">🗺️</span> Região</a>
+    <a class="nav-item" href="marcas.html"><span class="icon">🏷️</span> Marcas</a>
+    <a class="nav-item" href="produtos.html"><span class="icon">📦</span> Produtos</a>
+    <div class="sidebar-divider"></div>
+    <div class="nav-section">Gestão</div>
+    <a class="nav-item active" href="compras.html"><span class="icon">🛒</span> Compras</a>
+    <a class="nav-item" href="carteira.html"><span class="icon">👥</span> Carteira</a>
+    <a class="nav-item" href="shelflife.html"><span class="icon">🕒</span> Shelf Life</a>
+    <a class="nav-item" href="risco.html"><span class="icon">⚠️</span> Clientes em Risco</a>
+    <div class="sidebar-divider"></div>
+    <button class="btn-logout" onclick="location.href='index.html'">🚪 Sair</button>
+  </div>
+
+  <!-- CONTEÚDO PRINCIPAL -->
+  <div class="main-content">
+    <div class="breadcrumb"><a href="#">Portal</a> &gt; Compras</div>
+    <div class="page-title"><span>🛒</span> Gestão de Compras e Sugestões</div>
+
+    <!-- ZONA DE AÇÕES -->
+    <div class="actions-container">
+      <div class="upload-section" onclick="document.getElementById('file-upload').click()">
+        <input type="file" id="file-upload" accept=".xlsx, .xls" style="display: none;">
+        <div class="upload-icon">📂</div>
+        <div class="upload-text">
+          <h4>Upload da Planilha de Demandas / Estoque</h4>
+          <p>Clique aqui para selecionar e carregar o arquivo real da planilha</p>
+        </div>
+      </div>
+      <button class="btn-delete-planilha" id="btn-delete"><span>🗑️</span> Excluir Planilha</button>
+    </div>
+
+    <!-- CARDS DE KPI -->
+    <div class="kpi-container">
+      <div class="kpi-card"><div class="kpi-title">TOTAL ITENS</div><div class="kpi-value" id="kpi-total">0</div></div>
+      <div class="kpi-card critico"><div class="kpi-title"><span style="color:var(--cor-critico)">●</span> ESTOQUE CRÍTICO</div><div class="kpi-value" id="kpi-critico">0</div></div>
+      <div class="kpi-card atencao"><div class="kpi-title"><span style="color:var(--cor-atencao)">●</span> PRODUTOS NOVOS</div><div class="kpi-value" id="kpi-novos">0</div></div>
+      <div class="kpi-card ok"><div class="kpi-title"><span style="color:var(--cor-ok)">●</span> POSSUEM ESTOQUE</div><div class="kpi-value" id="kpi-com-estoque">0</div></div>
+      <div class="kpi-card em-acao"><div class="kpi-title"><span style="color:var(--cor-em-acao)">●</span> TOTAL VENDEDORES</div><div class="kpi-value" id="kpi-vendedores">0</div></div>
+    </div>
+
+    <!-- FILTROS -->
+    <div class="filter-bar">
+      <div class="search-input-wrapper">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="search-input" class="search-input" placeholder="Buscar por produto, vendedor ou marca...">
+      </div>
+    </div>
+
+    <!-- LEGENDAS -->
+    <div class="legend-bar">
+      <span>Legenda de Status:</span>
+      <span class="legend-badge" style="background-color: rgba(255, 51, 102, 0.2); color: var(--cor-critico)">■ Crítico (Sem Estoque)</span>
+      <span class="legend-badge" style="background-color: rgba(255, 170, 0, 0.2); color: var(--cor-atencao)">■ Produto Novo</span>
+      <span class="legend-badge" style="background-color: rgba(0, 210, 255, 0.2); color: var(--cor-azul-neon)">■ Sugestão de Compra</span>
+    </div>
+
+    <!-- TABELA -->
+    <div class="table-container">
+      <table class="custom-table">
+        <thead>
+          <tr>
+            <th>Status</th>
+            <th>Cód. Produto</th>
+            <th>Descrição do Produto</th>
+            <th>Marca</th>
+            <th>Vendedor</th>
+            <th>Qtd. Projetada</th>
+            <th>Tem Estoque?</th>
+            <th>Previsão Chegada</th>
+            <th>Falta Reincidente?</th>
+          </tr>
+        </thead>
+        <tbody id="table-body">
+          <tr class="no-data-row"><td colspan="9">Nenhum dado carregado. Faça o upload da planilha para processar.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- SCRIPT DE PROCESSAMENTO AUTOMÁTICO DO EXCEL -->
+  <script>
+    let dadosPlanilha = [];
+
+    document.getElementById('file-upload').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        
+        // Pega a primeira aba da planilha
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        
+        // Converte para JSON
+        const json = XLSX.utils.sheet_to_json(worksheet);
+        processarDados(json);
+      };
+      reader.readAsArrayBuffer(file);
+    });
+
+    function processarDados(dados) {
+      dadosPlanilha = dados;
+      renderizarTabela(dadosPlanilha);
+    }
+
+    function renderizarTabela(dados) {
+      const tbody = document.getElementById('table-body');
+      tbody.innerHTML = '';
+
+      if(dados.length === 0) {
+        tbody.innerHTML = `<tr class="no-data-row"><td colspan="9">Nenhum dado carregado. Faça o upload da planilha para processar.</td></tr>`;
+        atualizarKPIs([]);
+        return;
+      }
+
+      let countCritico = 0;
+      let countNovos = 0;
+      let countComEstoque = 0;
+      let vendedoresUnicos = new Set();
+
+      dados.forEach(row => {
+        // Mapeia os nomes complexos e com quebras de linha vindos da sua planilha
+        const cod = row['Código produto'] || '-';
+        const descricao = row['Descrição produto (o mais próximo do sistema)'] || '-';
+        const marca = row['Marca '] || row['Marca'] || '-';
+        const vendedor = row['Nome vendedor '] || row['Nome vendedor'] || '-';
+        const qtd = row['Quantidade media de venda projetada apenas em UNIDADES\n'] || row['Quantidade media de venda projetada apenas em UNIDADES'] || '-';
+        const temEstoque = (row['Tem estoque '] || row['Tem estoque'] || '').toString().trim();
+        const previsao = row['Previsão de chegada '] || row['Previsão de chegada'] || '-';
+        const reincidente = row['Essa Falta é reincidente ? ou seja esse produto já ficou em falta outras vezes?'] || 'Não';
+        const ehNovo = (row['Produto novo ?'] || '').toString().trim().toLowerCase();
+
+        if(vendedor !== '-') vendedoresUnicos.add(vendedor);
+
+        // Lógica de definição de status
+        let statusClass = 'sugestao';
+        let statusText = 'Sugestão';
+
+        if (temEstoque.toLowerCase() === 'não') {
+          statusClass = 'critico';
+          statusText = 'Crítico';
+          countCritico++;
+        } else {
+          countComEstoque++;
+        }
+
+        if (ehNovo === 'sim') {
+          statusClass = 'novo';
+          statusText = 'Novo';
+          countNovos++;
+        }
+
+        // Tag extra interna
+        let tagHtml = '';
+        if(reincidente.toLowerCase() === 'sim') {
+          tagHtml = `<div class="product-tag tag-alerta">⚠ FALTA REINCIDENTE</div>`;
+        } else {
+          tagHtml = `<div class="product-tag tag-ok">✓ Primeira Estabilidade</div>`;
+        }
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><span class="badge-status ${statusClass}">${statusText}</span></td>
+          <td>${cod}</td>
+          <td class="product-cell">
+            <div class="product-title">${descricao}</div>
+            ${tagHtml}
+          </td>
+          <td>${marca}</td>
+          <td>${vendedor}</td>
+          <td>${qtd}</td>
+          <td>${temEstoque}</td>
+          <td><span class="pill-previsao ${previsao.toLowerCase() === 'sem previsão' ? 'critico' : ''}">${previsao}</span></td>
+          <td>${reincidente}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // Atualiza os contadores superiores na tela
+      document.getElementById('kpi-total').innerText = dados.length;
+      document.getElementById('kpi-critico').innerText = countCritico;
+      document.getElementById('kpi-novos').innerText = countNovos;
+      document.getElementById('kpi-com-estoque').innerText = countComEstoque;
+      document.getElementById('kpi-vendedores').innerText = vendedoresUnicos.size;
+    }
+
+    // Ação do Botão Excluir Planilha
+    document.getElementById('btn-delete').addEventListener('click', function() {
+      dadosPlanilha = [];
+      document.getElementById('file-upload').value = '';
+      renderizarTabela([]);
+    });
+
+    // Filtro de pesquisa em tempo real
+    document.getElementById('search-input').addEventListener('input', function(e) {
+      const termo = e.target.value.toLowerCase();
+      const filtrados = dadosPlanilha.filter(row => {
+        const desc = (row['Descrição produto (o mais próximo do sistema)'] || '').toLowerCase();
+        const vend = (row['Nome vendedor '] || '').toLowerCase();
+        const marc = (row['Marca '] || '').toLowerCase();
+        return desc.includes(termo) || vend.includes(termo) || marc.includes(termo);
+      });
+      renderizarTabela(filtrados);
+      // Mantém os KPIs globais baseados no arquivo cheio
+      document.getElementById('kpi-total').innerText = filtrados.length;
+    });
+  </script>
+</body>
+</html>
