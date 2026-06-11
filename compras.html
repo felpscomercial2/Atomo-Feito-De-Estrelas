@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Átomo — Compras Diárias</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<style>
+  /* ── MESMA ESTILIZAÇÃO E CORES DO SHELFLIFE.HTML ── */
+  *{box-sizing:border-box;margin:0;padding:0;}
+  :root{
+    --bg:#F0F2F5;
+    --card:#FFFFFF;
+    --sidebar:#FFFFFF;
+    --accent:#015FB8;
+    --accent2:#0078D4;
+    --text:#1C1E21;
+    --muted:#65676B;
+    --border:rgba(0,0,0,0.08);
+    --success:#00A400;
+    --danger:#FA383E;
+    --warning:#FFBA00;
+  }
+  body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;}
+  
+  /* Sidebar idêntica */
+  .sidebar{width:220px;background:var(--sidebar);position:fixed;top:0;left:0;height:100vh;display:flex;flex-direction:column;align-items:center;padding:24px 12px;border-right:1px solid var(--border);z-index:100;}
+  .sidebar-logo{width:100px;margin-bottom:4px;filter:invert(1) brightness(0);}
+  .sidebar-title{font-size:11px;text-transform:uppercase;letter-spacing:2px;color:var(--muted);margin-bottom:24px;font-weight:700;}
+  .nav-item{width:100%;display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--text);text-decoration:none;margin-bottom:2px;transition:all 0.2s;}
+  .nav-item:hover{background:rgba(0,0,0,0.04);}
+  .nav-item.active{background:rgba(1,95,184,0.08);color:var(--accent);font-weight:600;}
+  
+  /* Área Principal */
+  .main{margin-left:220px;flex:1;padding:24px;max-width:1400px;}
+  .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
+  .page-title{font-size:22px;font-weight:700;color:var(--text);}
+  
+  /* Área de Upload */
+  .upload-area{background:var(--card);border:2px dashed var(--border);border-radius:12px;padding:32px;text-align:center;cursor:pointer;transition:all 0.2s;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,0.02);}
+  .upload-area:hover{border-color:var(--accent);background:rgba(1,95,184,0.01);}
+  .upload-icon{font-size:36px;margin-bottom:8px;color:var(--accent);}
+  .upload-text{font-size:15px;font-weight:600;color:var(--text);}
+  .upload-sub{font-size:12px;color:var(--muted);margin-top:4px;}
+  #fileInput{display:none;}
+  
+  /* Grid de KPIs Analíticos */
+  .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-bottom:20px;}
+  .kpi-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.02);position:relative;overflow:hidden;}
+  .kpi-card::after{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;}
+  .kpi-card.atual::after{background:var(--accent);}
+  .kpi-card.anterior::after{background:var(--warning);}
+  .kpi-card.novos::after{background:var(--success);}
+  .kpi-label{font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;}
+  .kpi-value{font-size:32px;font-weight:700;color:var(--text);}
+
+  /* Barra de Ferramentas / Botões */
+  .toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:12px;}
+  .btn{padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid transparent;display:flex;align-items:center;gap:8px;transition:all 0.2s;box-shadow:0 1px 2px rgba(0,0,0,0.05);}
+  .btn-export{background:var(--card);border-color:var(--border);color:var(--text);}
+  .btn-export:hover{background:#F8F9FA;border-color:var(--muted);}
+  .btn-delete{background:rgba(250,56,62,0.08);color:var(--danger);border:1px solid transparent;}
+  .btn-delete:hover{background:rgba(250,56,62,0.15);}
+  
+  /* Tabela igualzinha ao Shelf Life */
+  .table-container{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.02);}
+  table{width:100%;border-collapse:collapse;text-align:left;font-size:13px;}
+  th{background:#F8F9FA;padding:14px 16px;font-weight:600;color:var(--muted);border-bottom:1px solid var(--border);text-transform:uppercase;font-size:11px;letter-spacing:0.5px;}
+  td{padding:14px 16px;border-bottom:1px solid var(--border);color:var(--text);font-weight:500;}
+  tr:last-child td{border-bottom:none;}
+  tr:hover td{background:#F8F9FA;}
+  .empty-state{text-align:center;padding:48px;color:var(--muted);font-size:14px;}
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="sidebar-title">Átomo System</div>
+  <a class="nav-item" href="shelflife.html">📦 Shelf Life</a>
+  <a class="nav-item active" href="#">🛒 Compras Diárias</a>
+</div>
+
+<div class="main">
+  <div class="header">
+    <div class="page-title">Fechamento de Compras Diárias</div>
+  </div>
+
+  <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+    <div class="upload-icon">📥</div>
+    <div class="upload-text">Clique aqui para importar a planilha de compras do final do dia</div>
+    <div class="upload-sub">Formatos aceitos: .xlsx, .xls — Leitura e gravação automáticas</div>
+    <input type="file" id="fileInput" accept=".xlsx, .xls">
+  </div>
+
+  <div class="kpi-grid">
+    <div class="kpi-card atual">
+      <div class="kpi-label">Produtos na Planilha Atual</div>
+      <div class="kpi-value" id="kpiTotal">0</div>
+    </div>
+    <div class="kpi-card anterior">
+      <div class="kpi-label">Produtos que estavam na Anterior</div>
+      <div class="kpi-value" id="kpiAnterior">0</div>
+    </div>
+    <div class="kpi-card novos">
+      <div class="kpi-label">Quais Produtos São Novos</div>
+      <div class="kpi-value" id="kpiNovos">0</div>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <button class="btn btn-export" id="btnExport" onclick="exportarExcel()" style="display: none;">📊 Exportar para Excel</button>
+    <button class="btn btn-delete" id="btnDelete" onclick="excluirPlanilha()" style="display: none;">🗑️ Excluir Planilha do Banco</button>
+  </div>
+
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Produto</th>
+          <th>Quantidade</th>
+          <th>Valor Unitário</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody">
+        <tr>
+          <td colspan="5" class="empty-state">Nenhuma planilha carregada ainda. Selecione um arquivo para começar.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  const API_URL = "https://horus-production.up.railway.app"; 
+  
+  let dadosAtuais = [];
+  let ultimoUploadId = null;
+
+  document.getElementById('fileInput').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+      const data = new Uint8Array(evt.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+      const json = XLSX.utils.sheet_to_json(worksheet);
+      
+      // Mapeamento idêntico às tabelas criadas no seu banco
+      dadosAtuais = json.map(row => ({
+        codigoProduto: String(row['Código'] || row['codigo'] || ''),
+        nomeProduto: String(row['Produto'] || row['produto'] || ''),
+        quantidade: parseInt(row['Quantidade'] || row['quantidade'] || 0),
+        valorUnitario: parseFloat(row['Valor Unitário'] || row['valor_unitario'] || 0),
+        total: parseFloat(row['Total'] || row['total'] || 0)
+      })).filter(i => i.codigoProduto.trim() !== "");
+
+      if(!dadosAtuais.length) { 
+        alert("Planilha sem dados válidos ou vazia!"); 
+        return; 
+      }
+
+      renderTabela(dadosAtuais);
+      salvarNoBanco(dadosAtuais);
+    };
+    reader.readAsArrayBuffer(file);
+  });
+
+  function renderTabela(lista) {
+    const tbody = document.getElementById('tableBody');
+    tbody.innerHTML = lista.map(i => `
+      <tr>
+        <td style="color:var(--accent); font-weight:600;">${i.codigoProduto}</td>
+        <td>${i.nomeProduto}</td>
+        <td>${i.quantidade}</td>
+        <td>R$ ${i.valorUnitario.toFixed(2)}</td>
+        <td>R$ ${i.total.toFixed(2)}</td>
+      </tr>
+    `).join('');
+    
+    document.getElementById('btnExport').style.display = 'flex';
+    document.getElementById('btnDelete').style.display = 'flex';
+  }
+
+  async function salvarNoBanco(itens) {
+    try {
+      const res = await fetch(`${API_URL}/api/compras/upload`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items: itens })
+      });
+      const data = await res.json();
+      if(data.success) {
+        ultimoUploadId = data.uploadId;
+        document.getElementById('kpiTotal').innerText = data.analise.totalPlanilha;
+        document.getElementById('kpiAnterior').innerText = data.analise.existiamNaAnterior;
+        document.getElementById('kpiNovos').innerText = data.analise.novosProdutos;
+        alert("Planilha computada e guardada com sucesso no Railway!");
+      } else { 
+        alert("Erro no processamento interno: " + data.message); 
+      }
+    } catch (e) { 
+      alert("Erro ao enviar dados para o servidor Horus."); 
+    }
+  }
+
+  async function excluirPlanilha() {
+    if(!ultimoUploadId || !confirm("Você tem certeza de que quer excluir os registros desta planilha do banco?")) return;
+    try {
+      const res = await fetch(`${API_URL}/api/compras/upload/${ultimoUploadId}`, { method: 'DELETE' });
+      const data = await res.json();
+      if(data.success) {
+        alert("Planilha apagada do banco com sucesso!");
+        location.reload();
+      }
+    } catch(e) { 
+      alert("Erro ao realizar a exclusão."); 
+    }
+  }
+
+  function exportarExcel() {
+    const formatados = dadosAtuais.map(d => ({
+      'Código': d.codigoProduto, 
+      'Produto': d.nomeProduto, 
+      'Quantidade': d.quantidade, 
+      'Valor Unitário': d.valorUnitario, 
+      'Total': d.total
+    }));
+    const ws = XLSX.utils.json_to_sheet(formatados);
+    const wb = XLSX.utils.book_new();
+    XLSX.book_append_sheet(wb, ws, "Compras Diárias");
+    XLSX.writeFile(wb, "Fechamento_Compras_Diarias.xlsx");
+  }
+</script>
+</body>
+</html>
