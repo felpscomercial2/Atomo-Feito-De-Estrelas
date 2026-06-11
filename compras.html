@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Átomo - Compras</title>
+  <style>
+    /* --- ESTILOS GERAIS & CORES DA INTERFACE --- */
+    :root {
+      --bg-principal: #060b26;
+      --bg-sidebar: #0a1033;
+      --bg-cards: #0e1747;
+      --bg-inputs: #09113d;
+      --texto-claro: #ffffff;
+      --texto-mutado: #707eb4;
+      --borda-suave: rgba(255, 255, 255, 0.08);
+      
+      /* Cores de Destaque Baseadas na Imagem */
+      --cor-azul-neon: #00d2ff;
+      --cor-critico: #ff3366;
+      --cor-atencao: #ffaa00;
+      --cor-ok: #00e676;
+      --cor-em-acao: #9d4edd;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-principal);
+      color: var(--texto-claro);
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* --- SIDEBAR (Fiel à imagem image_da4288.png) --- */
+    .sidebar {
+      width: 250px;
+      background-color: var(--bg-sidebar);
+      padding: 20px 0;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--borda-suave);
+      flex-shrink: 0;
+    }
+
+    .sidebar-title {
+      font-size: 11px;
+      letter-spacing: 2px;
+      color: var(--texto-mutado);
+      padding: 0 24px;
+      margin-bottom: 20px;
+      font-weight: bold;
+    }
+
+    .nav-section {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: rgba(255, 255, 255, 0.3);
+      padding: 15px 24px 5px 24px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      padding: 12px 24px;
+      color: var(--texto-mutado);
+      text-decoration: none;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+
+    .nav-item:hover, .nav-item.active {
+      color: var(--texto-claro);
+      background: linear-gradient(90deg, rgba(0, 210, 255, 0.1) 0%, rgba(0, 0, 0, 0) 100%);
+    }
+
+    .nav-item.active {
+      border-left: 3px solid var(--cor-azul-neon);
+      background: linear-gradient(90deg, rgba(0, 210, 255, 0.15) 0%, rgba(0, 0, 0, 0) 100%);
+    }
+
+    .nav-item .icon {
+      margin-right: 12px;
+      font-size: 16px;
+      width: 20px;
+      text-align: center;
+    }
+
+    .sidebar-divider {
+      height: 1px;
+      background-color: var(--borda-suave);
+      margin: 15px 24px;
+    }
+
+    .btn-logout {
+      margin-top: auto;
+      background: none;
+      border: none;
+      color: var(--cor-critico);
+      padding: 15px 24px;
+      text-align: left;
+      cursor: pointer;
+      font-size: 14px;
+      width: 100%;
+    }
+
+    /* --- CONTEÚDO PRINCIPAL --- */
+    .main-content {
+      flex-grow: 1;
+      padding: 24px;
+      overflow-y: auto;
+    }
+
+    .breadcrumb {
+      font-size: 12px;
+      color: var(--texto-mutado);
+      margin-bottom: 8px;
+    }
+    .breadcrumb a { color: var(--cor-azul-neon); text-decoration: none; }
+
+    .page-title {
+      font-size: 24px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    /* --- DRAG & DROP AREA --- */
+    .upload-section {
+      background-color: var(--bg-cards);
+      border: 1px dashed rgba(0, 210, 255, 0.3);
+      border-radius: 8px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    .upload-icon { font-size: 24px; color: #ffa500; }
+    .upload-text h4 { font-size: 14px; font-weight: 500; margin-bottom: 2px; }
+    .upload-text p { font-size: 11px; color: var(--texto-mutado); }
+
+    /* --- LINHA DE CARDS / KPIS --- */
+    .kpi-container {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .kpi-card {
+      background-color: var(--bg-cards);
+      border-radius: 8px;
+      padding: 16px;
+      border-left: 4px solid var(--cor-azul-neon);
+      border-top: 1px solid var(--borda-suave);
+      border-right: 1px solid var(--borda-suave);
+      border-bottom: 1px solid var(--borda-suave);
+    }
+    .kpi-card.critico { border-left-color: var(--cor-critico); }
+    .kpi-card.atencao { border-left-color: var(--cor-atencao); }
+    .kpi-card.ok { border-left-color: var(--cor-ok); }
+    .kpi-card.em-acao { border-left-color: var(--cor-em-acao); }
+
+    .kpi-title {
+      font-size: 10px;
+      text-transform: uppercase;
+      font-weight: bold;
+      color: var(--texto-mutado);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .kpi-value {
+      font-size: 22px;
+      font-weight: bold;
+    }
+
+    /* --- FILTROS E PESQUISA --- */
+    .filter-bar {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .search-input-wrapper {
+      position: relative;
+      flex-grow: 1;
+    }
+    .search-input {
+      width: 100%;
+      background-color: var(--bg-inputs);
+      border: 1px solid var(--borda-suave);
+      border-radius: 6px;
+      padding: 10px 12px 10px 35px;
+      color: white;
+      font-size: 13px;
+    }
+    .search-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--texto-mutado);
+      font-size: 13px;
+    }
+
+    .btn-filter {
+      background-color: var(--bg-inputs);
+      border: 1px solid var(--borda-suave);
+      color: var(--texto-mutado);
+      padding: 9px 16px;
+      border-radius: 20px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .btn-filter.active {
+      color: white;
+      border-color: var(--cor-azul-neon);
+      background-color: rgba(0, 210, 255, 0.1);
+    }
+
+    /* --- LEGENDAS --- */
+    .legend-bar {
+      display: flex;
+      gap: 10px;
+      font-size: 12px;
+      color: var(--texto-mutado);
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    .legend-badge {
+      padding: 4px 10px;
+      border-radius: 4px;
+      color: white;
+      font-size: 11px;
+      border: 1px solid transparent;
+    }
+
+    /* --- TABELA ESTILIZADA --- */
+    .table-container {
+      background-color: var(--bg-sidebar);
+      border-radius: 8px;
+      border: 1px solid var(--borda-suave);
+      overflow-x: auto;
+    }
+
+    .custom-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 12px;
+    }
+
+    .custom-table th {
+      background-color: rgba(6, 11, 38, 0.6);
+      color: var(--cor-azul-neon);
+      text-transform: uppercase;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 14px 12px;
+      border-bottom: 1px solid var(--borda-suave);
+    }
+
+    .custom-table td {
+      padding: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      vertical-align: middle;
+    }
+
+    .custom-table tr:hover {
+      background-color: rgba(255, 255, 255, 0.02);
+    }
+
+    /* Status Badges */
+    .badge-status {
+      padding: 6px 12px;
+      border-radius: 12px;
+      font-weight: bold;
+      font-size: 10px;
+      display: inline-block;
+      text-align: center;
+      min-width: 65px;
+    }
+    .badge-status.sl { background-color: rgba(0, 210, 255, 0.2); color: var(--cor-azul-neon); }
+    .badge-status.critico { background-color: rgba(255, 51, 102, 0.2); color: var(--cor-critico); }
+    .badge-status.atencao { background-color: rgba(255, 170, 0, 0.2); color: var(--cor-atencao); }
+
+    /* Inputs internos da tabela */
+    .table-input {
+      background-color: var(--bg-inputs);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 6px;
+      color: white;
+      padding: 6px 10px;
+      width: 60px;
+      text-align: center;
+    }
+
+    .product-cell {
+      max-width: 250px;
+    }
+    .product-title {
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+    .product-tag {
+      font-size: 9px;
+      padding: 2px 6px;
+      border-radius: 3px;
+      display: inline-block;
+    }
+    .tag-reduziu { background-color: rgba(0, 230, 118, 0.15); color: var(--cor-ok); }
+
+    .pill-info {
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+      background-color: rgba(255, 255, 255, 0.05);
+    }
+    .pill-info.danger { color: var(--cor-critico); font-weight: bold; }
+    .pill-info.time { background-color: rgba(255, 51, 102, 0.15); color: var(--cor-critico); border-radius: 12px;}
+
+  </style>
+</head>
+<body>
+
+  <!-- SIDEBAR IDENTICA À IMAGEM -->
+  <div class="sidebar">
+    <div class="sidebar-title">ÁTOMO</div>
+    
+    <div class="nav-section">Dashboards</div>
+    <a class="nav-item" href="visao-geral.html"><span class="icon">📊</span> Visão Geral</a>
+    <a class="nav-item" href="vendedor.html"><span class="icon">👤</span> Vendedor</a>
+    <a class="nav-item" href="regiao.html"><span class="icon">🗺️</span> Região</a>
+    <a class="nav-item" href="marcas.html"><span class="icon">🏷️</span> Marcas</a>
+    <a class="nav-item" href="produtos.html"><span class="icon">📦</span> Produtos</a>
+    
+    <div class="sidebar-divider"></div>
+    
+    <div class="nav-section">Gestão</div>
+    <a class="nav-item active" href="compras.html"><span class="icon">🛒</span> Compras</a>
+    <a class="nav-item" href="carteira.html"><span class="icon">👥</span> Carteira</a>
+    <a class="nav-item" href="shelflife.html"><span class="icon">🕒</span> Shelf Life</a>
+    <a class="nav-item" href="risco.html"><span class="icon">⚠️</span> Clientes em Risco</a>
+    
+    <div class="sidebar-divider"></div>
+    <button class="btn-logout" onclick="location.href='index.html'">🚪 Sair</button>
+  </div>
+
+  <!-- CONTEÚDO PRINCIPAL -->
+  <div class="main-content">
+    
+    <!-- Breadcrumb e Título -->
+    <div class="breadcrumb"><a href="#">Portal</a> &gt; Compras</div>
+    <div class="page-title">
+      <span>🛒</span> Gestão de Compras e Sugestões
+    </div>
+
+    <!-- Upload da Planilha (Container Laranja/Azul idêntico) -->
+    <div class="upload-section">
+      <div class="upload-icon">📂</div>
+      <div class="upload-text">
+        <h4>Upload da Planilha de Demandas / Estoque</h4>
+        <p>Clique ou arraste o .xlsx do ERP | Integração automática ativada</p>
+      </div>
+    </div>
+
+    <!-- Cards de KPI (Mesma ordem de cores e bordas da imagem) -->
+    <div class="kpi-container">
+      <div class="kpi-card">
+        <div class="kpi-title">TOTAL ITENS</div>
+        <div class="kpi-value">142</div>
+      </div>
+      <div class="kpi-card critico">
+        <div class="kpi-title"><span style="color:var(--cor-critico)">●</span> ESTOQUE CRÍTICO</div>
+        <div class="kpi-value">12</div>
+      </div>
+      <div class="kpi-card atencao">
+        <div class="kpi-title"><span style="color:var(--cor-atencao)">●</span> COMPRA RECOMENDADA</div>
+        <div class="kpi-value">34</div>
+      </div>
+      <div class="kpi-card ok">
+        <div class="kpi-title"><span style="color:var(--cor-ok)">●</span> PEDIDOS EM ANDAMENTO</div>
+        <div class="kpi-value">19</div>
+      </div>
+      <div class="kpi-card em-acao">
+        <div class="kpi-title"><span style="color:var(--cor-em-acao)">●</span> CONCLUÍDOS NO MÊS</div>
+        <div class="kpi-value">58</div>
+      </div>
+    </div>
+
+    <!-- Barra de Pesquisa e Filtros Pílula -->
+    <div class="filter-bar">
+      <div class="search-input-wrapper">
+        <span class="search-icon">🔍</span>
+        <input type="text" class="search-input" placeholder="Buscar produto ou fornecedor...">
+      </div>
+      <button class="btn-filter active">Todos</button>
+      <button class="btn-filter"><span style="color:var(--cor-critico)">●</span> Crítico</button>
+      <button class="btn-filter"><span style="color:var(--cor-atencao)">●</span> Atenção</button>
+      <button class="btn-filter"><span style="color:var(--cor-ok)">●</span> OK</button>
+    </div>
+
+    <!-- Legendas Estilizadas -->
+    <div class="legend-bar">
+      <span>Legenda:</span>
+      <span class="legend-badge" style="background-color: #ffaa00; rgba(255,170,0,0.1)">■ Produto Novo</span>
+      <span class="legend-badge" style="background-color: #00d2ff;">▲ Demanda aumentou</span>
+      <span class="legend-badge" style="background-color: #00e676;">▼ Estoque Regulado</span>
+    </div>
+
+    <!-- Tabela Principal com os inputs escuros e badges brilhantes -->
+    <div class="table-container">
+      <table class="custom-table">
+        <thead>
+          <tr>
+            <th>Status</th>
+            <th>Cód.</th>
+            <th>Produto</th>
+            <th>Fornecedor</th>
+            <th>Unid.</th>
+            <th>Est. Atual</th>
+            <th>Sugestão</th>
+            <th>Lead Time</th>
+            <th>Venda 3M</th>
+            <th>Custo Unit.</th>
+            <th>Previsão Falta</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Linha 1 -->
+          <tr>
+            <td><span class="badge-status critico">Crítico</span></td>
+            <td>111759</td>
+            <td class="product-cell">
+              <div class="product-title">Farinha Especial Belga 25kg</div>
+              <div class="product-tag tag-reduziu">▼ QUANTIDADE REDUZIU 45 → 12</div>
+            </td>
+            <td>Reforpan</td>
+            <td>PR</td>
+            <td><input type="text" class="table-input" value="12"></td>
+            <td><input type="text" class="table-input" value="150" style="border-color: var(--cor-azul-neon)"></td>
+            <td>5d</td>
+            <td>540</td>
+            <td>R$ 89,00</td>
+            <td><span class="pill-info time">3d</span></td>
+          </tr>
+          <!-- Linha 2 -->
+          <tr>
+            <td><span class="badge-status sl">Sugestão</span></td>
+            <td>5396042</td>
+            <td class="product-cell">
+              <div class="product-title">Glace Mix 4kg Rizzato</div>
+              <div class="product-tag tag-reduziu" style="color: var(--cor-azul-neon)">▲ DEMANDA ESTÁVEL</div>
+            </td>
+            <td>Rizzato</td>
+            <td>PR</td>
+            <td><input type="text" class="table-input" value="4"></td>
+            <td><input type="text" class="table-input" value="20"></td>
+            <td>7d</td>
+            <td>45</td>
+            <td>R$ 34,20</td>
+            <td><span class="pill-info">14d</span></td>
+          </tr>
+          <!-- Linha 3 -->
+          <tr>
+            <td><span class="badge-status atencao">Atenção</span></td>
+            <td>5390133</td>
+            <td class="product-cell">
+              <div class="product-title">Creme Culinário 19% 1lt Hulala</div>
+              <div class="product-tag tag-reduziu">▼ ESTOQUE RESTRITO</div>
+            </td>
+            <td>Hulalá</td>
+            <td>SP</td>
+            <td><input type="text" class="table-input" value="38"></td>
+            <td><input type="text" class="table-input" value="500"></td>
+            <td>12d</td>
+            <td>1.240</td>
+            <td>R$ 8,50</td>
+            <td><span class="pill-info time" style="background-color:rgba(255,170,0,0.15); color:var(--cor-atencao)">9d</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+</body>
+</html>
