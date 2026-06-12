@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Átomo - Compras</title>
+
+  <style>
+    :root {
+      --bg-principal: #060b26;
+      --bg-sidebar: #0a1033;
+      --bg-cards: #0e1747;
+      --bg-inputs: #09113d;
+      --texto-claro: #ffffff;
+      --texto-mutado: #707eb4;
+      --borda-suave: rgba(255, 255, 255, 0.08);
+      --cor-azul-neon: #00d2ff;
+      --cor-critico: #ff3366;
+      --cor-atencao: #ffaa00;
+      --cor-ok: #00e676;
+      --cor-em-acao: #9d4edd;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background-color: var(--bg-principal); color: var(--texto-claro); display: flex; min-height: 100vh; }
+
+    .sidebar { width: 250px; background-color: var(--bg-sidebar); padding: 20px 0; display: flex; flex-direction: column; border-right: 1px solid var(--borda-suave); flex-shrink: 0; }
+    .sidebar-title { font-size: 11px; letter-spacing: 2px; color: var(--texto-mutado); padding: 0 24px; margin-bottom: 20px; font-weight: bold; text-align: center; }
+    .nav-section { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: rgba(255, 255, 255, 0.3); padding: 15px 24px 5px 24px; }
+    .nav-item { display: flex; align-items: center; padding: 12px 24px; color: var(--texto-mutado); text-decoration: none; font-size: 14px; transition: all 0.2s; }
+    .nav-item:hover, .nav-item.active { color: var(--texto-claro); background: linear-gradient(90deg, rgba(0, 210, 255, 0.1) 0%, rgba(0, 0, 0, 0) 100%); }
+    .nav-item.active { border-left: 3px solid var(--cor-azul-neon); background: linear-gradient(90deg, rgba(0, 210, 255, 0.15) 0%, rgba(0, 0, 0, 0) 100%); }
+    .nav-item .icon { margin-right: 12px; font-size: 16px; width: 20px; text-align: center; }
+    .sidebar-divider { height: 1px; background-color: var(--borda-suave); margin: 15px 24px; }
+
+    .main-content { flex: 1; padding: 30px 40px; overflow-y: auto; }
+    .page-title { font-size: 22px; font-weight: bold; margin-bottom: 25px; display: flex; align-items: center; gap: 12px; }
+
+    .actions-container { margin-bottom: 20px; }
+    .upload-section { background-color: var(--bg-cards); border: 2px dashed var(--cor-azul-neon); border-radius: 8px; padding: 18px 22px; display: flex; align-items: center; gap: 18px; cursor: pointer; transition: background 0.2s; }
+    .upload-section:hover { background-color: #142060; }
+    .upload-icon { font-size: 28px; color: var(--cor-atencao); }
+    .upload-text h4 { font-size: 14px; margin-bottom: 2px; }
+    .upload-text p { font-size: 11px; color: var(--texto-mutado); }
+
+    .date-filter-label { font-size: 10px; text-transform: uppercase; color: var(--texto-mutado); font-weight: bold; }
+    .date-select { background-color: var(--bg-inputs); border: 1px solid var(--borda-suave); border-radius: 6px; padding: 9px 12px; color: white; font-size: 13px; cursor: pointer; outline: none; }
+    .filter-btn.active { background-color: var(--cor-azul-neon); color: #060b26; border-color: var(--cor-azul-neon); font-weight: bold; }
+
+    .kpi-container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+    .kpi-card { background-color: var(--bg-cards); border-radius: 8px; padding: 16px; border-left: 4px solid var(--cor-azul-neon); border-top: 1px solid var(--borda-suave); }
+    .kpi-card.critico { border-left-color: var(--cor-critico); }
+    .kpi-card.atencao { border-left-color: var(--cor-atencao); }
+    .kpi-card.ok      { border-left-color: var(--cor-ok); }
+    .kpi-title { font-size: 10px; text-transform: uppercase; font-weight: bold; color: var(--texto-mutado); margin-bottom: 12px; }
+    .kpi-value { font-size: 22px; font-weight: bold; }
+
+    .table-container { background-color: var(--bg-sidebar); border-radius: 8px; border: 1px solid var(--borda-suave); overflow-x: auto; }
+    .custom-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 12px; }
+    .custom-table th { background-color: rgba(6, 11, 38, 0.6); color: var(--cor-azul-neon); text-transform: uppercase; font-size: 11px; font-weight: 600; padding: 14px 12px; border-bottom: 1px solid var(--borda-suave); }
+    .custom-table td { padding: 14px 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.04); vertical-align: middle; }
+
+    .badge-status { padding: 6px 12px; border-radius: 12px; font-weight: bold; font-size: 10px; display: inline-block; text-align: center; }
+    .badge-status.sugestao { background-color: rgba(0, 210, 255, 0.2); color: var(--cor-azul-neon); }
+    .badge-status.novo     { background-color: rgba(255, 170, 0, 0.2); color: var(--cor-atencao); }
+
+    .no-data-row { text-align: center; color: var(--texto-mutado); font-size: 14px; padding: 30px; }
+  </style>
+</head>
+<body>
+
+  <div class="sidebar">
+    <div class="sidebar-title">ÁTOMO</div>
+    <div class="nav-section">Dashboards</div>
+    <a class="nav-item" href="visao-geral.html"><span class="icon">📊</span> Visão Geral</a>
+    <a class="nav-item" href="vendedor.html"><span class="icon">👤</span> Vendedor</a>
+    <a class="nav-item" href="regiao.html"><span class="icon">🗺️</span> Região</a>
+    <a class="nav-item active" href="compras.html"><span class="icon">🛒</span> Compras</a>
+    <div class="sidebar-divider"></div>
+  </div>
+
+  <div class="main-content">
+    <div class="page-title"><span>🛒</span> Gestão de Demandas Históricas (Railway + Supabase)</div>
+
+    <div class="actions-container">
+      <div class="upload-section" onclick="document.getElementById('file-upload').click()">
+        <input type="file" id="file-upload" accept=".xlsx, .xls" style="display: none;">
+        <div class="upload-icon">📂</div>
+        <div class="upload-text" id="upload-status">
+          <h4>Enviar Nova Planilha para o Banco Railway</h4>
+          <p>O arquivo será processado e adicionado permanentemente ao histórico do banco.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="kpi-container">
+      <div class="kpi-card"><div class="kpi-title">TOTAL ITENS</div><div class="kpi-value" id="kpi-total">0</div></div>
+      <div class="kpi-card atencao"><div class="kpi-title">PRODUTOS NOVOS</div><div class="kpi-value" id="kpi-novos">0</div></div>
+      <div class="kpi-card ok"><div class="kpi-title">JÁ EXISTIAM (ANTERIOR)</div><div class="kpi-value" id="kpi-repetidos">0</div></div>
+      <div class="kpi-card critico"><div class="kpi-title">PLANILHAS ENVIADAS</div><div class="kpi-value" id="kpi-snapshots">0</div></div>
+    </div>
+
+    <div style="display:flex; gap:10px; margin-bottom:15px; align-items:center; flex-wrap:wrap;">
+      <label class="date-filter-label">PLANILHA:</label>
+      <select id="snapshot-select" class="date-select" style="min-width:280px;"></select>
+      <button id="btn-exportar" class="date-select" style="background:#00d2ff20;color:#00d2ff;border-color:#00d2ff;">⬇ Exportar Excel</button>
+      <button id="btn-excluir"  class="date-select" style="background:#ff336620;color:#ff3366;border-color:#ff3366;">🗑 Excluir Planilha</button>
+      <div style="flex:1"></div>
+      <div id="filter-buttons" style="display:flex; gap:6px;">
+        <button class="date-select filter-btn active" data-filter="todos">Todos</button>
+        <button class="date-select filter-btn" data-filter="novos">Novos</button>
+        <button class="date-select filter-btn" data-filter="repetidos">Repetidos</button>
+      </div>
+    </div>
+
+    <div class="table-container">
+      <table class="custom-table">
+        <thead>
+          <tr>
+            <th>CÓDIGO</th><th>PRODUTO</th><th>QTD</th><th>FABRICANTE</th><th>STATUS</th>
+          </tr>
+        </thead>
+        <tbody id="tabela-corpo">
+          <tr><td colspan="5" class="no-data-row">Envie uma planilha para começar</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script>
+    // ============================================================
+    // CONFIGURAÇÃO - MUDE PARA SUA URL
+    // ============================================================
+    const API = 'https://horus-production.up.railway.app';
+    let itensAtuais = [];
+    let codigosAnteriores = new Set();
+    let filtroAtivo = 'todos';
+    let uploadIdAtual = null;
+
+    // ============================================================
+    // FUNÇÃO AUXILIAR PARA EXTRAIR COLUNAS
+    // ============================================================
+    function getCol(row, ...nomes) {
+      const keys = Object.keys(row);
+      for (const n of nomes) {
+        const k = keys.find(x => x.toString().toLowerCase().includes(n.toLowerCase()));
+        if (k) return row[k];
+      }
+      return '';
+    }
+
+    // ============================================================
+    // UPLOAD DE ARQUIVO
+    // ============================================================
+    document.getElementById('file-upload').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      document.getElementById('upload-status').innerHTML = '<h4>⏳ Processando...</h4><p>' + file.name + '</p>';
+
+      try {
+        const buf = await file.arrayBuffer();
+        const wb = XLSX.read(buf, { type: 'array' });
+        const sheet = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+
+        // Mapear colunas da planilha
+        const items = rows.map(r => ({
+          codigoProduto: String(getCol(r, 'id', 'código', 'codigo')).trim(),
+          nomeProduto:   String(getCol(r, 'produto', 'descrição', 'descricao', 'nome')).trim(),
+          quantidade:    String(getCol(r, 'qtd', 'quantidade', 'qde')).trim(),
+          total:         String(getCol(r, 'fabricante', 'marca', 'brand')).trim(),
+        })).filter(x => x.codigoProduto);
+
+        if (!items.length) {
+          alert('Nenhum item válido encontrado. Verifique se a planilha tem coluna ID/Código.');
+          resetStatus();
+          return;
+        }
+
+        // Enviar para API (POST /api/compras/upload)
+        const res = await fetch(API + '/api/compras/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ items })
+        });
+        const data = await res.json();
+        
+        if (!data.success) { 
+          alert('Erro: ' + (data.message || 'Erro desconhecido')); 
+          resetStatus(); 
+          return; 
+        }
+
+        document.getElementById('upload-status').innerHTML =
+          '<h4>✅ ' + items.length + ' itens enviados!</h4><p>' + file.name + '</p>';
+        
+        // Recarregar lista de uploads
+        await carregarSnapshots(data.uploadId);
+      } catch (err) {
+        alert('Erro ao processar planilha: ' + err.message);
+        resetStatus();
+      }
+      e.target.value = '';
+    });
+
+    function resetStatus() {
+      document.getElementById('upload-status').innerHTML =
+        '<h4>Enviar Nova Planilha para o Banco Railway</h4>' +
+        '<p>O arquivo será processado e adicionado permanentemente ao histórico do banco.</p>';
+    }
+
+    // ============================================================
+    // CARREGAR SNAPSHOTS (GET /api/compras/snapshots)
+    // ============================================================
+    async function carregarSnapshots(selecionarId) {
+      try {
+        const res = await fetch(API + '/api/compras/snapshots');
+        const data = await res.json();
+        const sel = document.getElementById('snapshot-select');
+        sel.innerHTML = '';
+        const lista = data.snapshots || [];
+        
+        lista.forEach(s => {
+          const opt = document.createElement('option');
+          opt.value = s.id;
+          opt.textContent = '#' + s.id + ' — ' + s.uploaddate + ' (' + s.totalitems + ' itens)';
+          sel.appendChild(opt);
+        });
+        
+        document.getElementById('kpi-snapshots').textContent = lista.length;
+        
+        if (selecionarId) sel.value = selecionarId;
+        if (sel.value) {
+          await carregarItens(sel.value);
+        } else {
+          itensAtuais = []; 
+          codigosAnteriores = new Set();
+          document.getElementById('kpi-total').textContent = 0;
+          document.getElementById('kpi-novos').textContent = 0;
+          document.getElementById('kpi-repetidos').textContent = 0;
+          renderTabela();
+        }
+      } catch (err) {
+        console.error('Erro ao carregar snapshots:', err);
+        alert('Erro ao carregar snapshots: ' + err.message);
+      }
+    }
+
+    // ============================================================
+    // CARREGAR ITENS (GET /api/compras/listar?uploadId=<ID>)
+    // ============================================================
+    async function carregarItens(uploadId) {
+      try {
+        uploadIdAtual = uploadId;
+        const res = await fetch(API + '/api/compras/listar?uploadId=' + uploadId);
+        const data = await res.json();
+        
+        itensAtuais = data.items || [];
+        codigosAnteriores = new Set(data.codigosanteriores || []);
+        
+        document.getElementById('kpi-total').textContent = itensAtuais.length;
+        const novos = itensAtuais.filter(i => !codigosAnteriores.has(String(i.codigoproduto).trim())).length;
+        document.getElementById('kpi-novos').textContent = novos;
+        document.getElementById('kpi-repetidos').textContent = itensAtuais.length - novos;
+        
+        renderTabela();
+      } catch (err) {
+        console.error('Erro ao carregar itens:', err);
+        alert('Erro ao carregar itens: ' + err.message);
+      }
+    }
+
+    // ============================================================
+    // RENDERIZAR TABELA
+    // ============================================================
+    function renderTabela() {
+      const tbody = document.getElementById('tabela-corpo');
+      let lista = itensAtuais;
+      
+      if (filtroAtivo === 'novos')     lista = lista.filter(i => !codigosAnteriores.has(String(i.codigoproduto).trim()));
+      if (filtroAtivo === 'repetidos') lista = lista.filter(i =>  codigosAnteriores.has(String(i.codigoproduto).trim()));
+
+      if (!lista.length) {
+        tbody.innerHTML = '<tr><td colspan="5" class="no-data-row">Nenhum item</td></tr>';
+        return;
+      }
+      
+      tbody.innerHTML = lista.map(i => {
+        const novo = !codigosAnteriores.has(String(i.codigoproduto).trim());
+        return '<tr>' +
+          '<td>' + (i.codigoproduto || '') + '</td>' +
+          '<td>' + (i.descricaoproduto || '') + '</td>' +
+          '<td>' + (i.quantidademediavenda || '') + '</td>' +
+          '<td>' + (i.marca || '') + '</td>' +
+          '<td><span class="badge-status ' + (novo ? 'novo' : 'sugestao') + '">' +
+            (novo ? 'NOVO' : 'REPETIDO') + '</span></td>' +
+          '</tr>';
+      }).join('');
+    }
+
+    // ============================================================
+    // EVENT LISTENERS
+    // ============================================================
+    document.getElementById('snapshot-select').addEventListener('change', e => {
+      if (e.target.value) {
+        carregarItens(e.target.value);
+      }
+    });
+
+    // Deletar (DELETE /api/compras/upload/<ID>)
+    document.getElementById('btn-excluir').addEventListener('click', async () => {
+      const id = document.getElementById('snapshot-select').value;
+      if (!id) { alert('Nenhuma planilha selecionada'); return; }
+      if (!confirm('Excluir esta planilha do banco? Esta ação é permanente.')) return;
+      
+      try {
+        const res = await fetch(API + '/api/compras/upload/' + id, { method: 'DELETE' });
+        const data = await res.json();
+        if (!data.success) { alert('Erro: ' + data.message); return; }
+        await carregarSnapshots();
+      } catch (err) {
+        alert('Erro ao excluir: ' + err.message);
+      }
+    });
+
+    // Exportar (GET /api/compras/exportar?uploadId=<ID>)
+    document.getElementById('btn-exportar').addEventListener('click', () => {
+      const id = document.getElementById('snapshot-select').value;
+      if (!id) { alert('Nenhuma planilha selecionada'); return; }
+      window.location.href = API + '/api/compras/exportar?uploadId=' + id;
+    });
+
+    // Filtros
+    document.querySelectorAll('.filter-btn').forEach(b => {
+      b.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(x => x.classList.remove('active'));
+        b.classList.add('active');
+        filtroAtivo = b.dataset.filter;
+        renderTabela();
+      });
+    });
+
+    // ============================================================
+    // INICIALIZAR
+    // ============================================================
+    carregarSnapshots();
+  </script>
+</body>
+</html>
