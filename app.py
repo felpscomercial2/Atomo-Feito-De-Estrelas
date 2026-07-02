@@ -724,6 +724,7 @@ def shelflife_migrar():
 EMAILS_AUTORIZADOS_SL = [
     'comercial2@reforpan.com.br',
     'comercial3@esdel.com.br',
+    'comercial1@esdel.com.br',
 ]
 
 @app.route('/api/shelflife/verificar-acesso', methods=['POST'])
