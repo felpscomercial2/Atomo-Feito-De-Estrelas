@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Átomo — Positivação por Clientes</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{--bg:#0A1628;--card:#0E2048;--sidebar:#0D2558;--accent:#1976D2;--accent2:#64B5F6;--text:#F5F5F5;--muted:#a0aec0;--border:rgba(255,255,255,0.07);--success:#00ff88;--danger:#ff4d4d;--warning:#ffaa00;}
+body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;}
+.sidebar{width:220px;background:var(--sidebar);position:fixed;top:0;left:0;height:100vh;display:flex;flex-direction:column;align-items:center;padding:24px 12px;border-right:1px solid var(--border);z-index:100;}
+.sidebar-logo{width:100px;margin-bottom:4px;filter:drop-shadow(0 2px 8px rgba(25,118,210,0.4));}
+.sidebar-title{font-size:10px;letter-spacing:3px;color:var(--muted);margin-bottom:28px;}
+.nav-section{width:100%;font-size:10px;letter-spacing:1px;color:var(--muted);text-transform:uppercase;padding:0 8px;margin-bottom:6px;}
+.nav-item{width:100%;display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--muted);transition:all 0.2s;border:1px solid transparent;text-decoration:none;margin-bottom:2px;}
+.nav-item:hover{background:rgba(25,118,210,0.1);color:var(--text);border-color:rgba(25,118,210,0.2);}
+.nav-item.active{background:rgba(25,118,210,0.2);color:#fff;border-color:var(--accent);}
+.nav-item .icon{font-size:16px;width:20px;text-align:center;}
+.sidebar-divider{width:100%;height:1px;background:var(--border);margin:16px 0;}
+.btn-logout{margin-top:auto;width:100%;padding:10px;border-radius:8px;background:rgba(255,77,77,0.1);color:var(--danger);border:1px solid rgba(255,77,77,0.2);cursor:pointer;font-size:13px;}
+.main{margin-left:220px;flex:1;padding:28px;}
+.filtros-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+.filtro-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;}
+.filtro-titulo{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;}
+.busca-wrap-v{position:relative;}
+.busca-input{width:100%;padding:9px 14px;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none;}
+.busca-input:focus{border-color:var(--accent);}
+.busca-input::placeholder{color:var(--muted);}
+.sug-lista{position:absolute;top:calc(100% + 4px);left:0;right:0;background:#0E2048;border:1px solid var(--border);border-radius:8px;z-index:200;max-height:200px;overflow-y:auto;display:none;box-shadow:0 8px 24px rgba(0,0,0,0.4);}
+.sug-item{padding:9px 14px;cursor:pointer;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border);transition:background 0.15s;}
+.sug-item:last-child{border-bottom:none;}
+.sug-item:hover,.sug-ok{background:rgba(25,118,210,0.15);}
+.sug-nome{flex:1;font-size:13px;}
+.sug-check{color:var(--success);font-weight:700;}
+.tags-wrap{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;min-height:24px;align-items:center;}
+.tag-item{display:flex;align-items:center;gap:5px;background:rgba(0,195,255,0.12);border:1px solid rgba(0,195,255,0.3);border-radius:20px;padding:3px 8px 3px 12px;font-size:11px;color:var(--accent2);}
+.tag-item button{background:none;border:none;color:var(--accent2);cursor:pointer;font-size:14px;line-height:1;padding:0;opacity:0.7;}
+.tag-item button:hover{opacity:1;}
+.cal-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px;}
+.cal-ano{margin-bottom:12px;}
+.cal-ano-label{font-size:12px;font-weight:700;color:var(--accent2);margin-bottom:8px;letter-spacing:1px;}
+.cal-meses{display:flex;flex-wrap:wrap;gap:6px;}
+.cal-mes{padding:5px 10px;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:6px;font-size:12px;cursor:pointer;transition:all 0.15s;user-select:none;}
+.cal-mes:hover{background:rgba(25,118,210,0.2);border-color:var(--accent);}
+.cal-mes-sel{background:rgba(25,118,210,0.4)!important;border-color:var(--accent)!important;color:#fff;font-weight:600;}
+.resumo-bar{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:rgba(0,195,255,0.06);border:1px solid rgba(0,195,255,0.2);border-radius:8px;margin-bottom:12px;font-size:13px;flex-wrap:wrap;gap:8px;}
+.resumo-info{color:var(--accent2);font-weight:500;}
+.btn-limpar-tudo{background:rgba(255,77,77,0.1);color:var(--danger);border:1px solid rgba(255,77,77,0.2);border-radius:6px;padding:5px 14px;cursor:pointer;font-size:12px;}
+.pivot-wrap{overflow:auto;max-height:calc(100vh - 250px);border-radius:12px;border:1px solid var(--border);background:var(--card);}
+.pivot-table{border-collapse:collapse;font-size:12px;white-space:nowrap;width:100%;}
+.pivot-table thead{position:sticky;top:0;z-index:10;}
+.pivot-th{background:#1e2438;padding:10px 14px;text-align:left;font-weight:600;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:1px;border-bottom:2px solid var(--border);border-right:1px solid var(--border);}
+.pivot-td{padding:9px 14px;border-bottom:1px solid rgba(255,255,255,0.04);border-right:1px solid var(--border);}
+.clickable{cursor:pointer;color:var(--accent2);text-decoration:underline;}
+.clickable:hover{color:#fff;}
+.detalhe-row{background:rgba(25,118,210,0.05);}
+.detalhe-table{width:100%;border-collapse:collapse;margin:10px 0;}
+.detalhe-th{font-size:10px;color:var(--muted);padding:6px 14px;text-align:left;border-bottom:1px solid var(--border);}
+.detalhe-td{font-size:11px;padding:6px 14px;border-bottom:1px solid rgba(255,255,255,0.02);}
+.loading-overlay{display:none;position:fixed;inset:0;background:rgba(10,22,40,0.8);z-index:9999;align-items:center;justify-content:center;flex-direction:column;gap:10px;}
+.loading-overlay.show{display:flex;}
+.spinner{width:40px;height:40px;border:4px solid rgba(25,118,210,0.1);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="sidebar-title">ÁTOMO</div>
+  <a class="nav-item active" href="#"><span class="icon">👥</span> Positivação</a>
+  <div class="sidebar-divider"></div>
+  <button class="btn-logout">🚪 Sair</button>
+</div>
+
+<div class="main">
+  <h1 style="font-size:20px;font-weight:700;margin-bottom:16px;">👥 Positivação por Clientes</h1>
+  
+  <div class="filtros-grid">
+    <div class="filtro-card">
+      <div class="filtro-titulo">👤 Filtrar por Vendedor</div>
+      <div class="busca-wrap-v">
+        <input type="text" id="inputVend" class="busca-input" placeholder="Digite o nome do vendedor..." oninput="onBuscaVend()">
+        <div class="sug-lista" id="listaVend"></div>
+      </div>
+      <div class="tags-wrap" id="tagsVend">
+        <span style="color:#a0aec0;font-size:12px">Todos os vendedores</span>
+      </div>
+    </div>
+    <div class="filtro-card">
+      <div class="filtro-titulo">📅 Selecionar Períodos</div>
+      <div id="calendarioMeses" class="cal-meses"></div>
+      <div class="tags-wrap" id="tagsPeriodo">
+        <span style="color:#a0aec0;font-size:12px">Todos os períodos</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="resumo-bar">
+    <span class="resumo-info" id="resumoInfo">Aguardando filtros...</span>
+    <div style="display:flex;gap:8px;">
+      <button onclick="exportarExcel()" style="background:rgba(0,255,136,0.1);color:var(--success);border:1px solid rgba(0,255,136,0.2);border-radius:6px;padding:5px 14px;cursor:pointer;font-size:12px;">💾 Exportar Excel</button>
+      <button class="btn-limpar-tudo" onclick="limparFiltros()">✕ Limpar filtros</button>
+    </div>
+  </div>
+
+  <div class="pivot-wrap" id="pivotWrap">
+    <table class="pivot-table" id="tabelaClientes">
+      <thead>
+        <tr>
+          <th class="pivot-th">Cód. Cliente</th>
+          <th class="pivot-th">Cliente</th>
+          <th class="pivot-th">Total NF</th>
+        </tr>
+      </thead>
+      <tbody id="corpoTabela">
+        <tr>
+          <td colspan="3" style="padding:40px;text-align:center;color:var(--muted);">Selecione o vendedor e o período para visualizar os dados.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="loading-overlay" id="loader">
+  <div class="spinner"></div>
+  <span>Carregando dados...</span>
+</div>
+
+<script>
+const API = 'https://horus-production.up.railway.app';
+const MESES_NOME = ['','Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+let vendedoresSel = [];
+let periodosSel = [];
+let todosVendedores = [];
+let dadosClientes = []; // Simulação de dados para o exemplo
+
+// Inicialização
+async function init() {
+  mostrarLoader(true);
+  try {
+    const res = await fetch(`${API}/api/filtros`);
+    const data = await res.json();
+    todosVendedores = data.vendedores || [];
+    renderCalendario(data.anos || [2024, 2025, 2026]);
+  } catch (e) {
+    console.error("Erro ao carregar filtros", e);
+    // Fallback para demonstração se a API falhar
+    todosVendedores = ["JOAO SILVA", "MARIA SOUZA", "CARLOS OLIVEIRA"];
+    renderCalendario([2025, 2026]);
+  }
+  mostrarLoader(false);
+}
+
+function renderCalendario(anos) {
+  const container = document.getElementById('calendarioMeses');
+  container.innerHTML = '';
+  anos.forEach(ano => {
+    const divAno = document.createElement('div');
+    divAno.className = 'cal-ano';
+    divAno.innerHTML = `<div class="cal-ano-label">${ano}</div>`;
+    const divMeses = document.createElement('div');
+    divMeses.className = 'cal-meses';
+    for(let m=1; m<=12; m++) {
+      const btn = document.createElement('div');
+      btn.className = 'cal-mes';
+      btn.textContent = MESES_NOME[m];
+      btn.onclick = () => togglePeriodo(ano, m);
+      btn.dataset.ano = ano;
+      btn.dataset.mes = m;
+      divMeses.appendChild(btn);
+    }
+    divAno.appendChild(divMeses);
+    container.appendChild(divAno);
+  });
+}
+
+function onBuscaVend() {
+  const q = document.getElementById('inputVend').value.trim().toLowerCase();
+  const lista = document.getElementById('listaVend');
+  if(!q) { lista.style.display = 'none'; return; }
+  
+  const filtrados = todosVendedores.filter(v => v.toLowerCase().includes(q));
+  lista.innerHTML = '';
+  filtrados.slice(0, 10).forEach(v => {
+    const item = document.createElement('div');
+    item.className = 'sug-item';
+    item.textContent = v;
+    item.onclick = () => addVendedor(v);
+    lista.appendChild(item);
+  });
+  lista.style.display = filtrados.length ? 'block' : 'none';
+}
+
+function addVendedor(nome) {
+  if(!vendedoresSel.includes(nome)) vendedoresSel.push(nome);
+  document.getElementById('inputVend').value = '';
+  document.getElementById('listaVend').style.display = 'none';
+  renderTagsVend();
+  carregarDados();
+}
+
+function renderTagsVend() {
+  const container = document.getElementById('tagsVend');
+  if(!vendedoresSel.length) { container.innerHTML = '<span style="color:#a0aec0;font-size:12px">Todos os vendedores</span>'; return; }
+  container.innerHTML = '';
+  vendedoresSel.forEach(v => {
+    const tag = document.createElement('div');
+    tag.className = 'tag-item';
+    tag.innerHTML = `${v} <button onclick="remVendedor('${v}')">×</button>`;
+    container.appendChild(tag);
+  });
+}
+
+function remVendedor(nome) {
+  vendedoresSel = vendedoresSel.filter(v => v !== nome);
+  renderTagsVend();
+  carregarDados();
+}
+
+function togglePeriodo(ano, mes) {
+  const index = periodosSel.findIndex(p => p.ano === ano && p.mes === mes);
+  if(index >= 0) periodosSel.splice(index, 1);
+  else periodosSel.push({ano, mes});
+  
+  document.querySelectorAll('.cal-mes').forEach(el => {
+    const isSel = periodosSel.some(p => p.ano == el.dataset.ano && p.mes == el.dataset.mes);
+    el.classList.toggle('cal-mes-sel', isSel);
+  });
+  
+  renderTagsPeriodo();
+  carregarDados();
+}
+
+function renderTagsPeriodo() {
+  const container = document.getElementById('tagsPeriodo');
+  if(!periodosSel.length) { container.innerHTML = '<span style="color:#a0aec0;font-size:12px">Todos os períodos</span>'; return; }
+  container.innerHTML = '';
+  periodosSel.forEach(p => {
+    const tag = document.createElement('div');
+    tag.className = 'tag-item';
+    tag.innerHTML = `${MESES_NOME[p.mes]}/${p.ano} <button onclick="togglePeriodo(${p.ano}, ${p.mes})">×</button>`;
+    container.appendChild(tag);
+  });
+}
+
+async function carregarDados() {
+  if(!vendedoresSel.length || !periodosSel.length) {
+    document.getElementById('corpoTabela').innerHTML = '<tr><td colspan="3" style="padding:40px;text-align:center;color:var(--muted);">Selecione o vendedor e o período para visualizar os dados.</td></tr>';
+    document.getElementById('resumoInfo').textContent = 'Aguardando filtros...';
+    return;
+  }
+  
+  mostrarLoader(true);
+  
+  // Simulação de chamada de API
+  // No cenário real, usaríamos fetch com os parâmetros vendedoresSel e periodosSel
+  setTimeout(() => {
+    dadosClientes = [
+      {cod: '1001', nome: 'MERCADO CENTRAL', total: 1500.50, produtos: [
+        {cod_prod: 'P01', produto: 'ARROZ 5KG', marca: 'TIO JOAO', valor: 500.00},
+        {cod_prod: 'P02', produto: 'FEIJAO 1KG', marca: 'CAMIL', valor: 1000.50}
+      ]},
+      {cod: '1002', nome: 'SUPERMERCADO ALVORADA', total: 2800.00, produtos: [
+        {cod_prod: 'P03', produto: 'OLEO SOJA', marca: 'LIZA', valor: 2800.00}
+      ]},
+      {cod: '1003', nome: 'PADARIA PÃO QUENTE', total: 450.75, produtos: [
+        {cod_prod: 'P04', produto: 'FARINHA TRIGO', marca: 'DONA BENTA', valor: 450.75}
+      ]}
+    ];
+    renderTabela();
+    mostrarLoader(false);
+  }, 500);
+}
+
+function renderTabela() {
+  const corpo = document.getElementById('corpoTabela');
+  corpo.innerHTML = '';
+  
+  let totalGeral = 0;
+  dadosClientes.forEach(c => {
+    totalGeral += c.total;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="pivot-td clickable" onclick="toggleDetalhe('${c.cod}')">${c.cod}</td>
+      <td class="pivot-td clickable" onclick="toggleDetalhe('${c.cod}')">${c.nome}</td>
+      <td class="pivot-td" style="text-align:right">${brl(c.total)}</td>
+    `;
+    corpo.appendChild(tr);
+    
+    // Linha de detalhe (escondida por padrão)
+    const trDetalhe = document.createElement('tr');
+    trDetalhe.id = `detalhe-${c.cod}`;
+    trDetalhe.style.display = 'none';
+    trDetalhe.className = 'detalhe-row';
+    
+    let htmlProdutos = `
+      <td colspan="3" style="padding:0 20px 20px 20px">
+        <table class="detalhe-table">
+          <thead>
+            <tr>
+              <th class="detalhe-th">Cód. Prod</th>
+              <th class="detalhe-th">Produto</th>
+              <th class="detalhe-th">Marca</th>
+              <th class="detalhe-th" style="text-align:right">Valor NF</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+    
+    c.produtos.forEach(p => {
+      htmlProdutos += `
+        <tr>
+          <td class="detalhe-td">${p.cod_prod}</td>
+          <td class="detalhe-td">${p.produto}</td>
+          <td class="detalhe-td">${p.marca}</td>
+          <td class="detalhe-td" style="text-align:right">${brl(p.valor)}</td>
+        </tr>
+      `;
+    });
+    
+    htmlProdutos += '</tbody></table></td>';
+    trDetalhe.innerHTML = htmlProdutos;
+    corpo.appendChild(trDetalhe);
+  });
+  
+  document.getElementById('resumoInfo').textContent = `${dadosClientes.length} clientes encontrados | Total: ${brl(totalGeral)}`;
+}
+
+function toggleDetalhe(cod) {
+  const el = document.getElementById(`detalhe-${cod}`);
+  el.style.display = el.style.display === 'none' ? 'table-row' : 'none';
+}
+
+function brl(v) {
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
+}
+
+function mostrarLoader(show) {
+  document.getElementById('loader').classList.toggle('show', show);
+}
+
+function limparFiltros() {
+  vendedoresSel = [];
+  periodosSel = [];
+  document.getElementById('inputVend').value = '';
+  document.querySelectorAll('.cal-mes-sel').forEach(el => el.classList.remove('cal-mes-sel'));
+  renderTagsVend();
+  renderTagsPeriodo();
+  carregarDados();
+}
+
+function exportarExcel() {
+  if(!dadosClientes.length) { alert("Não há dados para exportar."); return; }
+  
+  const rows = [];
+  // Cabeçalho do Excel
+  rows.push(["Cód. Cliente", "Cliente", "Cód. Produto", "Produto", "Marca", "Valor NF"]);
+  
+  dadosClientes.forEach(c => {
+    c.produtos.forEach(p => {
+      rows.push([c.cod, c.nome, p.cod_prod, p.produto, p.marca, p.valor]);
+    });
+  });
+  
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Carteira");
+  XLSX.writeFile(wb, "carteira_clientes.xlsx");
+}
+
+init();
+</script>
+
+</body>
+</html>
