@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Átomo - Compras</title>
+
+  <style>
+    :root {
+      --bg-principal: #0A1628;
+      --bg-sidebar: #0D2558;
+      --bg-cards: #0E2048;
+      --bg-inputs: #0D2558;
+      --texto-claro: #F5F5F5;
+      --texto-mutado: #a0aec0;
+      --borda-suave: rgba(255, 255, 255, 0.07);
+      --cor-azul-neon: #1976D2;
+      --cor-critico: #ff4d4d;
+      --cor-atencao: #ffaa00;
+      --cor-ok: #00ff88;
+      --cor-em-acao: #9d4edd;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background-color: var(--bg-principal); color: var(--texto-claro); display: flex; min-height: 100vh; }
+
+    .sidebar { width: 220px; background-color: var(--bg-sidebar); padding: 20px 0; display: flex; flex-direction: column; border-right: 1px solid var(--borda-suave); flex-shrink: 0; }
+    .sidebar-title { font-size: 11px; letter-spacing: 2px; color: var(--texto-mutado); padding: 0 24px; margin-bottom: 20px; font-weight: bold; text-align: center; }
+    .sidebar-logo {
+      width: 90px; margin: 0 auto 8px; display: block;
+      filter: drop-shadow(0 0 8px rgba(25,118,210,0.6)) drop-shadow(0 0 16px rgba(66,165,245,0.3));
+      animation: logoGlowCompras 3s ease-in-out infinite;
+    }
+    @keyframes logoGlowCompras {
+      0%, 100% { filter: drop-shadow(0 0 6px rgba(25,118,210,0.5)) drop-shadow(0 0 12px rgba(66,165,245,0.25)); }
+      50%      { filter: drop-shadow(0 0 14px rgba(25,118,210,0.9)) drop-shadow(0 0 28px rgba(66,165,245,0.5)); }
+    }
+    .nav-section { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: rgba(255, 255, 255, 0.3); padding: 15px 24px 5px 24px; }
+    .nav-item { display: flex; align-items: center; padding: 12px 24px; color: var(--texto-mutado); text-decoration: none; font-size: 14px; transition: all 0.2s; }
+    .nav-item:hover, .nav-item.active { color: var(--texto-claro); background: linear-gradient(90deg, rgba(25, 118, 210, 0.1) 0%, rgba(0, 0, 0, 0) 100%); }
+    .nav-item.active { border-left: 3px solid var(--cor-azul-neon); background: linear-gradient(90deg, rgba(25, 118, 210, 0.15) 0%, rgba(0, 0, 0, 0) 100%); }
+    .nav-item .icon { margin-right: 12px; font-size: 16px; width: 20px; text-align: center; }
+    .sidebar-divider { height: 1px; background-color: var(--borda-suave); margin: 15px 24px; }
+
+    .main-content { flex: 1; padding: 30px 40px; overflow-y: auto; }
+    .page-title { font-size: 22px; font-weight: bold; margin-bottom: 25px; display: flex; align-items: center; gap: 12px; }
+
+    .actions-container { margin-bottom: 20px; }
+    .upload-section { background-color: var(--bg-cards); border: 2px dashed var(--cor-azul-neon); border-radius: 8px; padding: 18px 22px; display: flex; align-items: center; gap: 18px; cursor: pointer; transition: background 0.2s; }
+    .upload-section:hover { background-color: #142060; }
+    .upload-icon { font-size: 28px; color: var(--cor-atencao); }
+    .upload-text h4 { font-size: 14px; margin-bottom: 2px; }
+    .upload-text p { font-size: 11px; color: var(--texto-mutado); }
+
+    .date-filter-label { font-size: 10px; text-transform: uppercase; color: var(--texto-mutado); font-weight: bold; }
+    .date-select { background-color: var(--bg-inputs); border: 1px solid var(--borda-suave); border-radius: 6px; padding: 9px 12px; color: white; font-size: 13px; cursor: pointer; outline: none; }
+    .filter-btn.active { background-color: var(--cor-azul-neon); color: #0A1628; border-color: var(--cor-azul-neon); font-weight: bold; }
+
+    .kpi-container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+    .kpi-card { background-color: var(--bg-cards); border-radius: 8px; padding: 16px; border-left: 4px solid var(--cor-azul-neon); border-top: 1px solid var(--borda-suave); transition: all 0.2s; }
+    .kpi-card:hover { transform: translateY(-2px); border-top-color: var(--cor-azul-neon); }
+    .kpi-card.critico { border-left-color: var(--cor-critico); }
+    .kpi-card.atencao { border-left-color: var(--cor-atencao); }
+    .kpi-card.ok      { border-left-color: var(--cor-ok); }
+    .kpi-title { font-size: 10px; text-transform: uppercase; font-weight: bold; color: var(--texto-mutado); margin-bottom: 12px; }
+    .kpi-value { font-size: 22px; font-weight: bold; }
+
+    .table-container { background-color: var(--bg-sidebar); border-radius: 8px; border: 1px solid var(--borda-suave); overflow-x: auto; }
+    .custom-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 12px; }
+    .custom-table th { background-color: rgba(8, 18, 50, 0.6); color: var(--cor-azul-neon); text-transform: uppercase; font-size: 11px; font-weight: 600; padding: 14px 12px; border-bottom: 1px solid var(--borda-suave); }
+    .custom-table td { padding: 14px 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.04); vertical-align: middle; }
+
+    .badge-status { padding: 6px 12px; border-radius: 12px; font-weight: bold; font-size: 10px; display: inline-block; text-align: center; }
+    .badge-status.sugestao { background-color: rgba(25, 118, 210, 0.2); color: var(--cor-azul-neon); }
+    .badge-status.novo     { background-color: rgba(255, 170, 0, 0.2); color: var(--cor-atencao); }
+
+    .no-data-row { text-align: center; color: var(--texto-mutado); font-size: 14px; padding: 40px 20px; }
+    .no-data-row .empty-icon { font-size: 32px; display: block; margin-bottom: 10px; opacity: 0.5; }
+  /* HAMBURGER + MOBILE (sidebar) */
+.hamburger{display:none;position:fixed;top:14px;left:14px;z-index:200;background:rgba(25,118,210,0.18);border:1px solid rgba(25,118,210,0.35);border-radius:8px;width:40px;height:40px;align-items:center;justify-content:center;cursor:pointer;flex-direction:column;gap:5px;padding:8px;}
+.hamburger span{width:100%;height:2px;background:#64B5F6;border-radius:2px;transition:all 0.3s;}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:99;backdrop-filter:blur(2px);}
+.sidebar-overlay.show{display:block;}
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%);transition:transform 0.3s ease;z-index:150;position:fixed;top:0;left:0;height:100vh;}
+  .sidebar.open{transform:translateX(0);}
+  .hamburger{display:flex;}
+  .main{margin-left:0 !important;}
+  .main-content{margin-left:0 !important;}
+}
+</style>
+</head>
+<body>
+
+  <button class="hamburger" id="hamburgerBtn" onclick="toggleSidebar()" aria-label="Menu">
+  <span></span><span></span><span></span>
+</button>
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+<div class="sidebar">
+  <img class="sidebar-logo" src="logo.png" alt="Átomo" onerror="this.style.display='none'">
+  <div class="sidebar-title">ÁTOMO</div>
+  <a class="nav-item" href="home.html"><span class="icon">🏠</span> Página Inicial</a>
+  <div class="sidebar-divider"></div>
+  <div class="nav-section">Dashboards</div>
+  <a class="nav-item" href="visao-geral.html"><span class="icon">📊</span> Visão Geral</a>
+  <a class="nav-item" href="vendedor.html"><span class="icon">👤</span> Vendedor</a>
+  <a class="nav-item" href="regiao.html"><span class="icon">🗺️</span> Região</a>
+  <a class="nav-item" href="marcas.html"><span class="icon">🏷️</span> Marcas</a>
+  <a class="nav-item" href="produtos.html"><span class="icon">📦</span> Produtos</a>
+  <a class="nav-item" href="produtos-cliente.html"><span class="icon">🛍️</span> Produtos por Cliente</a>
+  <div class="sidebar-divider"></div>
+  <div class="nav-section">Gestão</div>
+  <a class="nav-item" href="carteira.html"><span class="icon">👥</span> Carteira</a>
+  <a class="nav-item" href="positivacao.html"><span class="icon">👥</span> Positivação</a>
+  <a class="nav-item" href="shelflife.html"><span class="icon">🕒</span> Shelf Life</a>
+  <a class="nav-item" href="risco.html"><span class="icon">⚠️</span> Clientes em Risco</a>
+  <a class="nav-item active" href="compras.html"><span class="icon">🛒</span> Compras</a>
+  <div class="sidebar-divider"></div>
+  <button class="btn-logout" onclick="location.href='index.html'">🚪 Sair</button>
+</div>
+
+  <div class="main-content">
+    <div class="page-title"><span>🛒</span> Gestão de Demandas Históricas (Railway + Supabase)</div>
+
+    <div class="actions-container">
+      <div class="upload-section" onclick="document.getElementById('file-upload').click()">
+        <input type="file" id="file-upload" accept=".xlsx, .xls" style="display: none;">
+        <div class="upload-icon">📂</div>
+        <div class="upload-text" id="upload-status">
+          <h4>Enviar Nova Planilha para o Banco Railway</h4>
+          <p>O arquivo será processado e adicionado permanentemente ao histórico do banco.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="kpi-container">
+      <div class="kpi-card"><div class="kpi-title">TOTAL ITENS</div><div class="kpi-value" id="kpi-total">0</div></div>
+      <div class="kpi-card atencao"><div class="kpi-title">PRODUTOS NOVOS</div><div class="kpi-value" id="kpi-novos">0</div></div>
+      <div class="kpi-card ok"><div class="kpi-title">JÁ EXISTIAM (ANTERIOR)</div><div class="kpi-value" id="kpi-repetidos">0</div></div>
+      <div class="kpi-card critico"><div class="kpi-title">PLANILHAS ENVIADAS</div><div class="kpi-value" id="kpi-snapshots">0</div></div>
+    </div>
+
+    <div style="display:flex; gap:10px; margin-bottom:15px; align-items:center; flex-wrap:wrap;">
+      <label class="date-filter-label">PLANILHA:</label>
+      <select id="snapshot-select" class="date-select" style="min-width:280px;"></select>
+      <button id="btn-exportar" class="date-select" style="background:#1976D220;color:#1976D2;border-color:#1976D2;">⬇ Exportar Excel</button>
+      <button id="btn-excluir"  class="date-select" style="background:#ff336620;color:#ff3366;border-color:#ff3366;">🗑 Excluir Planilha</button>
+      <div style="flex:1"></div>
+      <div id="filter-buttons" style="display:flex; gap:6px;">
+        <button class="date-select filter-btn active" data-filter="todos">Todos</button>
+        <button class="date-select filter-btn" data-filter="novos">Novos</button>
+        <button class="date-select filter-btn" data-filter="repetidos">Repetidos</button>
+      </div>
+    </div>
+
+    <div class="table-container">
+      <table class="custom-table">
+        <thead>
+          <tr>
+            <th>DATA</th><th>BASE</th><th>VENDEDOR</th><th>CÓDIGO</th><th>PRODUTO</th><th>QTD</th><th>FABRICANTE</th><th>PREVISÃO CHEGADA</th><th>STATUS</th>
+          </tr>
+        </thead>
+        <tbody id="tabela-corpo">
+          <tr><td colspan="9" class="no-data-row"><span class="empty-icon">📂</span>Envie uma planilha para começar</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script>
+    // ============================================================
+    // CONFIGURAÇÃO - MUDE PARA SUA URL
+    // ============================================================
+    const API = 'https://horus-production.up.railway.app';
+    let itensAtuais = [];
+    let codigosAnteriores = new Set();
+    let filtroAtivo = 'todos';
+    let uploadIdAtual = null;
+
+    // Animação visual de contagem nos cards de KPI (não altera o valor final, só a transição até ele)
+    function animarContador(elemento, valorFinal) {
+      if (!elemento) return;
+      const valorInicial = parseInt(elemento.textContent, 10) || 0;
+      const destino = parseInt(valorFinal, 10) || 0;
+      if (valorInicial === destino) { elemento.textContent = destino; return; }
+      const duracao = 500;
+      const inicioTempo = performance.now();
+      function passo(agora) {
+        const progresso = Math.min((agora - inicioTempo) / duracao, 1);
+        const valorAtual = Math.round(valorInicial + (destino - valorInicial) * progresso);
+        elemento.textContent = valorAtual;
+        if (progresso < 1) requestAnimationFrame(passo);
+      }
+      requestAnimationFrame(passo);
+    }
+
+    // ============================================================
+    // FUNÇÃO AUXILIAR PARA EXTRAIR COLUNAS
+    // ============================================================
+    function getCol(row, ...nomes) {
+      const keys = Object.keys(row);
+      for (const n of nomes) {
+        const k = keys.find(x => x.toString().toLowerCase().includes(n.toLowerCase()));
+        if (k) return row[k];
+      }
+      return '';
+    }
+
+    // ============================================================
+    // UPLOAD DE ARQUIVO
+    // ============================================================
+    document.getElementById('file-upload').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      document.getElementById('upload-status').innerHTML = '<h4>⏳ Lendo arquivo...</h4><p>' + file.name + '</p>';
+
+      try {
+        const buf = await file.arrayBuffer();
+        await new Promise(r => setTimeout(r, 30));
+
+        const wb    = XLSX.read(buf, { type: 'array', cellDates: true });
+        const sheet = wb.Sheets[wb.SheetNames[0]];
+
+        // Limita o range a A:I (9 colunas úteis) ANTES de converter para JSON —
+        // evita processar milhares de colunas vazias que o Excel guarda até XFD
+        const refOriginal = XLSX.utils.decode_range(sheet['!ref'] || 'A1');
+        sheet['!ref'] = XLSX.utils.encode_range({
+          s: { r: refOriginal.s.r, c: 0 },
+          e: { r: refOriginal.e.r, c: 8 }
+        });
+
+        const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+        await new Promise(r => setTimeout(r, 30));
+
+        const items = [];
+        for (const r of rows) {
+          const rawData = getCol(r, 'carimbo');
+          let dataHora  = '';
+          if (rawData instanceof Date) {
+            dataHora = rawData.toLocaleDateString('pt-BR');
+          } else if (rawData) {
+            dataHora = String(rawData).trim();
+          }
+          const rawPrevisao = getCol(r, 'previsão de chegada', 'previsao de chegada', 'previsão', 'previsao');
+          let previsaoChegada = '';
+          if (rawPrevisao instanceof Date) {
+            previsaoChegada = rawPrevisao.toLocaleDateString('pt-BR');
+          } else if (rawPrevisao) {
+            previsaoChegada = String(rawPrevisao).trim();
+          }
+          const nomeProduto = String(getCol(r, 'descrição produto', 'descricao produto', 'descrição', 'descricao')).trim();
+          if (!nomeProduto) continue;
+          items.push({
+            dataHora,
+            base:          String(getCol(r, 'base')).trim(),
+            nomeVendedor:  String(getCol(r, 'nome vendedor', 'vendedor')).trim(),
+            codigoProduto: String(getCol(r, 'código produto', 'codigo produto', 'código', 'codigo')).trim(),
+            nomeProduto,
+            quantidade:    String(getCol(r, 'quantidade media', 'quantidade', 'qtd')).trim(),
+            total:         String(getCol(r, 'marca')).trim(),
+            previsaoChegada,
+          });
+        }
+
+        if (!items.length) {
+          alert('Nenhum item válido encontrado.');
+          resetStatus(); return;
+        }
+
+        // Envia em lotes de 50 para não travar
+        const LOTE = 50;
+        let uploadId = null;
+        let baseDetectada = '';
+        for (let i = 0; i < items.length; i += LOTE) {
+          const lote      = items.slice(i, i + LOTE);
+          const progresso = Math.min(i + LOTE, items.length);
+          document.getElementById('upload-status').innerHTML =
+            '<h4>⏳ Salvando ' + progresso + '/' + items.length + '...</h4><p>' + file.name + '</p>';
+          await new Promise(r => setTimeout(r, 20));
+
+          const res  = await fetch(API + '/api/compras/upload', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              items: lote,
+              nomeArquivo: file.name,
+              uploadIdExistente: uploadId
+            })
+          });
+          const data = await res.json();
+          if (!data.success) { alert('Erro: ' + (data.message || 'Erro')); resetStatus(); return; }
+          if (!uploadId) { uploadId = data.uploadId; baseDetectada = data.base || ''; }
+        }
+
+        document.getElementById('upload-status').innerHTML =
+          '<h4>✅ ' + items.length + ' itens salvos! Base: ' + (baseDetectada || '?') + '</h4><p>' + file.name + '</p>';
+        await carregarSnapshots(uploadId);
+      } catch (err) {
+        alert('Erro: ' + err.message);
+        resetStatus();
+      }
+      e.target.value = '';
+    });
+
+    function resetStatus() {
+      document.getElementById('upload-status').innerHTML =
+        '<h4>Enviar Nova Planilha para o Banco Railway</h4>' +
+        '<p>O arquivo será processado e adicionado permanentemente ao histórico do banco.</p>';
+    }
+
+    // ============================================================
+    // CARREGAR SNAPSHOTS (GET /api/compras/snapshots)
+    // ============================================================
+    async function carregarSnapshots(selecionarId) {
+      try {
+        const res = await fetch(API + '/api/compras/snapshots');
+        const data = await res.json();
+        const sel = document.getElementById('snapshot-select');
+        sel.innerHTML = '';
+        const lista = data.snapshots || [];
+        
+        lista.forEach(s => {
+          const opt = document.createElement('option');
+          opt.value = s.id;
+          opt.textContent = '#' + s.id + ' — [' + (s.base || '?') + '] ' + s.uploaddate + ' (' + s.totalitems + ' itens)';
+          sel.appendChild(opt);
+        });
+        
+        animarContador(document.getElementById('kpi-snapshots'), lista.length);
+        
+        if (selecionarId) sel.value = selecionarId;
+        if (sel.value) {
+          await carregarItens(sel.value);
+        } else {
+          itensAtuais = []; 
+          codigosAnteriores = new Set();
+          document.getElementById('kpi-total').textContent = 0;
+          document.getElementById('kpi-novos').textContent = 0;
+          document.getElementById('kpi-repetidos').textContent = 0;
+          renderTabela();
+        }
+      } catch (err) {
+        console.error('Erro ao carregar snapshots:', err);
+        alert('Erro ao carregar snapshots: ' + err.message);
+      }
+    }
+
+    // ============================================================
+    // CARREGAR ITENS (GET /api/compras/listar?uploadId=<ID>)
+    // ============================================================
+    async function carregarItens(uploadId) {
+      try {
+        uploadIdAtual = uploadId;
+        const res = await fetch(API + '/api/compras/listar?uploadId=' + uploadId);
+        const data = await res.json();
+        
+        itensAtuais = data.items || [];
+        codigosAnteriores = new Set(data.codigosAnteriores || []);
+        
+        animarContador(document.getElementById('kpi-total'), itensAtuais.length);
+        const novos = itensAtuais.filter(i => !codigosAnteriores.has(String(i.descricaoproduto).trim().toLowerCase())).length;
+        animarContador(document.getElementById('kpi-novos'), novos);
+        animarContador(document.getElementById('kpi-repetidos'), itensAtuais.length - novos);
+        
+        renderTabela();
+      } catch (err) {
+        console.error('Erro ao carregar itens:', err);
+        alert('Erro ao carregar itens: ' + err.message);
+      }
+    }
+
+    // ============================================================
+    // RENDERIZAR TABELA
+    // ============================================================
+    function renderTabela() {
+      const tbody = document.getElementById('tabela-corpo');
+      let lista = itensAtuais;
+      
+      if (filtroAtivo === 'novos')     lista = lista.filter(i => !codigosAnteriores.has(String(i.descricaoproduto).trim().toLowerCase()));
+      if (filtroAtivo === 'repetidos') lista = lista.filter(i =>  codigosAnteriores.has(String(i.descricaoproduto).trim().toLowerCase()));
+
+      if (!lista.length) {
+        tbody.innerHTML = '<tr><td colspan="9" class="no-data-row"><span class="empty-icon">🔍</span>Nenhum item encontrado para esse filtro</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = lista.map(i => {
+        const novo = !codigosAnteriores.has(String(i.descricaoproduto).trim().toLowerCase());
+        return '<tr>' +
+          '<td>' + (i.carimbodatahora || '') + '</td>' +
+          '<td>' + (i.base || '') + '</td>' +
+          '<td>' + (i.nomevendedor || '') + '</td>' +
+          '<td>' + (i.codigoproduto || '') + '</td>' +
+          '<td>' + (i.descricaoproduto || '') + '</td>' +
+          '<td>' + (i.quantidademediavenda || '') + '</td>' +
+          '<td>' + (i.marca || '') + '</td>' +
+          '<td>' + (i.previsaochegada || '') + '</td>' +
+          '<td><span class="badge-status ' + (novo ? 'novo' : 'sugestao') + '">' +
+            (novo ? 'NOVO' : 'REPETIDO') + '</span></td>' +
+          '</tr>';
+      }).join('');
+    }
+
+    // ============================================================
+    // EVENT LISTENERS
+    // ============================================================
+    document.getElementById('snapshot-select').addEventListener('change', e => {
+      if (e.target.value) {
+        carregarItens(e.target.value);
+      }
+    });
+
+    // Deletar (DELETE /api/compras/upload/<ID>)
+    document.getElementById('btn-excluir').addEventListener('click', async () => {
+      const id = document.getElementById('snapshot-select').value;
+      if (!id) { alert('Nenhuma planilha selecionada'); return; }
+      if (!confirm('Excluir esta planilha do banco? Esta ação é permanente.')) return;
+      
+      try {
+        const res = await fetch(API + '/api/compras/upload/' + id, { method: 'DELETE' });
+        const data = await res.json();
+        if (!data.success) { alert('Erro: ' + data.message); return; }
+        await carregarSnapshots();
+      } catch (err) {
+        alert('Erro ao excluir: ' + err.message);
+      }
+    });
+
+    // Exportar (GET /api/compras/exportar?uploadId=<ID>)
+    document.getElementById('btn-exportar').addEventListener('click', () => {
+      const id = document.getElementById('snapshot-select').value;
+      if (!id) { alert('Nenhuma planilha selecionada'); return; }
+      window.location.href = API + '/api/compras/exportar?uploadId=' + id;
+    });
+
+    // Filtros
+    document.querySelectorAll('.filter-btn').forEach(b => {
+      b.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(x => x.classList.remove('active'));
+        b.classList.add('active');
+        filtroAtivo = b.dataset.filter;
+        renderTabela();
+      });
+    });
+
+    // ============================================================
+    // INICIALIZAR
+    // ============================================================
+    carregarSnapshots();
+  
+function toggleSidebar() {
+  const sidebar = document.getElementById('mainSidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  const isOpen = sidebar.classList.toggle('open');
+  overlay.classList.toggle('show', isOpen);
+}
+</script>
+</body>
+</html>
