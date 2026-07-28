@@ -1,0 +1,1863 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Átomo — Top Produtos</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{--bg:#0A1628;--card:#0E2048;--sidebar:#0D2558;--accent:#1976D2;--accent2:#64B5F6;--text:#F5F5F5;--muted:#a0aec0;--border:rgba(255,255,255,0.07);--success:#00ff88;--danger:#ff4d4d;--warning:#ffaa00;}
+body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;}
+.sidebar{width:220px;background:var(--sidebar);position:fixed;top:0;left:0;height:100vh;display:flex;flex-direction:column;align-items:center;padding:24px 12px;border-right:1px solid var(--border);z-index:100;}
+.sidebar-logo{width:100px;margin-bottom:4px;filter:drop-shadow(0 2px 8px rgba(25,118,210,0.4));}
+.sidebar-title{font-size:10px;letter-spacing:3px;color:var(--muted);margin-bottom:28px;}
+.nav-section{width:100%;font-size:10px;letter-spacing:1px;color:var(--muted);text-transform:uppercase;padding:0 8px;margin-bottom:6px;}
+.nav-item{width:100%;display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--muted);transition:all 0.2s;border:1px solid transparent;text-decoration:none;margin-bottom:2px;}
+.nav-item:hover{background:rgba(25,118,210,0.1);color:var(--text);border-color:rgba(25,118,210,0.2);}
+.nav-item.active{background:rgba(25,118,210,0.2);color:#fff;border-color:var(--accent);}
+.nav-item .icon{font-size:16px;width:20px;text-align:center;}
+.sidebar-divider{width:100%;height:1px;background:var(--border);margin:16px 0;}
+.btn-logout{margin-top:auto;width:100%;padding:10px;border-radius:8px;background:rgba(255,77,77,0.1);color:var(--danger);border:1px solid rgba(255,77,77,0.2);cursor:pointer;font-size:13px;}
+.main{margin-left:220px;flex:1;padding:28px;}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;}
+.header h1{font-size:20px;font-weight:700;}
+.limite-selector{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);}
+.limite-selector select{padding:6px 12px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none;cursor:pointer;}
+.filtros-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:16px;padding:12px 16px;background:var(--card);border:1px solid var(--border);border-radius:10px;}
+.filtro-tag{background:rgba(25,118,210,0.15);border:1px solid rgba(25,118,210,0.3);border-radius:20px;padding:4px 12px;font-size:12px;color:var(--accent2);}
+.btn-alt{font-size:12px;color:var(--accent2);text-decoration:none;background:rgba(25,118,210,0.1);border:1px solid rgba(25,118,210,0.2);border-radius:6px;padding:5px 12px;margin-left:auto;white-space:nowrap;}
+
+/* BUSCA DE PRODUTOS */
+.busca-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px;}
+.busca-titulo{font-size:13px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+.busca-wrap{position:relative;display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;}
+.busca-input-wrap{position:relative;flex:1;min-width:250px;}
+.busca-input{width:100%;padding:10px 14px;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none;transition:border 0.2s;}
+.busca-input:focus{border-color:var(--accent);}
+.busca-input::placeholder{color:var(--muted);}
+.lista-sugestoes{position:absolute;top:calc(100% + 4px);left:0;right:0;background:#0E2048;border:1px solid var(--border);border-radius:8px;z-index:200;max-height:240px;overflow-y:auto;display:none;box-shadow:0 8px 24px rgba(0,0,0,0.4);}
+.sugestao-item{padding:10px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;transition:background 0.15s;border-bottom:1px solid var(--border);}
+.sugestao-item:last-child{border-bottom:none;}
+.sugestao-item:hover{background:rgba(25,118,210,0.15);}
+.sugestao-adicionado{background:rgba(0,255,136,0.05);}
+.sugestao-nome{flex:1;font-size:13px;}
+.sugestao-marca{font-size:11px;color:var(--muted);background:rgba(255,255,255,0.05);padding:2px 8px;border-radius:4px;}
+.sugestao-check{color:var(--success);font-weight:700;}
+.btn-buscar{padding:10px 20px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;transition:all 0.2s;white-space:nowrap;}
+.btn-buscar:hover{background:#1565C0;}
+.tags-produtos{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;align-items:center;min-height:28px;}
+.produto-tag{display:flex;align-items:center;gap:6px;background:rgba(0,195,255,0.12);border:1px solid rgba(0,195,255,0.3);border-radius:20px;padding:4px 10px 4px 14px;font-size:12px;color:var(--accent2);}
+.produto-tag button{background:none;border:none;color:var(--accent2);cursor:pointer;font-size:15px;line-height:1;padding:0;opacity:0.7;}
+.produto-tag button:hover{opacity:1;}
+.btn-limpar-produtos{display:none;align-items:center;gap:6px;background:rgba(255,77,77,0.1);color:var(--danger);border:1px solid rgba(255,77,77,0.2);border-radius:6px;padding:5px 12px;cursor:pointer;font-size:12px;margin-left:auto;}
+
+.drill-bar{display:none;align-items:center;gap:10px;padding:10px 16px;background:rgba(0,195,255,0.08);border:1px solid rgba(0,195,255,0.25);border-radius:10px;margin-bottom:16px;font-size:13px;flex-wrap:wrap;}
+.drill-bar.show{display:flex;}
+.drill-tag{background:rgba(0,195,255,0.15);border:1px solid rgba(0,195,255,0.3);border-radius:20px;padding:4px 12px;color:var(--accent2);font-weight:600;font-size:12px;}
+.drill-clear{margin-left:auto;background:rgba(255,77,77,0.1);color:var(--danger);border:1px solid rgba(255,77,77,0.2);border-radius:6px;padding:5px 14px;cursor:pointer;font-size:12px;}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px;}
+.kpi-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;transition:all 0.2s;position:relative;overflow:hidden;}
+.kpi-card:hover{border-color:var(--accent);transform:translateY(-2px);}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:var(--accent);border-radius:12px 0 0 12px;}
+.kpi-card.verde::before{background:var(--success);}
+.kpi-card.vermelho::before{background:var(--danger);}
+.kpi-card.amarelo::before{background:var(--warning);}
+.kpi-card.ciano::before{background:var(--accent2);}
+.kpi-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;}
+.kpi-value{font-size:16px;font-weight:700;line-height:1.3;}
+.kpi-sub{font-size:10px;color:var(--muted);margin-top:4px;}
+.kpi-icon{position:absolute;top:12px;right:10px;font-size:16px;opacity:0.15;}
+.charts-row{display:grid;gap:16px;margin-bottom:16px;}
+.charts-row.col-2{grid-template-columns:1fr 1fr;}
+.charts-row.col-3{grid-template-columns:2fr 1fr;}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;}
+.chart-title{font-size:13px;font-weight:600;margin-bottom:4px;}
+.chart-subtitle{font-size:11px;color:var(--muted);margin-bottom:14px;}
+canvas{max-height:300px;cursor:pointer;}
+.table-wrap{overflow-x:auto;max-height:500px;overflow-y:auto;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{color:var(--muted);font-weight:500;text-align:left;padding:8px 12px;border-bottom:1px solid var(--border);font-size:11px;text-transform:uppercase;letter-spacing:1px;position:sticky;top:0;background:var(--card);}
+td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,0.04);vertical-align:middle;}
+tr:hover td{background:rgba(255,255,255,0.02);}
+.rank{color:var(--accent2);font-weight:700;width:40px;font-size:16px;}
+.progress-bar{background:rgba(255,255,255,0.08);border-radius:4px;height:4px;margin-top:4px;}
+.progress-fill{background:var(--accent);border-radius:4px;height:4px;transition:width 0.8s;}
+.nota{font-size:11px;color:var(--muted);padding:8px 12px;background:rgba(255,170,0,0.05);border:1px solid rgba(255,170,0,0.15);border-radius:6px;margin-bottom:16px;}
+@media(max-width:900px){.charts-row.col-2,.charts-row.col-3{grid-template-columns:1fr;}}
+
+@keyframes ringRotate{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+@keyframes logoFloat{0%,100%{transform:scale(1) translateY(0);filter:drop-shadow(0 0 15px rgba(25,118,210,0.8)) drop-shadow(0 0 40px rgba(0,195,255,0.4));}25%{transform:scale(1.06) translateY(-4px);filter:drop-shadow(0 0 30px rgba(0,195,255,1)) drop-shadow(0 0 60px rgba(0,195,255,0.6));}50%{transform:scale(0.97) translateY(2px);filter:drop-shadow(0 0 10px rgba(25,118,210,0.5));}75%{transform:scale(1.04) translateY(-2px);filter:drop-shadow(0 0 25px rgba(0,255,200,0.8));}}
+@keyframes glowPulse{0%,100%{transform:scale(1);opacity:0.6;}50%{transform:scale(1.8);opacity:0.2;}}
+@keyframes textGlow{0%,100%{text-shadow:0 0 10px rgba(25,118,210,0.8),0 0 20px rgba(25,118,210,0.4);}50%{text-shadow:0 0 20px rgba(0,195,255,1),0 0 40px rgba(0,195,255,0.6);}}
+@keyframes subFade{0%,100%{opacity:0.4;}50%{opacity:1;}}
+@keyframes beamSlide{0%{transform:translateX(-100%);}100%{transform:translateX(400%);}}
+.loading-global{display:none;position:fixed;inset:0;background:radial-gradient(ellipse at center,#010d1f 0%,#000508 100%);z-index:9999;align-items:center;justify-content:center;}
+.loading-global.show{display:flex;}
+.loading-scene{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;width:320px;height:320px;}
+.lo-ring{position:absolute;border-radius:50%;border:1px solid transparent;animation:ringRotate linear infinite;}
+.lo-ring-1{width:260px;height:260px;border-top-color:#1565C0;border-right-color:rgba(25,118,210,0.3);animation-duration:3s;box-shadow:0 0 20px rgba(25,118,210,0.3);}
+.lo-ring-2{width:210px;height:210px;border-bottom-color:#00c3ff;border-left-color:rgba(0,195,255,0.3);animation-duration:2s;animation-direction:reverse;box-shadow:0 0 15px rgba(0,195,255,0.3);}
+.lo-ring-3{width:160px;height:160px;border-top-color:rgba(0,255,200,0.6);animation-duration:1.5s;}
+.lo-logo-wrap{position:relative;z-index:10;display:flex;align-items:center;justify-content:center;}
+.lo-logo{width:100px;z-index:2;animation:logoFloat 3s ease-in-out infinite;}
+.lo-glow{position:absolute;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,rgba(0,195,255,0.15) 0%,transparent 70%);animation:glowPulse 2s ease-in-out infinite;z-index:1;}
+.lo-particles{position:absolute;inset:0;pointer-events:none;}
+.lo-text{position:absolute;bottom:-60px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:6px;white-space:nowrap;}
+.lo-title{font-size:18px;font-weight:800;letter-spacing:8px;color:#fff;animation:textGlow 2s ease-in-out infinite;}
+.lo-sub{font-size:9px;letter-spacing:4px;color:#00c3ff;opacity:0.7;animation:subFade 2s ease-in-out infinite;}
+.lo-track{width:160px;height:2px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden;margin-top:4px;}
+.lo-beam{height:100%;width:30%;border-radius:2px;background:linear-gradient(90deg,transparent,#00c3ff,#1565C0,transparent);animation:beamSlide 1.5s ease-in-out infinite;}
+
+
+/* ═══ ÁTOMO — Loading Screen ═══ */
+.loading-overlay,.loading-global{
+  display:none;position:fixed;inset:0;z-index:9999;
+  align-items:center;justify-content:center;flex-direction:column;gap:28px;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 0%,   rgba(25,118,210,0.18) 0%,transparent 55%),
+    radial-gradient(ellipse 60% 50% at -10% 60%,  rgba(33,150,243,0.14) 0%,transparent 50%),
+    radial-gradient(ellipse 60% 50% at 110% 60%,  rgba(0,200,255,0.12) 0%,transparent 50%),
+    radial-gradient(ellipse 80% 40% at 50% 110%,  rgba(13,71,161,0.18) 0%,transparent 55%),
+    #0A1628;
+}
+.loading-overlay.show,.loading-global.show{display:flex;}
+.lo-particles{
+  position:absolute;inset:0;pointer-events:none;
+  background-image:
+    radial-gradient(circle 1px at 8% 12%,rgba(255,255,255,0.9) 0%,transparent 100%),
+    radial-gradient(circle 1.5px at 20% 5%,rgba(100,181,246,0.8) 0%,transparent 100%),
+    radial-gradient(circle 1px at 33% 18%,rgba(255,255,255,0.7) 0%,transparent 100%),
+    radial-gradient(circle 1px at 48% 8%,rgba(0,220,255,0.8) 0%,transparent 100%),
+    radial-gradient(circle 1.5px at 62% 15%,rgba(255,255,255,0.6) 0%,transparent 100%),
+    radial-gradient(circle 1px at 75% 6%,rgba(21,101,192,0.8) 0%,transparent 100%),
+    radial-gradient(circle 1px at 88% 20%,rgba(255,255,255,0.7) 0%,transparent 100%),
+    radial-gradient(circle 1px at 5% 45%,rgba(255,255,255,0.6) 0%,transparent 100%),
+    radial-gradient(circle 1.5px at 15% 60%,rgba(66,165,245,0.7) 0%,transparent 100%),
+    radial-gradient(circle 1px at 42% 55%,rgba(0,200,255,0.7) 0%,transparent 100%),
+    radial-gradient(circle 1.5px at 58% 68%,rgba(255,255,255,0.8) 0%,transparent 100%),
+    radial-gradient(circle 1px at 72% 50%,rgba(21,101,192,0.6) 0%,transparent 100%),
+    radial-gradient(circle 1px at 90% 48%,rgba(0,255,180,0.6) 0%,transparent 100%),
+    radial-gradient(circle 1.5px at 35% 90%,rgba(100,181,246,0.7) 0%,transparent 100%),
+    radial-gradient(circle 1px at 80% 88%,rgba(0,200,255,0.6) 0%,transparent 100%);
+}
+.loading-scene{position:relative;width:320px;height:320px;display:flex;align-items:center;justify-content:center;}
+.lo-atom-svg{position:absolute;top:0;left:0;width:320px;height:320px;overflow:visible;}
+.lo-nucleus-circle{animation:nucleusPulse 2.5s ease-in-out infinite;transform-origin:160px 160px;}
+@keyframes nucleusPulse{
+  0%,100%{filter:drop-shadow(0 0 8px rgba(25,118,210,1)) drop-shadow(0 0 20px rgba(66,165,245,0.6));}
+  50%{filter:drop-shadow(0 0 16px rgba(25,118,210,1)) drop-shadow(0 0 40px rgba(66,165,245,0.8));}
+}
+.lo-group-1{animation:groupSpin1 3s linear infinite;transform-origin:160px 160px;}
+.lo-group-2{animation:groupSpin2 5s linear infinite;transform-origin:160px 160px;}
+.lo-group-3{animation:groupSpin3 7s linear infinite;transform-origin:160px 160px;}
+@keyframes groupSpin1{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+@keyframes groupSpin2{from{transform:rotate(60deg);}to{transform:rotate(420deg);}}
+@keyframes groupSpin3{from{transform:rotate(120deg);}to{transform:rotate(480deg);}}
+.lo-electron{animation:electronPulse 1.5s ease-in-out infinite;}
+.lo-electron-1{animation-delay:0s;}
+.lo-electron-2{animation-delay:0.5s;}
+.lo-electron-3{animation-delay:1s;}
+@keyframes electronPulse{0%,100%{opacity:1;}50%{opacity:0.6;}}
+.lo-text{display:flex;flex-direction:column;align-items:center;gap:8px;z-index:10;}
+.lo-title{
+  font-family:'Space Grotesk',sans-serif !important;
+  font-size:24px;font-weight:700;letter-spacing:8px;text-transform:uppercase;
+  background:linear-gradient(135deg,#BBDEFB 0%,#64B5F6 35%,#1976D2 65%,#00C8FF 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  background-size:200% auto;animation:titleShimmer 3s linear infinite;
+}
+@keyframes titleShimmer{0%{background-position:0% center;}100%{background-position:200% center;}}
+.lo-sub{font-size:11px;letter-spacing:5px;color:rgba(25,118,210,0.8);text-transform:uppercase;text-shadow:0 0 10px rgba(25,118,210,0.5);}
+.lo-progress{width:200px;height:2px;background:rgba(25,118,210,0.1);border-radius:2px;overflow:hidden;position:relative;}
+.lo-progress-bar{position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,#1976D2,#42A5F5,#00C8FF,transparent);animation:progressSlide 2s linear infinite;box-shadow:0 0 10px rgba(25,118,210,0.8);}
+@keyframes progressSlide{0%{left:-100%;}100%{left:100%;}}
+
+/* ═══════════════════════════════════════════════════
+   ÁTOMO — Galáxia Vibrante · Feito de estrelas.
+═══════════════════════════════════════════════════ */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+body,*{font-family:'DM Sans',system-ui,sans-serif !important;}
+h1,h2,h3,.page-title,.sidebar-title,.lo-title{font-family:'Space Grotesk',system-ui,sans-serif !important;}
+
+body{
+  background-color:#0A1628 !important;
+  background-image:
+    radial-gradient(ellipse 65% 45% at -5% 15%,rgba(33,150,243,0.22) 0%,rgba(25,118,210,0.12) 35%,transparent 65%),
+    radial-gradient(ellipse 55% 55% at 105% 35%,rgba(0,220,255,0.20) 0%,rgba(0,150,220,0.10) 40%,transparent 65%),
+    radial-gradient(ellipse 80% 45% at 50% 105%,rgba(13,71,161,0.25) 0%,rgba(13,71,161,0.12) 40%,transparent 60%),
+    radial-gradient(ellipse 70% 35% at 50% -8%,rgba(13,71,161,0.20) 0%,rgba(13,71,161,0.10) 40%,transparent 60%),
+    #0A1628 !important;
+}
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:
+    radial-gradient(circle 1px at 5% 8%,#fff 0%,transparent 100%),
+    radial-gradient(circle 1px at 12% 22%,#fff 0%,transparent 100%),
+    radial-gradient(circle 2px at 18% 5%,#fff 0%,transparent 100%),
+    radial-gradient(circle 1px at 25% 35%,#fff 0%,transparent 100%),
+    radial-gradient(circle 1px at 32% 14%,#fff 0%,transparent 100%),
+    radial-gradient(circle 2px at 38% 28%,#fff 0%,transparent 100%),
+    radial-gradient(circle 1px at 44% 8%,#fff 0%,transparent 100%),
+    radial-gradient(circle 1px at 50% 42%,#fff 0%,transparent 100%),
+    radial-gradient(circle 2px at 57% 18%,#fff 0%,transparent 100%),
+    radial-gradient(circle 1px at 63% 5%,#fff 0%,transparent 100%),
+    radial-gradient(circle 1px at 70% 32%,#fff 0%,transparent 100%),
+    radial-gradient(circle 2px at 76% 12%,#fff 0%,transparent 100%),
+    radial-gradient(circle 1px at 82% 25%,#fff 0%,transparent 100%),
+    radial-gradient(circle 2px at 88% 8%,#fff 0%,transparent 100%),
+    radial-gradient(circle 1px at 94% 20%,#fff 0%,transparent 100%),
+    radial-gradient(circle 1px at 8% 55%,#fff 0%,transparent 100%),
+    radial-gradient(circle 1px at 22% 68%,#fff 0%,transparent 100%),
+    radial-gradient(circle 2px at 35% 58%,#fff 0%,transparent 100%),
+    radial-gradient(circle 1px at 48% 72%,#fff 0%,transparent 100%),
+    radial-gradient(circle 1px at 62% 55%,#fff 0%,transparent 100%),
+    radial-gradient(circle 2px at 75% 68%,#fff 0%,transparent 100%),
+    radial-gradient(circle 1px at 88% 58%,#fff 0%,transparent 100%),
+    radial-gradient(circle 1px at 15% 85%,#fff 0%,transparent 100%),
+    radial-gradient(circle 2px at 40% 92%,#fff 0%,transparent 100%),
+    radial-gradient(circle 1px at 65% 88%,#fff 0%,transparent 100%),
+    radial-gradient(circle 1px at 90% 82%,#fff 0%,transparent 100%),
+    radial-gradient(circle 2.5px at 20% 30%,rgba(0,220,255,0.95) 0%,transparent 100%),
+    radial-gradient(circle 2.5px at 75% 20%,rgba(66,165,245,0.95) 0%,transparent 100%),
+    radial-gradient(circle 2px at 50% 60%,rgba(21,101,192,0.9) 0%,transparent 100%),
+    radial-gradient(circle 2.5px at 30% 75%,rgba(0,255,180,0.9) 0%,transparent 100%),
+    radial-gradient(circle 2px at 85% 50%,rgba(255,140,0,0.85) 0%,transparent 100%),
+    radial-gradient(circle 3px at 45% 15%,rgba(66,165,245,0.7) 0%,transparent 100%),
+    radial-gradient(circle 2px at 92% 70%,rgba(0,220,255,0.85) 0%,transparent 100%);
+}
+
+/* Sidebar */
+.sidebar{background:linear-gradient(180deg,rgba(10,26,75,0.95),rgba(8,18,60,0.98) 40%,rgba(0,5,40,1)) !important;border-right:1px solid rgba(25,118,210,0.25) !important;box-shadow:4px 0 40px rgba(0,0,0,0.8),inset -1px 0 0 rgba(66,165,245,0.1) !important;}
+.nav-item{color:rgba(144,202,249,0.6) !important;transition:all 0.2s !important;}
+.nav-item:hover{color:#90CAF9 !important;background:rgba(21,101,192,0.1) !important;text-shadow:0 0 12px rgba(21,101,192,0.5) !important;}
+.nav-item.active{background:linear-gradient(90deg,rgba(21,101,192,0.2),rgba(66,165,245,0.1)) !important;color:#BBDEFB !important;border-left:2px solid #1976D2 !important;text-shadow:0 0 16px rgba(21,101,192,0.6) !important;}
+.sidebar-title{letter-spacing:4px !important;background:linear-gradient(135deg,#BBDEFB,#64B5F6,#1976D2) !important;-webkit-background-clip:text !important;-webkit-text-fill-color:transparent !important;background-clip:text !important;}
+
+/* Cards */
+.card,.kpi-card,.chart-card,.filter-card,.upload-card,.table-wrap,.modal-box,.busca-card{
+  background:linear-gradient(135deg,rgba(14,32,72,0.92),rgba(10,22,58,0.95) 50%,rgba(5,0,30,0.97)) !important;
+  border:1px solid rgba(25,118,210,0.2) !important;border-radius:16px !important;
+  box-shadow:0 4px 30px rgba(0,0,0,0.6),inset 0 1px 0 rgba(255,255,255,0.04) !important;
+  backdrop-filter:blur(12px) !important;
+}
+
+/* KPI — NÃO força font-size */
+.kpi-card::before{background:linear-gradient(180deg,#1976D2,#64B5F6) !important;}
+.kpi-card.critico::before,.kpi-card.vermelho::before{background:linear-gradient(180deg,#FF2060,#FF6040) !important;}
+.kpi-card.atencao::before,.kpi-card.amarelo::before{background:linear-gradient(180deg,#FF8C00,#FFB040) !important;}
+.kpi-card.ok::before,.kpi-card.verde::before{background:linear-gradient(180deg,#00FFB0,#00D4FF) !important;}
+.kpi-card.ciano::before{background:linear-gradient(180deg,#00C8FF,#00FFB0) !important;}
+.kpi-card.sl::before{background:linear-gradient(180deg,#1976D2,#1565C0) !important;}
+.kpi-value{
+  color:#BBDEFB !important;
+  text-shadow:0 0 20px rgba(21,101,192,0.3) !important;
+  word-break:normal !important;white-space:nowrap !important;
+  overflow:hidden !important;text-overflow:ellipsis !important;
+}
+.kpi-label{color:rgba(144,202,249,0.6) !important;font-weight:700 !important;text-transform:uppercase !important;letter-spacing:.1em !important;}
+.kpi-sub{color:rgba(144,202,249,0.5) !important;}
+
+/* Badges */
+.badge{border-radius:8px !important;font-weight:700 !important;}
+.badge-critico{background:rgba(255,32,96,0.18) !important;color:#FF80A8 !important;border:1px solid rgba(255,32,96,0.45) !important;box-shadow:0 0 12px rgba(255,32,96,0.2) !important;text-shadow:0 0 8px rgba(255,60,120,0.6) !important;}
+.badge-atencao{background:rgba(255,140,0,0.18) !important;color:#FFB060 !important;border:1px solid rgba(255,140,0,0.45) !important;}
+.badge-ok{background:rgba(0,255,176,0.15) !important;color:#40FFD0 !important;border:1px solid rgba(0,255,176,0.4) !important;box-shadow:0 0 12px rgba(0,255,176,0.2) !important;text-shadow:0 0 8px rgba(0,255,176,0.5) !important;}
+.badge-sl{background:rgba(25,118,210,0.2) !important;color:#E080FF !important;border:1px solid rgba(25,118,210,0.5) !important;box-shadow:0 0 14px rgba(25,118,210,0.3) !important;text-shadow:0 0 10px rgba(25,118,210,0.7) !important;}
+
+/* Botões */
+.btn-primary,.btn-save,.btn-buscar{background:linear-gradient(135deg,#1565C0,#1976D2,#64B5F6) !important;border:none !important;box-shadow:0 4px 20px rgba(25,118,210,0.5) !important;color:#fff !important;font-weight:700 !important;transition:all 0.2s !important;}
+.btn-primary:hover,.btn-save:hover,.btn-buscar:hover{transform:translateY(-2px) !important;box-shadow:0 8px 30px rgba(25,118,210,0.7) !important;}
+.btn-logout{background:rgba(255,32,96,0.12) !important;color:#FF80A8 !important;border:1px solid rgba(255,32,96,0.25) !important;}
+
+/* Tabela */
+table thead th{background:rgba(8,18,50,0.95) !important;color:#9060CC !important;font-weight:700 !important;letter-spacing:.1em !important;font-size:10px !important;border-bottom:1px solid rgba(25,118,210,0.2) !important;}
+table tbody tr:hover{background:rgba(25,118,210,0.07) !important;}
+table tbody td{border-bottom:1px solid rgba(255,255,255,0.03) !important;color:#D0C0F0 !important;}
+
+/* Inputs */
+input,select,textarea,.td-input,.td-date,.td-select,.td-textarea,.busca-input{
+  background:rgba(10,22,58,0.9) !important;border:1px solid rgba(25,118,210,0.25) !important;
+  color:#E8D8FF !important;border-radius:8px !important;transition:all 0.2s !important;
+}
+input::placeholder,.busca-input::placeholder{color:rgba(144,202,249,0.4) !important;}
+input:focus,select:focus,textarea:focus,.td-input:focus,.td-date:focus,.td-select:focus,.busca-input:focus{
+  border-color:#1976D2 !important;box-shadow:0 0 0 3px rgba(25,118,210,0.2),0 0 15px rgba(25,118,210,0.2) !important;outline:none !important;
+}
+
+/* Filtros */
+.filtro-btn,.acao-filtro-btn{background:rgba(25,118,210,0.08) !important;border:1px solid rgba(25,118,210,0.25) !important;color:rgba(180,130,255,0.8) !important;border-radius:10px !important;}
+.filtro-btn:hover,.acao-filtro-btn:hover{border-color:#1976D2 !important;background:rgba(25,118,210,0.18) !important;color:#E8D8FF !important;box-shadow:0 0 15px rgba(25,118,210,0.2) !important;}
+.filtro-btn.ativo,.acao-filtro-btn.tem-filtro{background:rgba(25,118,210,0.22) !important;border-color:#1976D2 !important;color:#F0D8FF !important;box-shadow:0 0 20px rgba(25,118,210,0.3) !important;}
+
+/* Tags busca */
+.lista-sugestoes{background:linear-gradient(135deg,rgba(12,26,65,0.98),rgba(8,16,50,0.99)) !important;border:1px solid rgba(25,118,210,0.3) !important;border-radius:10px !important;box-shadow:0 8px 32px rgba(0,0,0,0.7) !important;}
+.sugestao-item:hover{background:rgba(25,118,210,0.12) !important;}
+.produto-tag{background:rgba(0,200,255,0.1) !important;border:1px solid rgba(0,200,255,0.3) !important;color:#60E8FF !important;border-radius:20px !important;}
+.filtro-tag{background:rgba(25,118,210,0.1) !important;border:1px solid rgba(25,118,210,0.3) !important;color:#C8B8FF !important;}
+.drill-bar{background:rgba(0,200,255,0.06) !important;border:1px solid rgba(0,200,255,0.2) !important;}
+.drill-tag{background:rgba(0,200,255,0.1) !important;border:1px solid rgba(0,200,255,0.3) !important;color:#60E8FF !important;}
+
+/* Dias vencimento */
+.dias-critico{color:#FF5090 !important;font-weight:800 !important;text-shadow:0 0 10px rgba(255,32,96,0.6) !important;}
+.dias-atencao{color:#FFB060 !important;font-weight:700 !important;text-shadow:0 0 8px rgba(255,140,0,0.5) !important;}
+.dias-ok{color:#40FFD0 !important;font-weight:600 !important;text-shadow:0 0 8px rgba(0,255,176,0.5) !important;}
+
+/* Tags comparação */
+.tag-novo{background:rgba(255,32,96,0.2) !important;color:#FF80B0 !important;border:1px solid rgba(255,32,96,0.5) !important;border-radius:6px !important;text-shadow:0 0 8px rgba(255,60,120,0.5) !important;}
+.tag-aumentou{background:rgba(0,200,255,0.15) !important;color:#60E8FF !important;border:1px solid rgba(0,200,255,0.4) !important;border-radius:6px !important;}
+.tag-reduziu{background:rgba(0,255,176,0.12) !important;color:#40FFD0 !important;border:1px solid rgba(0,255,176,0.35) !important;border-radius:6px !important;}
+.tag-anterior{background:rgba(30,90,165,0.12) !important;color:rgba(144,202,249,0.6) !important;border:1px solid rgba(30,90,165,0.25) !important;border-radius:6px !important;}
+
+/* Row states */
+.row-novo{background:rgba(255,32,96,0.08) !important;border-left:3px solid #FF2060 !important;box-shadow:inset 3px 0 12px rgba(255,32,96,0.1) !important;}
+.row-sl-novo{background:rgba(25,118,210,0.08) !important;border-left:3px solid #1976D2 !important;box-shadow:inset 3px 0 12px rgba(25,118,210,0.12) !important;}
+.row-aumentou{background:rgba(0,200,255,0.05) !important;}
+.row-reduziu{background:rgba(0,255,176,0.04) !important;}
+
+/* Upload */
+.upload-card{border:1px dashed rgba(25,118,210,0.35) !important;background:rgba(14,32,72,0.4) !important;}
+.upload-card:hover{border-color:#1976D2 !important;box-shadow:0 0 30px rgba(25,118,210,0.2) !important;}
+
+/* Dropdowns */
+.acao-dropdown,.vend-dropdown,[class*="dropdown"]{background:linear-gradient(135deg,rgba(14,32,72,0.98),rgba(10,22,58,0.99)) !important;border:1px solid rgba(25,118,210,0.3) !important;border-radius:12px !important;box-shadow:0 12px 40px rgba(0,0,0,0.8) !important;}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:#0A1628;}
+::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#1565C0,#1976D2);border-radius:3px;box-shadow:0 0 6px rgba(25,118,210,0.5);}
+
+/* Textos */
+h1,h2,.page-title{color:#BBDEFB !important;text-shadow:0 0 20px rgba(25,118,210,0.2) !important;}
+body,p,span,div,td,th,li,label{color:#D0C0F0;}
+.muted,[class*="muted"]{color:rgba(144,202,249,0.55) !important;}
+
+/* Logo glow */
+.sidebar-logo,.sidebar svg{
+  filter:drop-shadow(0 0 8px rgba(25,118,210,0.6)) drop-shadow(0 0 16px rgba(66,165,245,0.3)) !important;
+  animation:logoGlow 3s ease-in-out infinite !important;
+}
+@keyframes logoGlow{
+  0%,100%{filter:drop-shadow(0 0 6px rgba(25,118,210,0.5)) drop-shadow(0 0 12px rgba(66,165,245,0.25));}
+  50%{filter:drop-shadow(0 0 14px rgba(25,118,210,0.9)) drop-shadow(0 0 28px rgba(66,165,245,0.5));}
+}
+
+
+/* HAMBURGER + MOBILE */
+.hamburger{display:none;position:fixed;top:14px;left:14px;z-index:200;background:rgba(25,118,210,0.18);border:1px solid rgba(25,118,210,0.35);border-radius:8px;width:40px;height:40px;align-items:center;justify-content:center;cursor:pointer;flex-direction:column;gap:5px;padding:8px;}
+.hamburger span{width:100%;height:2px;background:#64B5F6;border-radius:2px;transition:all 0.3s;}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:99;backdrop-filter:blur(2px);}
+.sidebar-overlay.show{display:block;}
+.breadcrumb{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);margin-bottom:12px;}
+.breadcrumb a{color:var(--muted);text-decoration:none;transition:color 0.2s;}
+.breadcrumb a:hover{color:var(--accent2);}
+.breadcrumb span{color:var(--accent2);font-weight:600;}
+.breadcrumb-sep{opacity:0.4;}
+.dashboard-footer{margin-top:48px;padding:20px 0 8px;text-align:center;font-size:11px;color:var(--muted);border-top:1px solid var(--border);letter-spacing:0.5px;}
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%);transition:transform 0.3s ease;z-index:150;}
+  .sidebar.open{transform:translateX(0);}
+  .main{margin-left:0 !important;padding:20px 14px 14px !important;}
+  .hamburger{display:flex;}
+  .header{margin-top:52px;flex-direction:column;gap:8px;}
+  .filtros-bar{flex-direction:column;align-items:flex-start;}
+  .btn-exportar,.btn-alt{width:100%;text-align:center;justify-content:center;}
+  .busca-card{padding:14px !important;}
+}
+@media(max-width:480px){
+  .main{padding:16px 10px !important;}
+  .header{margin-top:56px;}
+}
+/* ══ VALTER — Popup Central Futurista ══ */
+.ia-fab{position:fixed;bottom:28px;right:28px;width:58px;height:58px;border-radius:50%;background:linear-gradient(135deg,#015FB8,#0096FF);color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 0 rgba(0,150,255,0.4),0 4px 24px rgba(1,95,184,0.5);z-index:900;transition:transform 0.25s cubic-bezier(0.34,1.56,0.64,1);overflow:hidden;}
+.ia-fab:hover{transform:scale(1.12);box-shadow:0 0 0 8px rgba(0,150,255,0.15),0 8px 32px rgba(1,95,184,0.7);}
+.ia-fab.ia-pulsing{animation:ia-pulse 2s infinite;}
+.ia-fab.ia-thinking{animation:ia-spin 1s linear infinite;}
+@keyframes ia-pulse{0%,100%{box-shadow:0 0 0 0 rgba(0,150,255,0.4),0 4px 24px rgba(1,95,184,0.5);}50%{box-shadow:0 0 0 12px rgba(245,168,0,0.15),0 4px 32px rgba(245,168,0,0.6);}}
+@keyframes ia-spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+.ia-badge{position:absolute;top:-4px;right:-4px;background:#F5A800;color:#000;font-size:10px;font-weight:800;padding:2px 6px;border-radius:10px;min-width:18px;text-align:center;display:none;z-index:1;}
+
+/* Overlay */
+.ia-overlay{display:none;position:fixed;inset:0;background:rgba(0,5,20,0.75);z-index:950;align-items:center;justify-content:center;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
+.ia-overlay.open{display:flex;}
+
+/* Painel central */
+.ia-panel{
+  position:relative;
+  background:linear-gradient(160deg,#0a1628 0%,#071020 60%,#040c18 100%);
+  border:1px solid rgba(0,150,255,0.3);
+  border-radius:24px;
+  width:560px;max-width:96vw;height:720px;max-height:93vh;
+  display:flex;flex-direction:column;
+  box-shadow:0 0 0 1px rgba(0,150,255,0.1),0 40px 100px rgba(0,0,0,0.9),0 0 60px rgba(0,100,255,0.06);
+  transform:scale(0.88) translateY(32px);opacity:0;
+  transition:transform 0.35s cubic-bezier(0.34,1.4,0.64,1),opacity 0.25s ease;
+  overflow:hidden;
+}
+.ia-panel::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 30% at 50% 0%,rgba(0,120,255,0.12),transparent 60%);pointer-events:none;border-radius:24px;}
+.ia-overlay.open .ia-panel{transform:scale(1) translateY(0);opacity:1;}
+
+/* Header */
+.ia-header{padding:20px 22px 16px;background:linear-gradient(135deg,rgba(0,100,255,0.12),rgba(0,150,255,0.06));border-bottom:1px solid rgba(0,150,255,0.12);border-radius:24px 24px 0 0;display:flex;align-items:center;gap:14px;flex-shrink:0;position:relative;}
+.ia-header::after{content:'';position:absolute;bottom:0;left:22px;right:22px;height:1px;background:linear-gradient(90deg,transparent,rgba(0,150,255,0.4),transparent);}
+.ia-avatar{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#013a8c,#0096FF);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 0 20px rgba(0,150,255,0.5),0 0 0 2px rgba(0,150,255,0.2);}
+.ia-avatar.thinking{animation:ia-avatar-pulse 1.2s ease-in-out infinite;}
+@keyframes ia-avatar-pulse{0%,100%{box-shadow:0 0 16px rgba(0,150,255,0.4),0 0 0 2px rgba(0,150,255,0.2);}50%{box-shadow:0 0 32px rgba(0,200,255,0.8),0 0 0 4px rgba(0,200,255,0.3);}}
+.ia-header-info{flex:1;}
+.ia-header-name{font-size:15px;font-weight:700;color:#E8F4FF;letter-spacing:0.3px;}
+.ia-header-status{font-size:11px;color:#4a7fa8;margin-top:3px;display:flex;align-items:center;gap:5px;}
+.ia-status-dot{width:6px;height:6px;border-radius:50%;background:#00ff88;flex-shrink:0;box-shadow:0 0 8px rgba(0,255,136,0.8);}
+.ia-header-actions{display:flex;gap:6px;}
+.ia-header-btn{background:rgba(0,150,255,0.06);border:1px solid rgba(0,150,255,0.15);color:#4a7fa8;cursor:pointer;width:32px;height:32px;border-radius:10px;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all 0.2s;}
+.ia-header-btn:hover{background:rgba(0,150,255,0.15);border-color:rgba(0,150,255,0.4);color:#E8F4FF;}
+
+/* Mensagens */
+.ia-messages{flex:1;overflow-y:auto;padding:16px 18px;display:flex;flex-direction:column;gap:16px;scroll-behavior:smooth;}
+.ia-messages::-webkit-scrollbar{width:4px;}
+.ia-messages::-webkit-scrollbar-thumb{background:rgba(0,150,255,0.3);border-radius:4px;}
+.ia-msg{max-width:92%;display:flex;flex-direction:column;gap:5px;}
+.ia-msg.bot{align-self:flex-start;}
+.ia-msg.user{align-self:flex-end;}
+.ia-msg-bubble{padding:13px 17px;border-radius:18px;font-size:14px;line-height:1.75;letter-spacing:0.1px;}
+.ia-msg.bot .ia-msg-bubble{
+  background:#0f1e3d;
+  border:1px solid rgba(60,130,255,0.25);
+  color:#ddeeff;
+  border-radius:4px 18px 18px 18px;
+  box-shadow:0 2px 16px rgba(0,0,0,0.4);
+}
+.ia-msg.user .ia-msg-bubble{
+  background:linear-gradient(135deg,#0d47a1,#1565c0);
+  color:#ffffff;
+  border-radius:18px 4px 18px 18px;
+  box-shadow:0 4px 16px rgba(0,100,255,0.35);
+}
+.ia-msg.bot .ia-msg-bubble strong{color:#82cfff;font-weight:700;}
+.ia-msg.bot .ia-msg-bubble ul{margin:10px 0 6px 18px;}
+.ia-msg.bot .ia-msg-bubble li{margin-bottom:6px;color:#ddeeff;line-height:1.6;}
+.ia-msg.bot .ia-msg-bubble p{margin-bottom:8px;}
+.ia-msg.bot .ia-msg-bubble p:last-child{margin-bottom:0;}
+.ia-msg-feedback{display:flex;gap:6px;padding:0 4px;opacity:0;transition:opacity 0.2s;}
+.ia-msg:hover .ia-msg-feedback{opacity:1;}
+.ia-feedback-btn{background:none;border:none;cursor:pointer;font-size:12px;padding:2px 6px;border-radius:6px;color:#2a4a6a;transition:all 0.15s;}
+.ia-feedback-btn:hover{background:rgba(0,100,255,0.1);color:#60B4FF;}
+.ia-feedback-btn.active{color:#F5A800;}
+
+/* Typing */
+.ia-typing{align-self:flex-start;background:rgba(0,30,70,0.8);border:1px solid rgba(0,100,255,0.15);border-radius:4px 18px 18px 18px;padding:14px 18px;display:flex;gap:6px;align-items:center;}
+.ia-typing span{width:7px;height:7px;border-radius:50%;background:rgba(0,150,255,0.4);animation:ia-bounce 1.4s infinite;}
+.ia-typing span:nth-child(2){animation-delay:0.2s;}
+.ia-typing span:nth-child(3){animation-delay:0.4s;}
+@keyframes ia-bounce{0%,60%,100%{transform:translateY(0);background:rgba(0,150,255,0.4);}30%{transform:translateY(-7px);background:#0096FF;}}
+
+/* Menu de modo */
+.ia-mode-menu{padding:16px;display:flex;flex-direction:column;gap:10px;border-top:1px solid rgba(0,100,255,0.1);flex-shrink:0;}
+.ia-mode-btn{padding:16px 18px;border-radius:16px;border:1px solid rgba(0,100,255,0.15);background:rgba(0,20,50,0.5);color:#C8DFF5;cursor:pointer;text-align:left;transition:all 0.25s;display:flex;align-items:center;gap:16px;}
+.ia-mode-btn:hover{background:rgba(0,80,200,0.2);border-color:rgba(0,150,255,0.4);transform:translateX(4px);box-shadow:0 4px 20px rgba(0,100,255,0.2);}
+.ia-mode-icon{font-size:24px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;border-radius:12px;flex-shrink:0;}
+.ia-mode-btn:nth-child(1) .ia-mode-icon{background:rgba(245,168,0,0.1);border:1px solid rgba(245,168,0,0.2);}
+.ia-mode-btn:nth-child(2) .ia-mode-icon{background:rgba(0,100,255,0.12);border:1px solid rgba(0,150,255,0.2);}
+.ia-mode-label{font-weight:700;font-size:14px;color:#E8F4FF;margin-bottom:3px;}
+.ia-mode-desc{font-size:11px;color:#4a7fa8;}
+.ia-mode-arrow{margin-left:auto;color:#1a3a5c;font-size:18px;}
+.ia-mode-btn:hover .ia-mode-arrow{color:#60B4FF;}
+
+/* Quick bar */
+.ia-quick-bar{padding:11px 16px;display:flex;flex-wrap:wrap;gap:8px;border-top:1px solid rgba(0,100,255,0.1);flex-shrink:0;}
+.ia-quick{padding:7px 15px;border-radius:20px;border:1px solid rgba(0,150,255,0.3);background:rgba(0,50,120,0.2);color:#7ec8ff;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;white-space:nowrap;}
+.ia-quick:hover{background:rgba(0,100,200,0.3);border-color:rgba(0,200,255,0.6);color:#fff;box-shadow:0 0 14px rgba(0,150,255,0.25);}
+.ia-back-btn{padding:7px 15px;border-radius:20px;border:1px solid rgba(255,255,255,0.08);background:transparent;color:#2a4a6a;font-size:12px;cursor:pointer;transition:all 0.15s;}
+.ia-back-btn:hover{color:#4a7fa8;border-color:rgba(255,255,255,0.2);}
+
+/* Input */
+.ia-input-area{padding:14px 16px;border-top:1px solid rgba(0,100,255,0.1);display:flex;gap:10px;flex-shrink:0;background:rgba(0,5,15,0.6);border-radius:0 0 24px 24px;}
+.ia-input{flex:1;background:rgba(0,20,50,0.6);border:1px solid rgba(0,100,255,0.2);border-radius:24px;padding:11px 18px;color:#E8F4FF;font-size:13px;outline:none;transition:all 0.2s;font-family:inherit;}
+.ia-input:focus{border-color:rgba(0,150,255,0.5);background:rgba(0,30,80,0.5);box-shadow:0 0 20px rgba(0,100,255,0.15);}
+.ia-input::placeholder{color:#1a3a5c;}
+.ia-send-btn{background:linear-gradient(135deg,#013a8c,#0064d4);border:none;border-radius:50%;width:42px;height:42px;color:#fff;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.2s;align-self:flex-end;box-shadow:0 4px 16px rgba(0,100,255,0.4);}
+.ia-send-btn:hover{transform:scale(1.1);box-shadow:0 6px 24px rgba(0,150,255,0.6);}
+.ia-send-btn:disabled{opacity:0.3;cursor:not-allowed;transform:none;box-shadow:none;}
+
+/* Alert proativo */
+.ia-alert{margin:8px 16px;padding:11px 15px;background:rgba(245,168,0,0.08);border:1px solid rgba(245,168,0,0.25);border-radius:10px;border-left:3px solid #F5A800;font-size:13px;color:#f0b429;display:flex;align-items:center;gap:10px;cursor:pointer;transition:background 0.15s;flex-shrink:0;line-height:1.5;}
+.ia-alert:hover{background:rgba(245,168,0,0.14);}
+.ia-alert-icon{font-size:17px;flex-shrink:0;}
+.ia-mode-tag{align-self:center;padding:4px 14px;border-radius:20px;background:rgba(0,100,255,0.1);border:1px solid rgba(0,150,255,0.2);color:#60B4FF;font-size:11px;font-weight:600;letter-spacing:0.5px;}
+
+
+/* ── Botão Exportar Excel ── */
+.btn-exportar{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:8px 18px;
+  background:linear-gradient(135deg,rgba(25,118,210,0.18),rgba(0,150,255,0.1));
+  color:#64B5F6;
+  border:1px solid rgba(25,118,210,0.35);
+  border-radius:10px;cursor:pointer;font-size:12px;font-weight:700;
+  transition:all 0.22s;white-space:nowrap;text-decoration:none;letter-spacing:0.3px;
+}
+.btn-exportar:hover{
+  background:linear-gradient(135deg,rgba(25,118,210,0.32),rgba(0,150,255,0.2));
+  border-color:rgba(25,118,210,0.6);color:#90CAF9;
+  box-shadow:0 4px 16px rgba(0,100,255,0.2);transform:translateY(-1px);
+}
+
+/* ── Comparador de períodos ── */
+.comp-wrap{
+  display:flex;flex-wrap:wrap;gap:10px;align-items:center;
+  padding:14px 20px;
+  background:var(--card);border:1px solid rgba(25,118,210,0.2);
+  border-radius:12px;margin-bottom:16px;
+}
+.comp-wrap label{font-size:12px;color:var(--muted);font-weight:500;}
+.comp-wrap select{
+  background:rgba(0,20,60,0.5);border:1px solid rgba(25,118,210,0.25);
+  border-radius:8px;color:var(--text);padding:7px 12px;font-size:12px;
+  outline:none;cursor:pointer;transition:border-color 0.2s;
+}
+.comp-wrap select:focus{border-color:rgba(25,118,210,0.6);}
+.comp-wrap select option{background:#0A1628;}
+.comp-wrap .vs-label{
+  font-size:11px;font-weight:700;color:var(--muted);
+  padding:4px 10px;border-radius:20px;
+  background:rgba(255,255,255,0.04);border:1px solid var(--border);
+}
+.comp-wrap .btn-comp{
+  padding:8px 20px;
+  background:linear-gradient(135deg,rgba(245,168,0,0.15),rgba(255,140,0,0.08));
+  color:#F5A800;border:1px solid rgba(245,168,0,0.4);
+  border-radius:10px;cursor:pointer;font-size:12px;font-weight:700;
+  transition:all 0.22s;letter-spacing:0.3px;
+}
+.comp-wrap .btn-comp:hover{
+  background:linear-gradient(135deg,rgba(245,168,0,0.28),rgba(255,140,0,0.18));
+  border-color:rgba(245,168,0,0.7);
+  box-shadow:0 4px 16px rgba(245,168,0,0.2);transform:translateY(-1px);
+}
+
+/* ── Grid de comparação ── */
+.comp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;}
+@media(max-width:900px){.comp-grid{grid-template-columns:repeat(2,1fr);}}
+.comp-card{
+  background:var(--card);border:1px solid rgba(25,118,210,0.15);
+  border-radius:14px;padding:16px 18px;position:relative;overflow:hidden;
+}
+.comp-card::before{
+  content:'';position:absolute;top:0;left:0;width:100%;height:2px;
+  background:linear-gradient(90deg,transparent,rgba(25,118,210,0.5),transparent);
+}
+.comp-lbl{font-size:10px;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;}
+.comp-periodos{display:flex;flex-direction:column;gap:10px;margin-bottom:10px;}
+.comp-periodo-row{display:flex;align-items:baseline;justify-content:space-between;gap:8px;}
+.comp-vA-label,.comp-vB-label{font-size:10px;color:var(--muted);white-space:nowrap;flex-shrink:0;}
+.comp-vA{font-size:16px;font-weight:700;color:var(--text);white-space:nowrap;}
+.comp-vB{font-size:14px;font-weight:600;color:var(--muted);white-space:nowrap;}
+.comp-sep{width:100%;height:1px;background:var(--border);}
+.comp-divider{display:none;}
+.comp-pct{
+  display:inline-flex;align-items:center;gap:4px;
+  font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px;margin-top:4px;
+}
+.c-up{color:#22C55E;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);}
+.c-dn{color:#FF4D4D;background:rgba(255,77,77,0.1);border:1px solid rgba(255,77,77,0.2);}
+.c-ne{color:var(--muted);background:rgba(255,255,255,0.04);border:1px solid var(--border);}
+
+/* loading spinner (se não existir) */
+.loading-spinner{display:inline-block;width:24px;height:24px;border:3px solid rgba(255,255,255,0.08);border-top-color:var(--accent,#1976D2);border-radius:50%;animation:spin 0.8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+
+/* ── Botão Exportar Excel ── */
+.btn-exportar{
+  display:inline-flex;align-items:center;gap:7px;padding:8px 18px;
+  background:linear-gradient(135deg,rgba(25,118,210,0.18),rgba(0,150,255,0.1));
+  color:#64B5F6;border:1px solid rgba(25,118,210,0.35);
+  border-radius:10px;cursor:pointer;font-size:12px;font-weight:700;
+  transition:all 0.22s;white-space:nowrap;text-decoration:none;letter-spacing:0.3px;
+}
+.btn-exportar:hover{
+  background:linear-gradient(135deg,rgba(25,118,210,0.32),rgba(0,150,255,0.2));
+  border-color:rgba(25,118,210,0.6);color:#90CAF9;
+  box-shadow:0 4px 16px rgba(0,100,255,0.2);transform:translateY(-1px);
+}
+/* ── Comparador ── */
+.comp-wrap{
+  display:flex;flex-wrap:wrap;gap:10px;align-items:center;
+  padding:14px 20px;background:var(--card);
+  border:1px solid rgba(25,118,210,0.2);border-radius:12px;margin-bottom:16px;
+}
+.comp-wrap label{font-size:12px;color:var(--muted);font-weight:500;}
+.comp-wrap select{
+  background:rgba(0,20,60,0.5);border:1px solid rgba(25,118,210,0.25);
+  border-radius:8px;color:var(--text);padding:7px 12px;font-size:12px;
+  outline:none;cursor:pointer;transition:border-color 0.2s;
+}
+.comp-wrap select:focus{border-color:rgba(25,118,210,0.6);}
+.comp-wrap select option{background:#0A1628;}
+.comp-wrap .vs-label{
+  font-size:11px;font-weight:700;color:var(--muted);
+  padding:4px 10px;border-radius:20px;
+  background:rgba(255,255,255,0.04);border:1px solid var(--border);
+}
+.comp-wrap .btn-comp{
+  padding:8px 20px;
+  background:linear-gradient(135deg,rgba(245,168,0,0.15),rgba(255,140,0,0.08));
+  color:#F5A800;border:1px solid rgba(245,168,0,0.4);
+  border-radius:10px;cursor:pointer;font-size:12px;font-weight:700;
+  transition:all 0.22s;letter-spacing:0.3px;
+}
+.comp-wrap .btn-comp:hover{
+  background:linear-gradient(135deg,rgba(245,168,0,0.28),rgba(255,140,0,0.18));
+  border-color:rgba(245,168,0,0.7);
+  box-shadow:0 4px 16px rgba(245,168,0,0.2);transform:translateY(-1px);
+}
+/* ── Cards de comparação ── */
+.comp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;}
+@media(max-width:900px){.comp-grid{grid-template-columns:repeat(2,1fr);}}
+.comp-card{
+  background:var(--card);border:1px solid rgba(25,118,210,0.15);
+  border-radius:14px;padding:16px 18px;position:relative;overflow:hidden;
+}
+.comp-card::before{
+  content:'';position:absolute;top:0;left:0;width:100%;height:2px;
+  background:linear-gradient(90deg,transparent,rgba(25,118,210,0.5),transparent);
+}
+.comp-lbl{font-size:10px;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;}
+.comp-periodos{display:flex;flex-direction:column;gap:10px;margin-bottom:10px;}
+.comp-periodo-row{display:flex;align-items:baseline;justify-content:space-between;gap:8px;}
+.comp-vA-label,.comp-vB-label{font-size:10px;color:var(--muted);white-space:nowrap;flex-shrink:0;}
+.comp-vA{font-size:16px;font-weight:700;color:var(--text);white-space:nowrap;}
+.comp-vB{font-size:14px;font-weight:600;color:var(--muted);white-space:nowrap;}
+.comp-sep{width:100%;height:1px;background:var(--border);}
+.comp-divider{display:none;}
+.comp-pct{
+  display:inline-flex;align-items:center;gap:4px;
+  font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px;margin-top:4px;
+}
+.c-up{color:#22C55E;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);}
+.c-dn{color:#FF4D4D;background:rgba(255,77,77,0.1);border:1px solid rgba(255,77,77,0.2);}
+.c-ne{color:var(--muted);background:rgba(255,255,255,0.04);border:1px solid var(--border);}
+
+</style>
+</head>
+<body>
+
+<!-- LOADING ÁTOMO -->
+<div class="loading-global" id="loadingGlobal">
+  <div class="lo-particles"></div>
+  <div class="loading-scene">
+    <svg class="lo-atom-svg" viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="ngLO" cx="40%" cy="35%">
+          <stop offset="0%" stop-color="#BBDEFB"/>
+          <stop offset="40%" stop-color="#1976D2"/>
+          <stop offset="100%" stop-color="#0D47A1"/>
+        </radialGradient>
+        <filter id="gfLO" x="-100%" y="-100%" width="300%" height="300%">
+          <feGaussianBlur stdDeviation="5" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="gfEL" x="-200%" y="-200%" width="500%" height="500%">
+          <feGaussianBlur stdDeviation="3" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+      <!-- Órbita 1 — horizontal -->
+      <g class="lo-group-1">
+        <ellipse cx="160" cy="160" rx="140" ry="50" fill="none" stroke="#42A5F5" stroke-width="1" stroke-dasharray="6 10" opacity="0.4"/>
+        <circle cx="300" cy="160" r="7" fill="#42A5F5" filter="url(#gfEL)" class="lo-electron lo-electron-1"/>
+      </g>
+      <!-- Órbita 2 — 60° -->
+      <g class="lo-group-2" style="transform:rotate(60deg);transform-origin:160px 160px;">
+        <ellipse cx="160" cy="160" rx="140" ry="50" fill="none" stroke="#00C8FF" stroke-width="1" stroke-dasharray="6 10" opacity="0.4"/>
+        <circle cx="300" cy="160" r="6" fill="#00C8FF" filter="url(#gfEL)" class="lo-electron lo-electron-2"/>
+      </g>
+      <!-- Órbita 3 — 120° -->
+      <g class="lo-group-3" style="transform:rotate(120deg);transform-origin:160px 160px;">
+        <ellipse cx="160" cy="160" rx="140" ry="50" fill="none" stroke="#1976D2" stroke-width="1" stroke-dasharray="6 10" opacity="0.4"/>
+        <circle cx="300" cy="160" r="6" fill="#1976D2" filter="url(#gfEL)" class="lo-electron lo-electron-3"/>
+      </g>
+      <!-- Núcleo -->
+      <circle cx="160" cy="160" r="28" fill="rgba(25,118,210,0.12)" filter="url(#gfLO)"/>
+      <circle cx="160" cy="160" r="18" fill="url(#ngLO)" filter="url(#gfLO)" class="lo-nucleus-circle"/>
+      <circle cx="153" cy="153" r="7" fill="rgba(255,255,255,0.22)"/>
+    </svg>
+  </div>
+  <div class="lo-text">
+    <span class="lo-title">ÁTOMO</span>
+    <span class="lo-sub">Feito de estrelas.</span>
+  </div>
+  <div class="lo-progress"><div class="lo-progress-bar"></div></div>
+</div>
+<button class="hamburger" id="hamburgerBtn" onclick="toggleSidebar()" aria-label="Menu">
+  <span></span><span></span><span></span>
+</button>
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+<div class="sidebar">
+  <img class="sidebar-logo" src="logo.png" alt="Átomo" onerror="this.style.display='none'">
+  <div class="sidebar-title">ÁTOMO</div>
+  <a class="nav-item" href="home.html"><span class="icon">🏠</span> Página Inicial</a>
+  <div class="sidebar-divider"></div>
+  <div class="nav-section">Dashboards</div>
+  <a class="nav-item" href="visao-geral.html"><span class="icon">📊</span> Visão Geral</a>
+  <a class="nav-item" href="vendedor.html"><span class="icon">👤</span> Vendedor</a>
+  <a class="nav-item" href="regiao.html"><span class="icon">🗺️</span> Região</a>
+  <a class="nav-item" href="marcas.html"><span class="icon">🏷️</span> Marcas</a>
+  <a class="nav-item active" href="produtos.html"><span class="icon">📦</span> Produtos</a>
+  <a class="nav-item" href="produtos-cliente.html"><span class="icon">🛍️</span> Produtos por Cliente</a>
+  <div class="sidebar-divider"></div>
+  <div class="nav-section">Gestão</div>
+  <a class="nav-item" href="carteira.html"><span class="icon">👥</span> Carteira</a>
+  <a class="nav-item" href="positivacao.html"><span class="icon">👥</span> Positivação</a>
+  <a class="nav-item" href="shelflife.html"><span class="icon">🕒</span> Shelf Life</a>
+  <a class="nav-item" href="risco.html"><span class="icon">⚠️</span> Clientes em Risco</a>
+  <a class="nav-item" href="compras.html"><span class="icon">🛒</span> Compras</a>
+  <div class="sidebar-divider"></div>
+  <button class="btn-logout" onclick="location.href='index.html'">🚪 Sair</button>
+</div>
+
+
+<div class="main">
+  <div class="breadcrumb">
+    <a href="home.html">🏠 Portal</a>
+    <span class="breadcrumb-sep">›</span>
+    <a href="visao-geral.html">Visão Geral</a>
+    <span class="breadcrumb-sep">›</span>
+    <span>Produtos</span>
+  </div>
+  <div class="header">
+    <h1>📦 Top Produtos</h1>
+    <div class="limite-selector">
+      <span>Exibir:</span>
+      <select onchange="alterarLimite(this.value)">
+        <option value="20">Top 20</option>
+        <option value="50">Top 50</option>
+        <option value="100">Top 100</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="nota">⚠️ Faturamento calculado considerando apenas <strong>Vendas e Devoluções</strong>. Bonificações desconsideradas.</div>
+
+  <div class="filtros-bar">
+    <span style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">🔍 Filtros globais:</span>
+    <span id="tagsAtivas" style="display:flex;gap:8px;flex-wrap:wrap;"></span>
+    <a href="home.html" class="btn-alt">✏️ Alterar filtros</a>
+    <button class="btn-exportar" onclick="exportarPagina()">⬇ Exportar Excel</button>
+  </div>
+
+  <!-- BUSCA DE PRODUTOS -->
+  <div class="busca-card">
+    <div class="busca-titulo">🔍 Buscar Produtos Específicos</div>
+    <div class="busca-wrap">
+      <div class="busca-input-wrap">
+        <input type="text" id="buscaProduto" class="busca-input" placeholder="Digite o nome ou código do produto..." oninput="onBuscaInput()" onkeydown="if(event.key==='Escape'){document.getElementById('listaSugestoes').style.display='none';}">
+        <div class="lista-sugestoes" id="listaSugestoes"></div>
+      </div>
+      <button class="btn-buscar" onclick="aplicarBusca()">✓ Aplicar seleção</button>
+    </div>
+    <div class="tags-produtos" id="tagsProdutos"></div>
+    <button class="btn-limpar-produtos" id="btnLimparProdutos" onclick="limparProdutos()">✕ Limpar seleção</button>
+  </div>
+
+  <div class="drill-bar" id="drillBar">
+    <span>🔍 Filtro por clique:</span>
+    <span id="drillTags" style="display:flex;gap:8px;flex-wrap:wrap;"></span>
+    <button class="drill-clear" onclick="limparDrill()">✕ Limpar</button>
+  </div>
+
+  <!-- KPIs -->
+  <div class="comp-wrap" id="compWrap">
+  <label>Comparar:</label>
+  <select id="cAnoA"><option value="">Ano A</option><option value="2024">2024</option><option value="2025">2025</option><option value="2026">2026</option><option value="2027">2027</option></select>
+  <select id="cMesA"><option value="">Mês A</option><option value="1">Jan</option><option value="2">Fev</option><option value="3">Mar</option><option value="4">Abr</option><option value="5">Mai</option><option value="6">Jun</option><option value="7">Jul</option><option value="8">Ago</option><option value="9">Set</option><option value="10">Out</option><option value="11">Nov</option><option value="12">Dez</option></select>
+  <span class="vs-label">vs</span>
+  <select id="cAnoB"><option value="">Ano B</option><option value="2024">2024</option><option value="2025">2025</option><option value="2026">2026</option><option value="2027">2027</option></select>
+  <select id="cMesB"><option value="">Mês B</option><option value="1">Jan</option><option value="2">Fev</option><option value="3">Mar</option><option value="4">Abr</option><option value="5">Mai</option><option value="6">Jun</option><option value="7">Jul</option><option value="8">Ago</option><option value="9">Set</option><option value="10">Out</option><option value="11">Nov</option><option value="12">Dez</option></select>
+  <button class="btn-comp" onclick="compararPeriodos()">⚡ Comparar</button>
+</div>
+<div class="comp-grid" id="compGrid" style="display:none"></div>
+
+  <div class="kpi-grid">
+    <div class="kpi-card verde"><div class="kpi-icon">💰</div><div class="kpi-label">Fat. Bruto</div><div class="kpi-value" id="kFat">...</div><div class="kpi-sub">Vendas no período</div></div>
+    <div class="kpi-card vermelho"><div class="kpi-icon">↩️</div><div class="kpi-label">Devoluções</div><div class="kpi-value" id="kDev">...</div><div class="kpi-sub" id="kDevPct">% do fat.</div></div>
+    <div class="kpi-card"><div class="kpi-icon">📈</div><div class="kpi-label">Fat. Líquido</div><div class="kpi-value" id="kLiq">...</div><div class="kpi-sub">Vendas - Dev.</div></div>
+    <div class="kpi-card ciano"><div class="kpi-icon">👥</div><div class="kpi-label">Clientes Ativos</div><div class="kpi-value" id="kCli">...</div><div class="kpi-sub">No período</div></div>
+    <div class="kpi-card"><div class="kpi-icon">🛒</div><div class="kpi-label">Ticket Médio</div><div class="kpi-value" id="kTkt">...</div><div class="kpi-sub">Por venda</div></div>
+    <div class="kpi-card amarelo"><div class="kpi-icon">📦</div><div class="kpi-label">Qtd. Vendas</div><div class="kpi-value" id="kVendas">...</div><div class="kpi-sub">Pedidos</div></div>
+  </div>
+
+  <!-- GRÁFICOS -->
+  <div class="charts-row col-3">
+    <div class="chart-card">
+      <div class="chart-title">📦 Top 15 Produtos</div>
+      <div class="chart-subtitle">🥇 Ouro · 🥈 Prata · 🥉 Bronze · por faturamento</div>
+      <canvas id="chartProdutos" style="max-height:360px;"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">🏷️ Por Marca</div>
+      <div class="chart-subtitle">Clique para filtrar por marca</div>
+      <canvas id="chartMarcas"></canvas>
+    </div>
+  </div>
+
+  <div class="charts-row" style="grid-template-columns:1fr;margin-bottom:16px;">
+    <div class="chart-card">
+      <div class="chart-title">📈 Evolução Mensal <span id="lblMensal" style="font-size:11px;color:var(--muted);font-weight:400;"></span></div>
+      <div class="chart-subtitle">Clique num mês para filtrar</div>
+      <canvas id="chartMensal" style="max-height:200px;"></canvas>
+    </div>
+  </div>
+
+  <!-- TABELA -->
+  <div class="chart-card">
+    <div class="chart-title">📋 Ranking Completo</div>
+    <div class="chart-subtitle">Ordenado por faturamento · inclui marca e quantidade</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>#</th><th>Produto</th><th>Faturamento</th><th>% Total</th><th>Quantidade</th></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="dashboard-footer" id="dashboardFooter">Aguardando carregamento dos dados...</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<script>
+
+var API = 'https://horus-production.up.railway.app';
+var MESES = ['','Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+var MESES_EXT = ['','Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+var cProdutos=null, cMarcas=null, cMensal=null;
+var drillMarca=null, drillMes=null;
+var limite = 20;
+var produtosSelecionados = []; // lista de produtos selecionados
+var buscaTimer = null;
+var todosProdutosLocal = [];
+
+// ============ PARTÍCULAS ============
+function gerarParticulas() {
+  var container = document.getElementById('loParticles');
+  if (!container) return;
+  var colors = ['#1565C0','#00c3ff','#00ff88','#ffffff','#1565C0'];
+  function criarParticula() {
+    var p = document.createElement('div');
+    var size = Math.random()*4+1, color = colors[Math.floor(Math.random()*colors.length)];
+    var angle = Math.random()*Math.PI*2, dist = 60+Math.random()*80, duration = 2000+Math.random()*2000;
+    p.style.cssText = 'position:absolute;border-radius:50%;width:'+size+'px;height:'+size+'px;background:'+color+';left:50%;top:50%;transform:translate(-50%,-50%);box-shadow:0 0 '+(size*2)+'px '+color+';opacity:0;';
+    container.appendChild(p);
+    function animar() {
+      var endX=Math.cos(angle)*dist, endY=Math.sin(angle)*dist, st=null;
+      setTimeout(function() {
+        function step(ts) {
+          if (!st) st=ts;
+          var prog=(ts-st)/duration;
+          if (prog>=1) { angle=Math.random()*Math.PI*2; dist=60+Math.random()*80; endX=Math.cos(angle)*dist; endY=Math.sin(angle)*dist; st=null; setTimeout(function(){requestAnimationFrame(step);},Math.random()*500); return; }
+          var e=prog<0.5?2*prog*prog:-1+(4-2*prog)*prog;
+          var op=prog<0.2?prog/0.2:prog>0.8?(1-prog)/0.2:1;
+          p.style.transform='translate(calc(-50% + '+(endX*e)+'px),calc(-50% + '+(endY*e)+'px))';
+          p.style.opacity=(op*0.8).toString();
+          requestAnimationFrame(step);
+        }
+        requestAnimationFrame(step);
+      }, Math.random()*2000);
+    }
+    animar();
+  }
+  for (var i=0;i<15;i++) criarParticula();
+}
+
+// ============ UTILS ============
+function getFiltros() { var s=localStorage.getItem('horus_filtros'); return s?JSON.parse(s):{}; }
+function brl(v,c) {
+  var n=parseFloat(v)||0;
+  if (c&&Math.abs(n)>=1e6) return 'R$ '+(n/1e6).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})+'M';
+  if (c&&Math.abs(n)>=1e3) return 'R$ '+(n/1e3).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})+'K';
+  return new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(n);
+}
+function num(v) { return new Intl.NumberFormat('pt-BR').format(v||0); }
+function pct(a,b) { if (!b) return '0,0%'; return ((Math.abs(a)/Math.abs(b))*100).toFixed(1).replace('.',',')+'%'; }
+
+// Animação visual de contagem nos KPIs. Recebe o valor numérico final e uma
+// função formatadora. Guarda o texto final em data-valor-real IMEDIATAMENTE
+// (síncrono), para que a exportação leia esse atributo em vez do textContent
+// (que fica animando por 600ms) — assim a exportação nunca vê valor intermediário.
+function animarContador(elemento, valorFinal, formatador) {
+  if (!elemento) return;
+  var fmt = formatador || function(v){ return String(v); };
+  var textoFinal = fmt(valorFinal);
+  elemento.setAttribute('data-valor-real', textoFinal);
+  var destino = parseFloat(valorFinal) || 0;
+  var duracao = 600;
+  var inicioTempo = performance.now();
+  function passo(agora) {
+    var progresso = Math.min((agora - inicioTempo) / duracao, 1);
+    if (progresso >= 1) { elemento.textContent = textoFinal; return; }
+    elemento.textContent = fmt(destino * progresso);
+    requestAnimationFrame(passo);
+  }
+  requestAnimationFrame(passo);
+}
+
+// Para KPIs cujo valor final já é um texto não-numérico (ex: "produto(s) filtrado(s)",
+// "—"), apenas registra o texto real e exibe direto, sem tentar animar.
+function definirKpiTexto(elemento, texto) {
+  if (!elemento) return;
+  elemento.setAttribute('data-valor-real', texto);
+  elemento.textContent = texto;
+}
+
+function montarParams() {
+  var filtros=getFiltros();
+  var p=new URLSearchParams();
+  if (filtros.ano)      p.append('ano',filtros.ano);
+  if (filtros.mes)      p.append('mes',filtros.mes);
+  if (filtros.unidade)  p.append('unidade',filtros.unidade);
+  if (filtros.vendedor) p.append('vendedor',filtros.vendedor);
+  if (filtros.marca)    p.append('marca',filtros.marca);
+  if (drillMarca)       p.set('marca',drillMarca);
+  if (drillMes)         p.set('mes',drillMes);
+  return p.toString();
+}
+
+function mostrarFiltros() {
+  var filtros=getFiltros();
+  var tags=[];
+  if (filtros.ano)      tags.push('Ano: '+filtros.ano);
+  if (filtros.mes)      tags.push('Mês: '+MESES_EXT[filtros.mes]);
+  if (filtros.unidade)  tags.push('Unidade: '+filtros.unidade);
+  if (filtros.marca)    tags.push('Marca: '+filtros.marca);
+  if (filtros.vendedor) tags.push('Vendedor: '+filtros.vendedor);
+  var el=document.getElementById('tagsAtivas');
+  if (!tags.length) { el.innerHTML='<span style="color:#a0aec0;font-size:12px">Nenhum filtro global</span>'; return; }
+  el.innerHTML=tags.map(function(t){return '<div class="filtro-tag">'+t+'</div>';}).join('');
+}
+
+function atualizarDrillBar() {
+  var tags=[], bar=document.getElementById('drillBar'), el=document.getElementById('drillTags');
+  if (drillMarca) tags.push('Marca: '+drillMarca);
+  if (drillMes)   tags.push('Mês: '+MESES_EXT[drillMes]);
+  if (tags.length) { bar.classList.add('show'); el.innerHTML=tags.map(function(t){return '<span class="drill-tag">'+t+'</span>';}).join(''); }
+  else { bar.classList.remove('show'); el.innerHTML=''; }
+}
+function limparDrill() { drillMarca=null; drillMes=null; atualizarDrillBar(); recarregar(); }
+
+// ============ BUSCA DE PRODUTOS ============
+function onBuscaInput() {
+  var q = document.getElementById('buscaProduto').value.trim();
+  var lista = document.getElementById('listaSugestoes');
+  if (q.length < 2) { lista.style.display='none'; return; }
+
+  var q_low = q.toLowerCase();
+  var resultados = todosProdutosLocal.filter(function(d){
+    return (d.produto||'').toLowerCase().indexOf(q_low) >= 0 ||
+           (d.cod_produto||'').toLowerCase().indexOf(q_low) >= 0;
+  }).slice(0, 25);
+
+  if (!resultados.length) { lista.style.display='none'; return; }
+  lista.innerHTML = '';
+  resultados.forEach(function(d) {
+    var jaAdicionado = produtosSelecionados.indexOf(d.produto) >= 0;
+    var el = document.createElement('div');
+    el.className = 'sugestao-item' + (jaAdicionado ? ' sugestao-adicionado' : '');
+    el.innerHTML = '<span class="sugestao-nome">'+d.produto+'</span>' +
+      '<span class="sugestao-marca">'+d.marca+'</span>' +
+      (jaAdicionado ? '<span class="sugestao-check">&#10003;</span>' : '');
+    el.addEventListener('click', (function(nome){ return function(){ adicionarProduto(nome); }; })(d.produto));
+    lista.appendChild(el);
+  });
+  lista.style.display = 'block';
+}
+
+async function buscarProdutos(q) {
+  try {
+    var res = await fetch(API+'/api/buscar-produtos?q='+encodeURIComponent(q));
+    var data = await res.json();
+    var lista = document.getElementById('listaSugestoes');
+    if (!data.length) { lista.style.display='none'; return; }
+    lista.innerHTML = '';
+    data.forEach(function(d) {
+      var jaAdicionado = produtosSelecionados.indexOf(d.produto) >= 0;
+      var el = document.createElement('div');
+      el.className = 'sugestao-item' + (jaAdicionado ? ' sugestao-adicionado' : '');
+      el.innerHTML = '<span class="sugestao-nome">'+d.produto+'</span>' +
+        '<span class="sugestao-marca">'+d.marca+'</span>' +
+        (jaAdicionado ? '<span class="sugestao-check">&#10003;</span>' : '');
+      el.addEventListener('click', (function(nome){ return function(){ adicionarProduto(nome); }; })(d.produto));
+      lista.appendChild(el);
+    });
+    lista.style.display = 'block';
+  } catch(e) {}
+}
+
+function adicionarProduto(nome) {
+  if (produtosSelecionados.indexOf(nome) >= 0) {
+    removerProduto(nome);
+    return;
+  }
+  produtosSelecionados.push(nome);
+  document.getElementById('buscaProduto').value = '';
+  document.getElementById('listaSugestoes').style.display = 'none';
+  renderizarTags();
+}
+
+function removerProduto(nome) {
+  produtosSelecionados = produtosSelecionados.filter(function(p){return p!==nome;});
+  renderizarTags();
+}
+
+function limparProdutos() {
+  produtosSelecionados = [];
+  renderizarTags();
+  recarregar();
+}
+
+function renderizarTags() {
+  var container = document.getElementById('tagsProdutos');
+  var btnLimpar = document.getElementById('btnLimparProdutos');
+  if (!produtosSelecionados.length) {
+    container.innerHTML = '<span style="color:#a0aec0;font-size:12px">Nenhum produto selecionado — exibindo top produtos</span>';
+    btnLimpar.style.display = 'none';
+  } else {
+    container.innerHTML = '';
+    produtosSelecionados.forEach(function(p) {
+      var d = document.createElement('div');
+      d.className = 'produto-tag';
+      d.appendChild(document.createTextNode(p));
+      var btn = document.createElement('button');
+      btn.innerHTML = '&times;';
+      btn.addEventListener('click', (function(nome){ return function(){ removerProduto(nome); recarregar(); }; })(p));
+      d.appendChild(btn);
+      container.appendChild(d);
+    });
+    btnLimpar.style.display = 'inline-flex';
+  }
+}
+
+function aplicarBusca() {
+  document.getElementById('listaSugestoes').style.display = 'none';
+  recarregar();
+}
+
+// Fecha sugestões ao clicar fora
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.busca-wrap')) {
+    document.getElementById('listaSugestoes').style.display = 'none';
+  }
+});
+
+// ============ CARREGAMENTOS ============
+async function recarregar() {
+  var loader=document.getElementById('loadingGlobal');
+  loader.classList.add('show');
+  var params=montarParams();
+  await Promise.all([
+    carregarKPIs(params),
+    carregarProdutos(params),
+    carregarMarcas(params),
+    carregarMensal(params),
+    carregarTabelaProdutos(params),
+  ]);
+  loader.classList.remove('show');
+}
+
+async function carregarKPIs(params) {
+  // Quando há produtos filtrados, calcula KPIs com base nos dados filtrados
+  if (produtosSelecionados.length) {
+    var p = new URLSearchParams(params);
+    produtosSelecionados.forEach(function(nome){ p.append('produtos', nome); });
+    try {
+      var res = await fetch(API+'/api/top-produtos-filtrado?'+p.toString());
+      var data = await res.json();
+      var fat=0, qtd=0;
+      (data||[]).forEach(function(d){ fat+=parseFloat(d.faturamento)||0; qtd+=parseFloat(d.quantidade)||0; });
+      animarContador(document.getElementById('kFat'), fat, function(v){ return brl(v,true); });
+      definirKpiTexto(document.getElementById('kDev'), 'R$ —');
+      definirKpiTexto(document.getElementById('kDevPct'), 'produto(s) filtrado(s)');
+      animarContador(document.getElementById('kLiq'), fat, function(v){ return brl(v,true); });
+      definirKpiTexto(document.getElementById('kCli'), (data||[]).length+' prod.');
+      definirKpiTexto(document.getElementById('kTkt'), '—');
+      animarContador(document.getElementById('kVendas'), Math.round(qtd), function(v){ return num(v)+' un'; });
+    } catch(e) {}
+    return;
+  }
+  var res=await fetch(API+'/api/kpis?'+params);
+  var d=await res.json();
+  var fat=parseFloat(d.faturamento)||0, dev=parseFloat(d.devolucoes)||0, liq=fat+dev;
+  animarContador(document.getElementById('kFat'), fat, function(v){ return brl(v,true); });
+  animarContador(document.getElementById('kDev'), Math.abs(dev), function(v){ return brl(v,true); });
+  definirKpiTexto(document.getElementById('kDevPct'), pct(dev,fat)+' do fat.');
+  animarContador(document.getElementById('kLiq'), liq, function(v){ return brl(v,true); });
+  animarContador(document.getElementById('kCli'), d.total_clientes, num);
+  animarContador(document.getElementById('kTkt'), d.ticket_medio, brl);
+  animarContador(document.getElementById('kVendas'), d.qtd_vendas, num);
+}
+
+async function carregarProdutos(params) {
+  var p = new URLSearchParams(params);
+  if (produtosSelecionados.length) {
+    produtosSelecionados.forEach(function(nome){ p.append('produtos', nome); });
+    var res=await fetch(API+'/api/top-produtos-filtrado?'+p.toString());
+  } else {
+    p.set('limite', limite);
+    var res=await fetch(API+'/api/top-produtos?'+p.toString());
+  }
+  var data=await res.json();
+  if (!data||!data.length) return;
+  if (cProdutos) cProdutos.destroy();
+  var top=data.slice(0,15);
+  cProdutos = new Chart(document.getElementById('chartProdutos'),{
+    type:'bar', indexAxis:'y',
+    data:{
+      labels:top.map(function(d){return d.produto.length>35?d.produto.slice(0,35)+'...':d.produto;}),
+      datasets:[{
+        label:'Faturamento',
+        data:top.map(function(d){return d.faturamento;}),
+        backgroundColor:top.map(function(_,i){
+          if (i===0) return '#00c3ff';
+          if (i===1) return '#1565C0';
+          if (i===2) return '#1565C0';
+          return 'rgba(25,118,210,0.5)';
+        }),
+        borderRadius:4,borderWidth:0
+      }]
+    },
+    options:{
+      responsive:true,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return ' '+brl(c.raw,true)+' | '+num(top[c.dataIndex].quantidade)+' un';}}}},
+      scales:{
+        x:{ticks:{color:'#a0aec0',font:{size:10},callback:function(v){return 'R$'+(v/1e6).toFixed(1)+'M';}},grid:{color:'rgba(255,255,255,0.04)'}},
+        y:{ticks:{color:'#F5F5F5',font:{size:10}},grid:{display:false}}
+      }
+    }
+  });
+}
+
+async function carregarMarcas(params) {
+  var res=await fetch(API+'/api/faturamento-por-marca?'+params+'&limite=10');
+  var data=await res.json();
+  if (!data||!data.length) return;
+  if (cMarcas) cMarcas.destroy();
+  cMarcas = new Chart(document.getElementById('chartMarcas'),{
+    type:'doughnut',
+    data:{
+      labels:data.map(function(d){return d.marca;}),
+      datasets:[{data:data.map(function(d){return d.faturamento;}),backgroundColor:['#1565C0','#00c3ff','#00ff88','#ffaa00','#ff4d4d','#a78bfa','#34d399','#fb923c','#f43f5e','#06b6d4'],borderWidth:0}]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:true,
+      onClick:function(e,els){
+        if (!els.length) return;
+        var m=data[els[0].index].marca;
+        drillMarca=(drillMarca===m)?null:m;
+        atualizarDrillBar(); recarregar();
+      },
+      plugins:{legend:{position:'bottom',labels:{color:'#a0aec0',font:{size:10},padding:8,boxWidth:12}},tooltip:{callbacks:{label:function(c){return ' '+c.label+': '+brl(c.raw,true);}}}}
+    }
+  });
+}
+
+async function carregarMensal(params) {
+  var res=await fetch(API+'/api/faturamento-mensal?'+params);
+  var raw=await res.json();
+  var data=raw.filter(function(d){return d.mes>=1&&d.mes<=12;});
+  document.getElementById('lblMensal').textContent='('+data.length+' meses)';
+  if (cMensal) cMensal.destroy();
+  cMensal = new Chart(document.getElementById('chartMensal'),{
+    type:'bar',
+    data:{
+      labels:data.map(function(d){return MESES[d.mes]+'/'+String(d.ano).slice(2);}),
+      datasets:[
+        {label:'Faturamento',data:data.map(function(d){return d.faturamento;}),backgroundColor:'rgba(25,118,210,0.75)',borderColor:'#1565C0',borderWidth:1,borderRadius:4,order:2},
+        {label:'Devoluções',data:data.map(function(d){return Math.abs(d.devolucoes);}),type:'line',borderColor:'#ff4d4d',backgroundColor:'rgba(255,77,77,0.1)',tension:0.4,pointRadius:4,pointBackgroundColor:'#ff4d4d',fill:false,order:1}
+      ]
+    },
+    options:{
+      responsive:true,
+      onClick:function(e,els){
+        if (!els.length) return;
+        var d=data[els[0].index];
+        drillMes=(drillMes==d.mes)?null:d.mes;
+        atualizarDrillBar(); recarregar();
+      },
+      plugins:{legend:{labels:{color:'#a0aec0',font:{size:11}}},tooltip:{callbacks:{label:function(c){return ' '+c.dataset.label+': '+brl(c.raw);}}}},
+      scales:{
+        x:{ticks:{color:'#a0aec0',font:{size:10}},grid:{color:'rgba(255,255,255,0.04)'}},
+        y:{ticks:{color:'#a0aec0',font:{size:10},callback:function(v){return 'R$'+(v/1e6).toFixed(1)+'M';}},grid:{color:'rgba(255,255,255,0.04)'}}
+      }
+    }
+  });
+}
+
+async function carregarTabelaProdutos(params) {
+  var p = new URLSearchParams(params);
+  if (produtosSelecionados.length) {
+    produtosSelecionados.forEach(function(nome){ p.append('produtos', nome); });
+    var res=await fetch(API+'/api/top-produtos-filtrado?'+p.toString());
+  } else {
+    p.set('limite', limite);
+    var res=await fetch(API+'/api/top-produtos?'+p.toString());
+  }
+  var data=await res.json();
+  if (!data||!data.length) { document.getElementById('tbody').innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:36px 24px;"><span style="font-size:24px;opacity:0.5;display:block;margin-bottom:8px;">📭</span>Sem dados para esse período</td></tr>'; return; }
+  var total=data.reduce(function(s,d){return s+(parseFloat(d.faturamento)||0);},0);
+  var html='';
+  data.forEach(function(d,i){
+    var p2=total>0?((d.faturamento/total)*100).toFixed(1):0;
+    var bar=data[0].faturamento>0?((d.faturamento/data[0].faturamento)*100).toFixed(1):0;
+    var medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1)+'°';
+    html+='<tr>'+
+      '<td class="rank">'+medal+'</td>'+
+      '<td><div style="font-weight:600;">'+d.produto+'</div><div style="font-size:11px;color:var(--muted);">'+d.marca+'</div><div class="progress-bar"><div class="progress-fill" style="width:'+bar+'%;"></div></div></td>'+
+      '<td>'+brl(d.faturamento,true)+'</td>'+
+      '<td><span style="color:var(--accent2)">'+p2+'%</span></td>'+
+      '<td>'+num(d.quantidade)+' un</td>'+
+      '</tr>';
+  });
+  document.getElementById('tbody').innerHTML=html;
+}
+
+function alterarLimite(val) {
+  limite = parseInt(val);
+  if (!produtosSelecionados.length) recarregar();
+}
+
+function toggleSidebar() {
+  var sidebar = document.getElementById('mainSidebar');
+  var overlay = document.getElementById('sidebarOverlay');
+  var isOpen = sidebar.classList.toggle('open');
+  overlay.classList.toggle('show', isOpen);
+}
+
+function atualizarFooter() {
+  var el = document.getElementById('dashboardFooter');
+  if (!el) return;
+  var agora = new Date().toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+  el.textContent = '📅 Dados carregados em: ' + agora;
+}
+
+window.onload = async function() {
+  gerarParticulas();
+  mostrarFiltros();
+  renderizarTags();
+  var loader=document.getElementById('loadingGlobal');
+  loader.classList.add('show');
+  // Carrega todos os produtos para busca local instantânea
+  try {
+    var resProd = await fetch(API+'/api/todos-produtos');
+    todosProdutosLocal = await resProd.json();
+  } catch(e) { todosProdutosLocal = []; }
+
+  await recarregar();
+  loader.classList.remove('show');
+  atualizarFooter();
+};
+
+</script>
+
+<!-- ══ VALTER FAB ══ -->
+<button class="ia-fab" id="iaFab" title="Valter — Assistente Átomo"><svg width="26" height="26" viewBox="0 0 38 38" xmlns="http://www.w3.org/2000/svg"><circle cx="19" cy="19" r="19" fill="#0A1628"/><ellipse cx="19" cy="19" rx="15" ry="5.5" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.2" transform="rotate(-40 19 19)"/><ellipse cx="19" cy="19" rx="15" ry="5.5" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.2" transform="rotate(40 19 19)"/><ellipse cx="19" cy="19" rx="15" ry="5.5" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.2" transform="rotate(90 19 19)"/><circle cx="19" cy="19" r="5" fill="#fff"/><circle cx="19" cy="19" r="3" fill="#0096FF"/><circle cx="34" cy="19" r="2.2" fill="#F5A800"/><circle cx="11.5" cy="6.5" r="2.2" fill="#F5A800"/><circle cx="11.5" cy="31.5" r="2.2" fill="#F5A800"/></svg><span class="ia-badge" id="iaBadge"></span></button>
+
+<!-- ══ VALTER OVERLAY + PAINEL CENTRAL ══ -->
+<div class="ia-overlay" id="iaOverlay">
+<div class="ia-panel" id="iaPanel">
+  <div class="ia-header">
+    <div class="ia-avatar" id="iaAvatar"><svg width="28" height="28" viewBox="0 0 38 38" xmlns="http://www.w3.org/2000/svg"><circle cx="19" cy="19" r="19" fill="#060f22"/><ellipse cx="19" cy="19" rx="15" ry="5.5" fill="none" stroke="rgba(0,200,255,0.8)" stroke-width="1.2" transform="rotate(-40 19 19)"/><ellipse cx="19" cy="19" rx="15" ry="5.5" fill="none" stroke="rgba(0,200,255,0.8)" stroke-width="1.2" transform="rotate(40 19 19)"/><ellipse cx="19" cy="19" rx="15" ry="5.5" fill="none" stroke="rgba(0,200,255,0.8)" stroke-width="1.2" transform="rotate(90 19 19)"/><circle cx="19" cy="19" r="5" fill="#fff"/><circle cx="19" cy="19" r="3" fill="#0096FF"/><circle cx="34" cy="19" r="2.2" fill="#F5A800"/><circle cx="11.5" cy="6.5" r="2.2" fill="#F5A800"/><circle cx="11.5" cy="31.5" r="2.2" fill="#F5A800"/></svg></div>
+    <div class="ia-header-info">
+      <div class="ia-header-name">Valter</div>
+      <div class="ia-header-status"><span class="ia-status-dot"></span><span id="iaStatus">Assistente Átomo</span></div>
+    </div>
+    <div class="ia-header-actions">
+      <button class="ia-header-btn" id="iaResetBtn" title="Reiniciar">↺</button>
+      <button class="ia-header-btn" id="iaCloseBtn" title="Fechar">✕</button>
+    </div>
+  </div>
+  <div id="iaAlertArea"></div>
+  <div class="ia-messages" id="iaMessages"></div>
+  <div id="iaModeMenu" style="display:none"></div>
+  <div class="ia-quick-bar" id="iaQuickBar" style="display:none"></div>
+  <div class="ia-input-area" id="iaInputArea" style="display:none">
+    <input class="ia-input" id="iaInput" placeholder="Digite sua pergunta...">
+    <button class="ia-send-btn" id="iaSendBtn">➤</button>
+  </div>
+</div>
+</div>
+
+<script>
+(function() {
+  var API_BASE  = (typeof API !== 'undefined') ? API : 'https://horus-production.up.railway.app';
+  var STORAGE_KEY = 'valter_session_v2';
+
+  var state = {
+    open:      false,
+    iniciado:  false,
+    mode:      null,
+    historico: [],
+    contexto:  '',
+    pagina:    document.title.replace('Átomo — ','').replace('Atomo — ','').trim(),
+  };
+
+  /* ── PERSISTÊNCIA ──────────────────────────────────────── */
+  function salvarSessao() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        mode:      state.mode,
+        historico: state.historico.slice(-10),
+        contexto:  state.contexto,
+        ts:        Date.now(),
+      }));
+    } catch(e) {}
+  }
+
+  function carregarSessao() {
+    try {
+      var s = localStorage.getItem(STORAGE_KEY);
+      if (!s) return null;
+      var d = JSON.parse(s);
+      // Expira após 4 horas
+      if (Date.now() - d.ts > 4 * 60 * 60 * 1000) return null;
+      return d;
+    } catch(e) { return null; }
+  }
+
+  /* ── DOM HELPERS ───────────────────────────────────────── */
+  function el(id) { return document.getElementById(id); }
+
+  function setStatus(txt) {
+    el('iaStatus').textContent = txt;
+  }
+
+  function setThinking(on) {
+    el('iaAvatar').classList.toggle('thinking', on);
+    el('iaSendBtn').disabled = on;
+    el('iaFab').classList.toggle('ia-thinking', on && !state.open);
+  }
+
+  function showBadge(n) {
+    var b = el('iaBadge');
+    if (n > 0) {
+      b.textContent = n;
+      b.style.display = 'block';
+      el('iaFab').classList.add('ia-pulsing');
+    } else {
+      b.style.display = 'none';
+      el('iaFab').classList.remove('ia-pulsing');
+    }
+  }
+
+  /* ── MENSAGENS ─────────────────────────────────────────── */
+  function iaAddMsg(texto, tipo, streaming) {
+    var wrap = document.createElement('div');
+    wrap.className = 'ia-msg ' + tipo;
+
+    var bubble = document.createElement('div');
+    bubble.className = 'ia-msg-bubble';
+
+    if (!streaming) {
+      bubble.innerHTML = iaFormatarTexto(texto);
+    }
+    wrap.appendChild(bubble);
+
+    if (tipo === 'bot') {
+      var feedback = document.createElement('div');
+      feedback.className = 'ia-msg-feedback';
+      feedback.innerHTML =
+        '<button class="ia-feedback-btn" data-v="1" title="Útil">👍</button>' +
+        '<button class="ia-feedback-btn" data-v="-1" title="Não útil">👎</button>';
+      feedback.addEventListener('click', function(e) {
+        var btn = e.target.closest('[data-v]');
+        if (!btn) return;
+        btn.classList.add('active');
+      });
+      wrap.appendChild(feedback);
+    }
+
+    el('iaMessages').appendChild(wrap);
+    el('iaMessages').scrollTop = el('iaMessages').scrollHeight;
+    return bubble;
+  }
+
+  function iaFormatarTexto(texto) {
+    return texto
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/^### (.+)$/gm, '<strong style="color:#60A5FA;font-size:12px;text-transform:uppercase;letter-spacing:0.5px">$1</strong>')
+      .replace(/^- (.+)$/gm, '<li>$1</li>')
+      .replace(/(<li>[\s\S]*?<\/li>)/g, '<ul style="margin:6px 0 6px 16px">$1</ul>')
+      .replace(/\n/g, '<br>');
+  }
+
+  function iaAddTag(texto) {
+    var tag = document.createElement('div');
+    tag.className = 'ia-mode-tag';
+    tag.textContent = texto;
+    el('iaMessages').appendChild(tag);
+    el('iaMessages').scrollTop = el('iaMessages').scrollHeight;
+  }
+
+  function iaAddTyping() {
+    var div = document.createElement('div');
+    div.className = 'ia-typing'; div.id = 'iaTyping';
+    div.innerHTML = '<span></span><span></span><span></span>';
+    el('iaMessages').appendChild(div);
+    el('iaMessages').scrollTop = el('iaMessages').scrollHeight;
+  }
+
+  function iaRemoveTyping() { var t = el('iaTyping'); if (t) t.remove(); }
+
+  /* ── ALERTAS PROATIVOS ─────────────────────────────────── */
+  async function iaVerificarAlertas() {
+    try {
+      var r = await fetch(API_BASE + '/api/valter/alertas');
+      if (!r.ok) return;
+      var data = await r.json();
+      if (data.alertas && data.alertas.length) {
+        showBadge(data.alertas.length);
+        var area = el('iaAlertArea');
+        area.innerHTML = '';
+        data.alertas.slice(0,2).forEach(function(a) {
+          var div = document.createElement('div');
+          div.className = 'ia-alert';
+          div.innerHTML = '<span class="ia-alert-icon">' + (a.icone||'⚠️') + '</span><span>' + a.texto + '</span>';
+          div.addEventListener('click', function() {
+            if (!state.open) iaToggle();
+            setTimeout(function() { iaSendMensagem(a.pergunta || a.texto); }, 400);
+          });
+          area.appendChild(div);
+        });
+      }
+    } catch(e) {}
+  }
+
+  /* ── TOGGLE ────────────────────────────────────────────── */
+  function iaToggle() {
+    state.open = !state.open;
+    document.getElementById('iaOverlay').classList.toggle('open', state.open);
+    if (state.open) {
+      showBadge(0);
+      if (!state.iniciado) { state.iniciado = true; setTimeout(iaIniciar, 300); }
+    }
+  }
+  // Fechar ao clicar fora do painel
+  document.getElementById('iaOverlay').addEventListener('click', function(e) {
+    if (e.target === document.getElementById('iaOverlay')) iaToggle();
+  });
+  window.iaToggle = iaToggle;
+
+  /* ── INICIAR / RESTAURAR SESSÃO ────────────────────────── */
+  async function iaIniciar() {
+    setStatus('Carregando dados...');
+    setThinking(true);
+
+    // Busca contexto do sistema
+    try {
+      var r = await fetch(API_BASE + '/api/valter/contexto');
+      var d = await r.json();
+      if (d.contexto) state.contexto = d.contexto;
+    } catch(e) {}
+
+    // Adiciona contexto da página atual
+    state.contexto += '\n\nPÁGINA ATUAL: ' + state.pagina;
+
+    setThinking(false);
+
+    // Tenta restaurar sessão anterior
+    var sessao = carregarSessao();
+    if (sessao && sessao.mode && sessao.historico.length) {
+      state.mode      = sessao.mode;
+      state.historico = sessao.historico;
+      state.contexto  = sessao.contexto || state.contexto;
+
+      setStatus(state.mode === 'sl' ? '📦 Shelf Life' : '💬 Dúvidas Gerais');
+      iaAddMsg('Bem-vindo de volta! Continuando nossa conversa sobre **' +
+        (state.mode === 'sl' ? 'Shelf Life' : 'Dúvidas Gerais') + '**.', 'bot');
+
+      // Reexibe últimas 2 mensagens do histórico
+      var ultimas = state.historico.slice(-4);
+      ultimas.forEach(function(m) {
+        iaAddMsg(m.content, m.role === 'user' ? 'user' : 'bot');
+      });
+
+      iaShowInput(state.mode);
+    } else {
+      iaApresentar();
+    }
+  }
+
+  async function iaApresentar() {
+    setStatus('Pronto');
+    iaAddMsg('Olá! Sou o **Valter**, assistente inteligente do sistema Átomo. Estou aqui para te ajudar com análises, dúvidas e insights da Alimentare.\n\nO que você precisa hoje?', 'bot');
+    iaEscolherModo('geral');
+  }
+
+  /* ── MENU ──────────────────────────────────────────────── */
+  function iaShowMenu() {
+    var menu = el('iaModeMenu');
+    el('iaQuickBar').style.display = 'none';
+    el('iaInputArea').style.display = 'none';
+
+    menu.innerHTML =
+      '<div class="ia-mode-menu">' +
+        '<button class="ia-mode-btn" id="iaBtnSL">' +
+          '<div class="ia-mode-icon">📦</div>' +
+          '<div><div class="ia-mode-label">Shelf Life</div>' +
+          '<div class="ia-mode-desc">Validade, produtos críticos e ações SL</div></div>' +
+          '<span class="ia-mode-arrow">›</span>' +
+        '</button>' +
+        '<button class="ia-mode-btn" id="iaBtnGeral">' +
+          '<div class="ia-mode-icon">💬</div>' +
+          '<div><div class="ia-mode-label">Dúvidas Gerais</div>' +
+          '<div class="ia-mode-desc">Faturamento, vendedores, marcas, carteira</div></div>' +
+          '<span class="ia-mode-arrow">›</span>' +
+        '</button>' +
+      '</div>';
+    menu.style.display = 'block';
+
+    el('iaBtnSL').addEventListener('click', function() { iaEscolherModo('sl'); });
+    el('iaBtnGeral').addEventListener('click', function() { iaEscolherModo('geral'); });
+  }
+
+  function iaHideMenu() {
+    el('iaModeMenu').style.display = 'none';
+  }
+
+  /* ── ESCOLHER MODO ─────────────────────────────────────── */
+  async function iaEscolherModo(modo) {
+    state.mode = modo;
+    state.historico = [];
+    iaHideMenu();
+    el('iaMessages').innerHTML = '';
+
+    var label = modo === 'sl' ? '📦 Shelf Life' : '💬 Dúvidas Gerais';
+    setStatus(label);
+    iaAddTag(label);
+    iaAddTyping();
+    setThinking(true);
+
+    var ctx = state.contexto;
+    var prompt = '';
+
+    if (modo === 'sl') {
+      if (typeof dadosCompletos !== 'undefined' && dadosCompletos.length) {
+        ctx += iaContextoSL();
+      }
+      prompt = 'Apresente-se rapidamente como Valter e faça uma análise focada do shelf life. ' +
+        'Destaque os pontos mais urgentes e os produtos que recomenda para código SL com justificativa.';
+    } else {
+      prompt = 'Apresente-se brevemente como Valter e diga que pode ajudar com faturamento, ' +
+        'vendedores, marcas, carteira de clientes, produtos e shelf life da Alimentare. ' +
+        'Mencione 2-3 insights interessantes do contexto fornecido.';
+    }
+
+    var resp = await iaChamarAPI(prompt, ctx, modo);
+    iaRemoveTyping();
+    setThinking(false);
+    iaAddMsg(resp, 'bot');
+    salvarSessao();
+
+    iaShowInput(modo);
+  }
+
+  function iaContextoSL() {
+    var dados = dadosCompletos || [];
+    var criticos = dados.filter(function(d){ return d.dias_vencimento <= 30; });
+    var sl       = dados.filter(function(d){ return d.is_sl; });
+    var semSaida = dados.filter(function(d){ return (!d.venda_mes||d.venda_mes==0)&&d.quantidade_log>0; });
+    var linhas   = dados.slice(0,60).map(function(d){
+      var med = d.venda_3meses ? (parseFloat(d.venda_3meses)/3).toFixed(1) : '0';
+      var qtd = parseFloat(d.quantidade_log||0);
+      var est = parseFloat(med)>0 ? Math.round(qtd/(parseFloat(med)/30)) : 999;
+      return [d.cod_produto||'',d.produto||'',d.marca||'',qtd,
+              d.dias_vencimento||'?',d.status_logistica||'',
+              d.venda_mes?parseFloat(d.venda_mes).toFixed(0):'0',
+              d.venda_3meses?parseFloat(d.venda_3meses).toFixed(0):'0',
+              med, est<999?est+'d':'sem_giro',
+              d.is_sl?'SIM':'NAO',d.acao||''].join('|');
+    }).join('\n');
+    return '\n\nDADOS SHELF LIFE ATUAL:\n' +
+      'Total:'+dados.length+' | Criticos:'+criticos.length+' | SL:'+sl.length+' | SemSaida:'+semSaida.length+'\n' +
+      'COLUNAS:cod|produto|marca|qtd|dias_venc|status|venda_mes|venda_3m|media_3m|dias_est|is_sl|acao\n' + linhas;
+  }
+
+  /* ── INPUT E AÇÕES RÁPIDAS ─────────────────────────────── */
+  function iaShowInput(modo) {
+    var qb = el('iaQuickBar');
+    var ia = el('iaInputArea');
+    ia.style.display = 'flex';
+    qb.style.display = 'flex';
+    qb.innerHTML = '';
+
+    var btns = modo === 'sl' ? [
+      {l:'🏷️ Reclassificar SL', m:'Quais produtos devo reclassificar para código SL agora?'},
+      {l:'🚨 Críticos',          m:'Quais produtos estão críticos e precisam de ação imediata?'},
+      {l:'📊 Resumo',            m:'Faça um resumo geral do shelf life desta semana.'},
+      {l:'⚠️ Risco de vencer',   m:'Quais produtos têm maior risco de vencer sem saída?'},
+    ] : [
+      {l:'📈 Faturamento',    m:'Como está o faturamento do ano atual?'},
+      {l:'🏆 Top vendedores', m:'Quais são os top vendedores do ano?'},
+      {l:'🏷️ Top marcas',     m:'Quais marcas têm maior faturamento?'},
+      {l:'👥 Carteira',       m:'Me dê insights sobre a carteira de clientes.'},
+    ];
+
+    // Botões dinâmicos baseados no contexto
+    if (modo === 'sl' && typeof dadosCompletos !== 'undefined') {
+      var criticos = dadosCompletos.filter(function(d){ return d.dias_vencimento<=15; }).length;
+      if (criticos > 0) {
+        btns.unshift({l:'🚨 '+criticos+' vencem em 15d', m:'Liste os '+criticos+' produtos que vencem em 15 dias e sugira ações urgentes.'});
+      }
+    }
+
+    btns.forEach(function(b) {
+      var btn = document.createElement('button');
+      btn.className = 'ia-quick'; btn.textContent = b.l;
+      btn.addEventListener('click', function(){ iaSendMensagem(b.m); });
+      qb.appendChild(btn);
+    });
+
+    var back = document.createElement('button');
+    back.className = 'ia-back-btn'; back.textContent = '← Menu';
+    back.addEventListener('click', iaReset);
+    qb.appendChild(back);
+
+    el('iaInput').focus();
+  }
+
+  /* ── RESET ─────────────────────────────────────────────── */
+  function iaReset() {
+    state.mode = null; state.historico = [];
+    try { localStorage.removeItem(STORAGE_KEY); } catch(e) {}
+    el('iaMessages').innerHTML = '';
+    el('iaQuickBar').style.display = 'none';
+    el('iaInputArea').style.display = 'none';
+    setStatus('Assistente Átomo');
+    iaApresentar();
+  }
+
+  /* ── PESQUISA DE PRODUTO ───────────────────────────────── */
+  async function iaPesquisarProduto(nome) {
+    try {
+      var r = await fetch(API_BASE + '/api/valter/pesquisar?produto=' + encodeURIComponent(nome));
+      if (!r.ok) return '';
+      var data = await r.json();
+      if (!data.resultados || !data.resultados.length) return '';
+      var txt = 'INFORMACOES DO PRODUTO "' + nome + '":\n';
+      data.resultados.forEach(function(res) {
+        txt += '[' + res.fonte + '] ' + res.titulo + '\n';
+        if (res.descricao) txt += res.descricao.substring(0,300) + '\n\n';
+      });
+      return txt;
+    } catch(e) { return ''; }
+  }
+
+  function iaDetectarProduto(pergunta) {
+    // SEMPRE pesquisa se a pergunta tem mais de 3 palavras relevantes
+    // Remove apenas artigos e preposições curtíssimas
+    var stopwords = ['o','a','os','as','um','uma','do','da','de','dos','das',
+      'no','na','nos','nas','ao','com','por','para','que','se','em'];
+
+    var palavras = pergunta.split(/\s+/).filter(function(w) {
+      return w.length > 1 && stopwords.indexOf(w.toLowerCase()) < 0;
+    });
+
+    // Se a pergunta tem conteúdo suficiente, sempre pesquisa
+    if (palavras.length >= 2) {
+      return palavras.slice(0, 5).join(' ');
+    }
+
+    return palavras.length > 0 ? palavras[0] : null;
+  }
+
+  /* ── CHAMAR API ────────────────────────────────────────── */
+  async function iaChamarAPI(pergunta, contexto, modo) {
+    var sys = 'Seu nome é Valter. Você é o assistente inteligente do sistema Átomo da Alimentare, ' +
+      'distribuidora de alimentos. Responda sempre em português, de forma direta, prática e objetiva. ' +
+      'Use **negrito** para destacar dados importantes. Use listas com - para sugestões. ' +
+      'Seja conciso mas completo. Nunca invente dados — use apenas o contexto fornecido.';
+
+    if (modo === 'sl') {
+      sys += ' Você está no modo Shelf Life. Foque em: produtos críticos, sugestões de reclassificação SL, ' +
+        'receitas e ideias para girar estoques próximos do vencimento.';
+    } else {
+      sys += ' Você está no modo Dúvidas Gerais. Responda sobre qualquer tema do sistema: faturamento, ' +
+        'vendedores, marcas, produtos, carteira. Quando perguntado sobre produtos específicos, ' +
+        'use as informações dos sites da Alimentare que serão fornecidas.';
+    }
+
+    var infoProduto = '';
+    var prod = iaDetectarProduto(pergunta);
+    if (prod) { setStatus('Pesquisando '+prod+'...'); infoProduto = await iaPesquisarProduto(prod); }
+
+    setStatus('Pensando...');
+    var userMsg = 'CONTEXTO:\n' + contexto;
+    if (infoProduto) userMsg += '\n\n' + infoProduto;
+    userMsg += '\n\nPERGUNTA: ' + pergunta;
+
+    try {
+      var resp = await fetch(API_BASE + '/api/valter/chat', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          system: sys,
+          messages: state.historico.concat([{role:'user',content:userMsg}])
+        })
+      });
+      var data = await resp.json();
+      var texto = data.content&&data.content[0] ? data.content[0].text : 'Erro ao obter resposta.';
+      state.historico.push({role:'user',content:pergunta});
+      state.historico.push({role:'assistant',content:texto});
+      if (state.historico.length>12) state.historico=state.historico.slice(-12);
+      setStatus(modo==='sl'?'📦 Shelf Life':'💬 Dúvidas Gerais');
+      return texto;
+    } catch(e) {
+      setStatus('Erro de conexão');
+      return 'Erro de conexão. Tente novamente.';
+    }
+  }
+
+  /* ── ENVIAR MENSAGEM ───────────────────────────────────── */
+  async function iaSendMensagem(texto) {
+    if (!texto.trim()) return;
+    iaAddMsg(texto, 'user');
+    iaAddTyping();
+    setThinking(true);
+    var ctx = state.contexto;
+    if (state.mode==='sl' && typeof dadosCompletos!=='undefined' && dadosCompletos.length) {
+      ctx += iaContextoSL();
+    }
+    var r = await iaChamarAPI(texto, ctx, state.mode||'geral');
+    iaRemoveTyping();
+    setThinking(false);
+    iaAddMsg(r, 'bot');
+    salvarSessao();
+  }
+
+  /* ── EVENTOS ───────────────────────────────────────────── */
+  window.addEventListener('load', function() {
+    el('iaFab').addEventListener('click', iaToggle);
+    el('iaCloseBtn').addEventListener('click', iaToggle);
+    el('iaResetBtn').addEventListener('click', iaReset);
+    el('iaSendBtn').addEventListener('click', function() {
+      var v = el('iaInput').value.trim();
+      if (v) { el('iaInput').value=''; iaSendMensagem(v); }
+    });
+    el('iaInput').addEventListener('keydown', function(e) {
+      if (e.key==='Enter' && !e.shiftKey) {
+        e.preventDefault();
+        var v = el('iaInput').value.trim();
+        if (v) { el('iaInput').value=''; iaSendMensagem(v); }
+      }
+    });
+
+
+  });
+
+})();
+
+async function compararPeriodos() {
+  var anoA = document.getElementById('cAnoA').value;
+  var mesA = document.getElementById('cMesA').value;
+  var anoB = document.getElementById('cAnoB').value;
+  var mesB = document.getElementById('cMesB').value;
+
+  if (!anoA || !mesA || !anoB || !mesB) {
+    alert('Selecione ano e mês para os dois períodos.');
+    return;
+  }
+
+  var mesesNome = ['','Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  var labelA = mesesNome[parseInt(mesA)] + '/' + anoA;
+  var labelB = mesesNome[parseInt(mesB)] + '/' + anoB;
+
+  var grid = document.getElementById('compGrid');
+  grid.style.display = 'grid';
+  grid.innerHTML = '<div style="grid-column:1/-1;padding:20px;text-align:center;color:var(--muted);font-size:13px"><div class="loading-spinner" style="margin:0 auto 8px"></div>Comparando períodos...</div>';
+
+  try {
+    var base = montarParams();
+    var pA = new URLSearchParams(base); pA.set('ano', anoA); pA.set('mes', mesA);
+    var pB = new URLSearchParams(base); pB.set('ano', anoB); pB.set('mes', mesB);
+
+    var [rA, rB] = await Promise.all([
+      fetch(API + '/api/kpis?' + pA.toString()).then(function(r){return r.json();}),
+      fetch(API + '/api/kpis?' + pB.toString()).then(function(r){return r.json();})
+    ]);
+
+    var fatA  = parseFloat(rA.faturamento)||0;
+    var fatB  = parseFloat(rB.faturamento)||0;
+    var devA  = Math.abs(parseFloat(rA.devolucoes)||0);
+    var devB  = Math.abs(parseFloat(rB.devolucoes)||0);
+    var liqA  = fatA - devA;
+    var liqB  = fatB - devB;
+    var cliA  = parseInt(rA.total_clientes)||0;
+    var cliB  = parseInt(rB.total_clientes)||0;
+    var tktA  = parseFloat(rA.ticket_medio)||0;
+    var tktB  = parseFloat(rB.ticket_medio)||0;
+    var qA    = parseInt(rA.qtd_vendas)||0;
+    var qB    = parseInt(rB.qtd_vendas)||0;
+
+    function card(lbl, vA, vB, fmt) {
+      var delta = vB !== 0 ? ((vA - vB) / Math.abs(vB)) * 100 : 0;
+      var cls   = delta > 0.5 ? 'c-up' : delta < -0.5 ? 'c-dn' : 'c-ne';
+      var arrow = delta > 0.5 ? '▲' : delta < -0.5 ? '▼' : '–';
+      var fmtted = fmt === 'brl'
+        ? [brl(vA), brl(vB)]
+        : fmt === 'pct'
+          ? [vA.toFixed(1).replace('.',',')+' %', vB.toFixed(1).replace('.',',')+' %']
+          : [num(vA), num(vB)];
+      return '<div class="comp-card">' +
+        '<div class="comp-lbl">' + lbl + '</div>' +
+        '<div class="comp-periodos">' +
+          '<div class="comp-periodo-row"><span class="comp-vA-label">' + labelA + '</span><span class="comp-vA">' + fmtted[0] + '</span></div>' +
+          '<div class="comp-sep"></div>' +
+          '<div class="comp-periodo-row"><span class="comp-vB-label">' + labelB + '</span><span class="comp-vB">' + fmtted[1] + '</span></div>' +
+        '</div>' +
+        '<span class="comp-pct ' + cls + '">' + arrow + ' ' + Math.abs(delta).toFixed(1).replace('.',',') + '%</span>' +
+        '</div>';
+    }
+
+    grid.innerHTML =
+      card('💰 Fat. Bruto',     fatA,  fatB,  'brl') +
+      card('↩️ Devoluções',     devA,  devB,  'brl') +
+      card('📈 Fat. Líquido',   liqA,  liqB,  'brl') +
+      card('👥 Clientes Ativos',cliA,  cliB,  'num') +
+      card('🛒 Ticket Médio',   tktA,  tktB,  'brl') +
+      card('📦 Qtd. Vendas',    qA,    qB,    'num');
+
+  } catch(e) {
+    grid.innerHTML = '<div style="grid-column:1/-1;padding:16px;color:var(--danger);font-size:13px">Erro ao comparar: ' + e.message + '</div>';
+  }
+}
+
+
+
+</script>
+
+<script>
+function exportarPagina() {
+  var wb = XLSX.utils.book_new();
+  // Tabela principal de produtos
+  var tbl = document.querySelector('#tblProdutos table') || document.querySelector('.tabela-produtos table') || document.querySelector('table');
+  if (tbl) {
+    var header = Array.from(tbl.querySelectorAll('thead th')).map(function(th){return th.textContent.trim();});
+    var rows = [header];
+    tbl.querySelectorAll('tbody tr').forEach(function(tr){
+      rows.push(Array.from(tr.querySelectorAll('td')).map(function(td){return td.textContent.trim();}));
+    });
+    var ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols'] = header.map(function(){return {wch:20};});
+    XLSX.utils.book_append_sheet(wb, ws, 'Produtos');
+  }
+  var ids = ['kFat','kDev','kLiq','kCli','kTkt','kVendas'];
+  var lbls= ['Fat. Bruto','Devoluções','Fat. Líquido','Clientes','Ticket Médio','Qtd. Vendas'];
+  var kpis = [['KPI','Valor']];
+  ids.forEach(function(id,i){ var el=document.getElementById(id); if(el) kpis.push([lbls[i], el.getAttribute('data-valor-real') || el.textContent]); });
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(kpis), 'KPIs');
+  XLSX.writeFile(wb, 'Atomo-Produtos-'+new Date().toISOString().slice(0,10)+'.xlsx');
+}
+</script>
+</body>
+</html>
