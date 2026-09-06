@@ -3,18 +3,10 @@ services:
     name: horus
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app --timeout 300 --workers 1
+    startCommand: python app.py
     plan: free
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
-      - key: FLASK_APP
-        value: app.py
-      - key: FLASK_ENV
-        value: production
-      - key: FLASK_DEBUG
-        value: False
-      - key: APP_NAME
-        value: Átomo
-      - key: APP_VERSION
-        value: 2.0.0
+      - key: PORT
+        value: 8080
