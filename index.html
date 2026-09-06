@@ -149,6 +149,12 @@
     box-shadow: 0 6px 24px rgba(37, 99, 235, 0.35);
   }
 
+  .btn-primary:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none !important;
+  }
+
   .btn-secondary {
     background: var(--bg);
     color: var(--text);
@@ -475,7 +481,7 @@
     </svg>
     <h1>Átomo</h1>
     <p>Feito de estrelas.</p>
-    <input id="email" placeholder="Email" type="email">
+    <input id="email" placeholder="Email" type="email" autofocus>
     <input id="password" type="password" placeholder="Senha">
     <button class="btn btn-primary" id="loginBtn">Entrar</button>
     <button class="btn btn-secondary" id="registerBtn">Criar conta</button>
@@ -509,13 +515,23 @@ function showToast(msg) {
   toast._timeout = setTimeout(() => { toast.className = ''; }, 3000);
 }
 
-// --- LOGIN ---
-document.getElementById("loginBtn").onclick = function() {
+// ============================================================
+// FUNÇÃO DE LOGIN (reutilizada pelo clique e pelo Enter)
+// ============================================================
+function realizarLogin() {
   const btn = document.getElementById('loginBtn');
   const email = document.getElementById('email').value;
   const password = document.getElementById('password').value;
+
+  // Validação básica
+  if (!email || !password) {
+    showToast("❌ Preencha email e senha.");
+    return;
+  }
+
   btn.textContent = 'Entrando...';
   btn.disabled = true;
+
   auth.signInWithEmailAndPassword(email, password)
     .then((userCredential) => {
       localStorage.setItem('horus_user_email', userCredential.user.email);
@@ -526,9 +542,33 @@ document.getElementById("loginBtn").onclick = function() {
       btn.disabled = false;
       showToast("❌ Erro no login: " + err.message);
     });
-};
+}
 
-// --- REGISTER ---
+// ============================================================
+// EVENTO DE CLIQUE NO BOTÃO "ENTRAR"
+// ============================================================
+document.getElementById("loginBtn").onclick = realizarLogin;
+
+// ============================================================
+// EVENTO DE TECLA "ENTER" NOS CAMPOS EMAIL E SENHA
+// ============================================================
+document.getElementById("email").addEventListener("keydown", function(e) {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    document.getElementById("password").focus();
+  }
+});
+
+document.getElementById("password").addEventListener("keydown", function(e) {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    realizarLogin();
+  }
+});
+
+// ============================================================
+// REGISTER
+// ============================================================
 document.getElementById("registerBtn").onclick = function() {
   const email = document.getElementById('email').value;
   const password = document.getElementById('password').value;
@@ -541,7 +581,9 @@ document.getElementById("registerBtn").onclick = function() {
     .catch(err => showToast("❌ Erro: " + err.message));
 };
 
-// --- ADMIN LOGIN ---
+// ============================================================
+// ADMIN LOGIN
+// ============================================================
 document.getElementById("adminBtn").onclick = function() {
   document.getElementById("loginScreen").innerHTML = `
     <div class="card">
@@ -560,6 +602,22 @@ document.getElementById("adminBtn").onclick = function() {
       <button class="btn btn-secondary" onclick="location.reload()">↩ Voltar</button>
     </div>
   `;
+
+  // Também adiciona Enter para o login admin
+  document.getElementById("adminEmail").addEventListener("keydown", function(e) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      document.getElementById("adminPassword").focus();
+    }
+  });
+
+  document.getElementById("adminPassword").addEventListener("keydown", function(e) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      document.getElementById("adminLoginBtn").click();
+    }
+  });
+
   document.getElementById("adminLoginBtn").onclick = function() {
     const email = document.getElementById('adminEmail').value;
     const password = document.getElementById('adminPassword').value;
