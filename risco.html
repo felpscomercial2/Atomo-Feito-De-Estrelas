@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Átomo — Clientes em Risco</title>
+  
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0A1628">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  
+  <link rel="stylesheet" href="/static/css/atomo.css">
+  <link rel="stylesheet" href="/static/css/widgets.css">
+</head>
+<body>
+  <!-- LOADING -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-spinner"></div>
+    <span style="color:var(--text);margin-top:12px;">Carregando clientes em risco...</span>
+  </div>
+  
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="mainSidebar">
+    <img class="sidebar-logo" src="/logo.png" alt="Átomo" onerror="this.style.display='none'">
+    <div class="sidebar-title">ÁTOMO</div>
+    
+    <div class="nav-section">Dashboards</div>
+    <a class="nav-item" href="/home.html"><span class="icon">🏠</span> Página Inicial</a>
+    <a class="nav-item" href="/visao-geral.html"><span class="icon">📊</span> Visão Geral</a>
+    <a class="nav-item" href="/vendedor.html"><span class="icon">👤</span> Vendedor</a>
+    <a class="nav-item" href="/regiao.html"><span class="icon">🗺️</span> Região</a>
+    <a class="nav-item" href="/marcas.html"><span class="icon">🏷️</span> Marcas</a>
+    <a class="nav-item" href="/produtos.html"><span class="icon">📦</span> Produtos</a>
+    <a class="nav-item" href="/produtos-cliente.html"><span class="icon">🛍️</span> Produtos por Cliente</a>
+    
+    <div class="sidebar-divider"></div>
+    <div class="nav-section">Gestão</div>
+    <a class="nav-item" href="/carteira.html"><span class="icon">👥</span> Carteira</a>
+    <a class="nav-item" href="/positivacao.html"><span class="icon">👥</span> Positivação</a>
+    <a class="nav-item" href="/shelflife.html"><span class="icon">🕒</span> Shelf Life</a>
+    <a class="nav-item active" href="/risco.html"><span class="icon">⚠️</span> Clientes em Risco</a>
+    <a class="nav-item" href="/compras.html"><span class="icon">🛒</span> Compras</a>
+    
+    <div class="sidebar-divider"></div>
+    <div class="nav-section">🏆 Metas <span class="badge-meta" id="badgeMetas">0</span></div>
+    
+    <button class="btn-logout" onclick="logout()">🚪 Sair</button>
+  </div>
+  
+  <!-- MAIN CONTENT -->
+  <div class="main-content">
+    <div id="notificationContainer"></div>
+    
+    <div class="page-header">
+      <div class="breadcrumb">
+        <a href="/home.html">🏠 Portal</a>
+        <span class="sep">›</span>
+        <a href="/visao-geral.html">Visão Geral</a>
+        <span class="sep">›</span>
+        <span>⚠️ Clientes em Risco</span>
+      </div>
+      <div class="header-actions">
+        <button onclick="exportarPDF()">📄 <span>PDF</span></button>
+        <button onclick="exportarExcelRisco()">📊 <span>Excel</span></button>
+        <button onclick="compartilharFiltros()">🔗</button>
+        <button onclick="toggleTheme()">🌓</button>
+        <button onclick="abrirNotificacoes()" style="position:relative;">
+          🔔 <span class="badge-notification" id="notifBadge">0</span>
+        </button>
+      </div>
+    </div>
+    
+    <div class="nota">⚠️ Clientes sem compra há um período — oportunidades de reativação. <strong>Dias sem compra</strong> calculado a partir da última venda.</div>
+    
+    <!-- FILTROS GLOBAIS -->
+    <div class="filtros-card">
+      <div class="filtros-grid">
+        <div class="filtro-group">
+          <label>📅 Ano</label>
+          <select class="filtro-select" id="filtroAno" onchange="aplicarFiltros()"></select>
+        </div>
+        <div class="filtro-group">
+          <label>📅 Mês</label>
+          <select class="filtro-select" id="filtroMes" onchange="aplicarFiltros()">
+            <option value="">Todos</option>
+            <option value="1">Janeiro</option><option value="2">Fevereiro</option>
+            <option value="3">Março</option><option value="4">Abril</option>
+            <option value="5">Maio</option><option value="6">Junho</option>
+            <option value="7">Julho</option><option value="8">Agosto</option>
+            <option value="9">Setembro</option><option value="10">Outubro</option>
+            <option value="11">Novembro</option><option value="12">Dezembro</option>
+          </select>
+        </div>
+        <div class="filtro-group">
+          <label>🏢 Unidade</label>
+          <select class="filtro-select" id="filtroUnidade" onchange="aplicarFiltros()"></select>
+        </div>
+        <div class="filtro-group">
+          <label>🏷️ Marca</label>
+          <select class="filtro-select" id="filtroMarca" onchange="aplicarFiltros()"></select>
+        </div>
+      </div>
+      <div class="filtros-ativos" id="filtrosAtivos"></div>
+    </div>
+    
+    <!-- FILTROS ESPECÍFICOS DO RISCO -->
+    <div class="filtros-card" style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;">
+      <label style="font-size:13px;color:var(--muted);font-weight:500;">⏱️ Sem comprar há mais de:</label>
+      <select class="filtro-select" id="selDias" style="width:auto;min-width:120px;">
+        <option value="30">30 dias</option>
+        <option value="60" selected>60 dias</option>
+        <option value="90">90 dias</option>
+        <option value="120">120 dias</option>
+        <option value="180">180 dias</option>
+        <option value="365">1 ano</option>
+      </select>
+      
+      <label style="font-size:13px;color:var(--muted);font-weight:500;margin-left:8px;">👤 Vendedor:</label>
+      <select class="filtro-select" id="selVend" style="width:auto;min-width:150px;">
+        <option value="">Todos</option>
+      </select>
+      
+      <label style="font-size:13px;color:var(--muted);font-weight:500;margin-left:8px;">📊 Mostrar:</label>
+      <select class="filtro-select" id="selLimite" style="width:auto;min-width:100px;">
+        <option value="100">100</option>
+        <option value="200" selected>200</option>
+        <option value="500">500</option>
+        <option value="1000">1000</option>
+      </select>
+      
+      <button class="btn-comp" onclick="carregarRisco()">✓ Aplicar</button>
+    </div>
+    
+    <!-- KPIs -->
+    <div class="kpi-grid" style="margin-bottom:20px;">
+      <div class="kpi-card vermelho">
+        <div class="kpi-label">⚠️ Total em Risco</div>
+        <div class="kpi-value" id="kpiTotal">—</div>
+        <div class="kpi-sub">Clientes sem compra</div>
+      </div>
+      <div class="kpi-card amarelo">
+        <div class="kpi-label">📅 Dias Médios</div>
+        <div class="kpi-value" id="kpiMedia">—</div>
+        <div class="kpi-sub">Média sem compra</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">💰 Faturamento Histórico</div>
+        <div class="kpi-value" id="kpiFat">—</div>
+        <div class="kpi-sub">Total perdido</div>
+      </div>
+      <div class="kpi-card vermelho">
+        <div class="kpi-label">🔴 Críticos (+120d)</div>
+        <div class="kpi-value" id="kpiCrit">—</div>
+        <div class="kpi-sub">Alta prioridade</div>
+      </div>
+      <div class="kpi-card amarelo">
+        <div class="kpi-label">🟡 Atenção (60-120d)</div>
+        <div class="kpi-value" id="kpiAtenc">—</div>
+        <div class="kpi-sub">Média prioridade</div>
+      </div>
+      <div class="kpi-card ciano">
+        <div class="kpi-label">🟢 Observação (30-60d)</div>
+        <div class="kpi-value" id="kpiObs">—</div>
+        <div class="kpi-sub">Baixa prioridade</div>
+      </div>
+    </div>
+    
+    <!-- TABELA -->
+    <div class="widget-card">
+      <div class="widget-header">
+        <div class="widget-title">📋 Lista de Clientes em Risco</div>
+        <span style="font-size:11px;color:var(--muted);" id="countLabel"></span>
+      </div>
+      <div class="widget-content">
+        <!-- Barra de busca -->
+        <div style="margin-bottom:12px;">
+          <div style="position:relative;max-width:400px;">
+            <input type="text" id="buscaRisco" class="filtro-select" placeholder="🔍 Buscar cliente..." style="width:100%;padding-left:35px;" oninput="filtrarTabelaRisco()">
+            <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:14px;">🔍</span>
+          </div>
+        </div>
+        
+        <div class="table-wrap" id="corpo" style="max-height:calc(100vh - 200px);overflow:auto;">
+          <div class="loading-spinner" style="margin:20px auto;"></div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- FOOTER -->
+    <div class="dashboard-footer" id="dashboardFooter">
+      <span id="footerInfo"></span>
+    </div>
+  </div>
+  
+  <!-- VALTER -->
+  <button class="ia-fab" id="iaFab" onclick="toggleValter()">
+    <svg width="28" height="28" viewBox="0 0 38 38"><circle cx="19" cy="19" r="19" fill="#0A1628"/><ellipse cx="19" cy="19" rx="15" ry="5.5" fill="none" stroke="#fff" stroke-width="1.2" transform="rotate(-40 19 19)"/><ellipse cx="19" cy="19" rx="15" ry="5.5" fill="none" stroke="#fff" stroke-width="1.2" transform="rotate(40 19 19)"/><ellipse cx="19" cy="19" rx="15" ry="5.5" fill="none" stroke="#fff" stroke-width="1.2" transform="rotate(90 19 19)"/><circle cx="19" cy="19" r="5" fill="#fff"/><circle cx="19" cy="19" r="3" fill="#0096FF"/></svg>
+    <span class="ia-badge" id="iaBadge">0</span>
+  </button>
+  
+  <div class="ia-panel" id="iaPanel">
+    <div class="ia-header">
+      <div class="ia-avatar">⚛️</div>
+      <div class="ia-header-info">
+        <div class="ia-header-name">Valter</div>
+        <div class="ia-header-status"><span class="ia-status-dot"></span> Assistente</div>
+      </div>
+      <button class="ia-header-btn" onclick="toggleValter()">✕</button>
+    </div>
+    <div class="ia-messages" id="iaMessages">
+      <div class="ia-msg bot"><div class="ia-msg-bubble">Olá! Pergunte sobre clientes em risco, reativação ou análise de inatividade.</div></div>
+    </div>
+    <div class="ia-quick-bar">
+      <button class="ia-quick" onclick="enviarPergunta('Clientes em risco crítico')">🚨 Críticos</button>
+      <button class="ia-quick" onclick="enviarPergunta('Análise de clientes inativos')">📊 Análise</button>
+      <button class="ia-quick" onclick="enviarPergunta('Sugestões de reativação')">💡 Reativação</button>
+    </div>
+    <div class="ia-input-area">
+      <input class="ia-input" id="iaInput" placeholder="Digite sua pergunta..." onkeydown="if(event.key==='Enter') enviarPergunta()">
+      <button class="ia-send-btn" onclick="enviarPergunta()">➤</button>
+    </div>
+  </div>
+  
+  <script src="/static/js/app.js"></script>
+  <script>
+    // ============================================================
+    // VARIÁVEIS GLOBAIS
+    // ============================================================
+    const API = 'https://horus-production.up.railway.app';
+    let dadosRisco = [];
+    let dadosFiltrados = [];
+    let termoBusca = '';
+    
+    // ============================================================
+    // INICIALIZAÇÃO
+    // ============================================================
+    document.addEventListener('DOMContentLoaded', function() {
+      carregarFiltros();
+      carregarTheme();
+      carregarMetas();
+      carregarVendedoresRisco();
+      
+      document.addEventListener('filtrosAplicados', function() {
+        carregarRisco();
+      });
+      
+      if (!localStorage.getItem('atomo_logged_in')) {
+        window.location.href = '/index.html';
+      }
+    });
+    
+    // ============================================================
+    // CARREGA VENDEDORES
+    // ============================================================
+    function carregarVendedoresRisco() {
+      fetch(`${API}/api/filtros`)
+        .then(res => res.json())
+        .then(data => {
+          const sel = document.getElementById('selVend');
+          data.vendedores.forEach(v => {
+            const opt = document.createElement('option');
+            opt.value = v;
+            opt.textContent = v;
+            sel.appendChild(opt);
+          });
+        })
+        .catch(err => console.error('Erro ao carregar vendedores:', err));
+    }
+    
+    // ============================================================
+    // CARREGAR DADOS DE RISCO
+    // ============================================================
+    function carregarRisco() {
+      const loader = document.getElementById('loadingOverlay');
+      loader.classList.add('show');
+      
+      const dias = document.getElementById('selDias').value;
+      const limite = document.getElementById('selLimite').value;
+      const vend = document.getElementById('selVend').value;
+      
+      // Monta params com filtros globais
+      const params = new URLSearchParams();
+      params.append('dias', dias);
+      params.append('limite', limite);
+      
+      if (filtrosAtuais.ano) params.append('ano', filtrosAtuais.ano);
+      if (filtrosAtuais.mes) params.append('mes', filtrosAtuais.mes);
+      if (filtrosAtuais.unidade) params.append('unidade', filtrosAtuais.unidade);
+      if (filtrosAtuais.marca) params.append('marca', filtrosAtuais.marca);
+      
+      fetch(`${API}/api/clientes-em-risco?${params}`)
+        .then(res => res.json())
+        .then(data => {
+          dadosRisco = data.clientes || [];
+          
+          // Filtra por vendedor (frontend)
+          if (vend) {
+            dadosRisco = dadosRisco.filter(c => c.vendedor === vend);
+          }
+          
+          dadosFiltrados = dadosRisco;
+          atualizarKPIsRisco();
+          renderTabelaRisco();
+          atualizarFooterRisco();
+          loader.classList.remove('show');
+        })
+        .catch(err => {
+          console.error('Erro ao carregar risco:', err);
+          document.getElementById('corpo').innerHTML = `
+            <div style="padding:40px;text-align:center;color:var(--danger);">
+              ❌ Erro ao carregar dados: ${err.message}
+            </div>
+          `;
+          adicionarNotificacao('❌ Erro ao carregar dados: ' + err.message, 'danger', '❌');
+          loader.classList.remove('show');
+        });
+    }
+    
+    // ============================================================
+    // ATUALIZAR KPIs
+    // ============================================================
+    function atualizarKPIsRisco() {
+      const total = dadosRisco.length;
+      const media = total ? Math.round(dadosRisco.reduce((s, c) => s + c.dias_sem_compra, 0) / total) : 0;
+      const fat = dadosRisco.reduce((s, c) => s + c.fat_total, 0);
+      const crit = dadosRisco.filter(c => c.dias_sem_compra >= 120).length;
+      const atenc = dadosRisco.filter(c => c.dias_sem_compra >= 60 && c.dias_sem_compra < 120).length;
+      const obs = dadosRisco.filter(c => c.dias_sem_compra >= 30 && c.dias_sem_compra < 60).length;
+      
+      animarContador(document.getElementById('kpiTotal'), total);
+      animarContador(document.getElementById('kpiMedia'), media + 'd');
+      animarContador(document.getElementById('kpiFat'), fat);
+      animarContador(document.getElementById('kpiCrit'), crit);
+      animarContador(document.getElementById('kpiAtenc'), atenc);
+      animarContador(document.getElementById('kpiObs'), obs);
+      
+      document.getElementById('countLabel').textContent = total + ' clientes em risco';
+    }
+    
+    // ============================================================
+    // ANIMAÇÃO DE CONTADOR
+    // ============================================================
+    function animarContador(elemento, valorFinal) {
+      if (!elemento) return;
+      
+      // Se for string com unidade (ex: "150d")
+      const isStringWithUnit = typeof valorFinal === 'string' && /[a-zA-Z]/.test(valorFinal);
+      const valorNumerico = parseFloat(String(valorFinal).replace(/[^0-9.-]/g, '')) || 0;
+      const unidade = isStringWithUnit ? String(valorFinal).replace(/[0-9.-]/g, '') : '';
+      
+      const valorInicial = parseFloat(String(elemento.textContent).replace(/[^0-9.-]/g, '')) || 0;
+      const destino = valorNumerico;
+      
+      if (valorInicial === destino) {
+        elemento.textContent = isStringWithUnit ? destino + unidade : destino;
+        return;
+      }
+      
+      const duracao = 500;
+      const inicioTempo = performance.now();
+      
+      function passo(agora) {
+        const progresso = Math.min((agora - inicioTempo) / duracao, 1);
+        const valorAtual = Math.round(valorInicial + (destino - valorInicial) * progresso);
+        elemento.textContent = isStringWithUnit ? valorAtual + unidade : valorAtual;
+        if (progresso < 1) requestAnimationFrame(passo);
+      }
+      requestAnimationFrame(passo);
+    }
+    
+    // ============================================================
+    // RENDER TABELA
+    // ============================================================
+    function renderTabelaRisco() {
+      const container = document.getElementById('corpo');
+      let dados = dadosRisco;
+      
+      // Aplica busca
+      if (termoBusca.trim()) {
+        const busca = termoBusca.toLowerCase().trim();
+        dados = dados.filter(c => 
+          (c.cliente || '').toLowerCase().includes(busca) ||
+          (c.cod_cliente || '').toLowerCase().includes(busca) ||
+          (c.vendedor || '').toLowerCase().includes(busca)
+        );
+      }
+      
+      dadosFiltrados = dados;
+      document.getElementById('countLabel').textContent = dadosFiltrados.length + ' clientes em risco';
+      
+      if (!dadosFiltrados.length) {
+        container.innerHTML = `
+          <div style="padding:40px;text-align:center;color:var(--muted);">
+            <span style="font-size:32px;opacity:0.5;display:block;margin-bottom:8px;">✅</span>
+            Nenhum cliente em risco para os filtros selecionados.
+          </div>
+        `;
+        return;
+      }
+      
+      const maxFat = Math.max(...dadosFiltrados.map(c => c.fat_total), 1);
+      
+      container.innerHTML = `
+        <table>
+          <thead style="position:sticky;top:0;z-index:5;">
+            <tr>
+              <th style="width:50px;">#</th>
+              <th>Código</th>
+              <th>Cliente</th>
+              <th>Vendedor</th>
+              <th style="min-width:100px;">Última Compra</th>
+              <th style="min-width:80px;">Dias</th>
+              <th style="text-align:right;min-width:120px;">Fat. Total</th>
+              <th style="text-align:right;min-width:80px;">Pedidos</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${dadosFiltrados.map((c, i) => {
+              let badgeClass = 'badge-ok';
+              let badgeText = '🟢 Observação';
+              if (c.dias_sem_compra >= 120) {
+                badgeClass = 'badge-danger';
+                badgeText = '🔴 Crítico';
+              } else if (c.dias_sem_compra >= 60) {
+                badgeClass = 'badge-warning';
+                badgeText = '🟡 Atenção';
+              }
+              
+              const fatPercent = (c.fat_total / maxFat * 100).toFixed(1);
+              
+              return `
+                <tr style="${c.dias_sem_compra >= 120 ? 'border-left:3px solid var(--danger);' : c.dias_sem_compra >= 60 ? 'border-left:3px solid var(--warning);' : ''}">
+                  <td class="rank">${i+1}°</td>
+                  <td style="font-size:12px;color:var(--muted);">${c.cod_cliente || '—'}</td>
+                  <td><strong>${c.cliente || '—'}</strong></td>
+                  <td style="font-size:12px;color:var(--muted);">${c.vendedor || '—'}</td>
+                  <td style="font-size:12px;">${c.ultima_compra || '—'}</td>
+                  <td><span class="badge ${badgeClass}">${c.dias_sem_compra}d</span></td>
+                  <td style="text-align:right;font-weight:600;">
+                    ${formatarMoeda(c.fat_total)}
+                    <div class="progress-bar"><div class="progress-fill" style="width:${fatPercent}%;${c.dias_sem_compra >= 120 ? 'background:var(--danger);' : c.dias_sem_compra >= 60 ? 'background:var(--warning);' : ''}"></div></div>
+                  </td>
+                  <td style="text-align:right;">${c.num_pedidos || 0}</td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+    
+    // ============================================================
+    // FILTRO DE BUSCA
+    // ============================================================
+    function filtrarTabelaRisco() {
+      const input = document.getElementById('buscaRisco');
+      termoBusca = input.value || '';
+      renderTabelaRisco();
+    }
+    
+    // ============================================================
+    // EXPORTAR EXCEL
+    // ============================================================
+    function exportarExcelRisco() {
+      if (!dadosFiltrados.length) {
+        adicionarNotificacao('Nenhum dado para exportar!', 'warning', '⚠️');
+        return;
+      }
+      
+      const rows = [
+        ['#', 'Código', 'Cliente', 'Vendedor', 'Última Compra', 'Dias Sem Compra', 'Fat. Total', 'Pedidos']
+      ];
+      
+      dadosFiltrados.forEach((c, i) => {
+        rows.push([
+          i+1,
+          c.cod_cliente || '—',
+          c.cliente || '—',
+          c.vendedor || '—',
+          c.ultima_compra || '—',
+          c.dias_sem_compra,
+          formatarMoeda(c.fat_total),
+          c.num_pedidos || 0
+        ]);
+      });
+      
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.aoa_to_sheet(rows);
+      ws['!cols'] = [
+        { wch: 5 }, { wch: 14 }, { wch: 35 }, { wch: 25 },
+        { wch: 15 }, { wch: 18 }, { wch: 18 }, { wch: 10 }
+      ];
+      XLSX.utils.book_append_sheet(wb, ws, 'Clientes em Risco');
+      
+      const fileName = 'Atomo-ClientesRisco-' + new Date().toISOString().slice(0,10) + '.xlsx';
+      XLSX.writeFile(wb, fileName);
+      adicionarNotificacao('✅ Excel gerado com sucesso!', 'success', '✅');
+    }
+    
+    // ============================================================
+    // ATUALIZAR FOOTER
+    // ============================================================
+    function atualizarFooterRisco() {
+      const el = document.getElementById('dashboardFooter');
+      if (!el) return;
+      const agora = new Date().toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+      const dias = document.getElementById('selDias').value;
+      const total = dadosRisco.length;
+      el.textContent = `📅 Dados carregados em: ${agora} · ${total} clientes · Corte: ${dias} dias sem compra`;
+    }
+    
+    // ============================================================
+    // EXPORTA FUNÇÕES GLOBAIS
+    // ============================================================
+    window.carregarRisco = carregarRisco;
+    window.filtrarTabelaRisco = filtrarTabelaRisco;
+    window.exportarExcelRisco = exportarExcelRisco;
+  </script>
+</body>
+</html>
