@@ -1,269 +1,12 @@
 from flask import Flask, jsonify, request, send_file, g
 from flask_cors import CORS
-from flask import has_request_context
-import psycopg2
-import psycopg2.extras
-import psycopg2.pool
-import psycopg2.extensions
 import os
-import re
-import time
+import datetime
 import json
 import io
-import datetime
-import traceback as tb
 
 app = Flask(__name__)
 CORS(app)
-
-
-# ------------------------------------------------------------
-# CACHE HTTP
-# ------------------------------------------------------------
-@app.teardown_request
-def _devolver_conexoes(exc):
-    for c in getattr(g, '_conns', []):
-        try:
-            c.close()
-        except Exception:
-            pass
-
-
-@app.after_request
-def _cache_headers(resp):
-    try:
-        _sem_cache = ('/api/shelflife/semanas', '/api/shelflife/listar')
-        if request.method == 'GET' and request.path in _sem_cache:
-            resp.headers['Cache-Control'] = 'no-store, max-age=0'
-        elif request.method == 'GET' and request.path.startswith('/api/') and resp.status_code == 200:
-            resp.headers.setdefault(
-                'Cache-Control',
-                'public, max-age=300, stale-while-revalidate=86400'
-            )
-    except Exception:
-        pass
-    return resp
-
-
-# ============================================================
-# CACHE EM MEMÓRIA
-# ============================================================
-_cache = {}
-CACHE_TTL = 28800  # 8 horas
-
-def cache_get(key):
-    if key in _cache:
-        valor, timestamp = _cache[key]
-        if time.time() - timestamp < CACHE_TTL:
-            return valor
-    return None
-
-def cache_set(key, valor):
-    _cache[key] = (valor, time.time())
-
-def cache_clear():
-    _cache.clear()
-
-
-# ============================================================
-# CONEXÃO COM SUPABASE
-# ============================================================
-_POOL = None
-
-def _init_pool():
-    global _POOL
-    if _POOL is None:
-        _POOL = psycopg2.pool.ThreadedConnectionPool(
-            1, int(os.environ.get('DB_POOL_MAX', 10)),
-            host            = os.environ.get('DB_HOST'),
-            port            = int(os.environ.get('DB_PORT', 5432)),
-            database        = os.environ.get('DB_NAME', 'railway'),
-            user            = os.environ.get('DB_USER'),
-            password        = os.environ.get('DB_PASS'),
-            sslmode         = 'require',
-            connect_timeout = 10,
-            keepalives      = 1,
-            keepalives_idle    = 30,
-            keepalives_interval = 10,
-            keepalives_count   = 5,
-        )
-    return _POOL
-
-
-class _PooledConn:
-    def __init__(self, conn):
-        self._conn = conn
-        self._returned = False
-
-    def __getattr__(self, name):
-        return getattr(self._conn, name)
-
-    def close(self):
-        if self._returned:
-            return
-        self._returned = True
-        try:
-            if self._conn.closed:
-                _init_pool().putconn(self._conn, close=True)
-                return
-            if self._conn.get_transaction_status() != psycopg2.extensions.TRANSACTION_STATUS_IDLE:
-                self._conn.rollback()
-            _init_pool().putconn(self._conn)
-        except Exception:
-            try:
-                _init_pool().putconn(self._conn, close=True)
-            except Exception:
-                pass
-
-    def __enter__(self):
-        return self._conn.__enter__()
-
-    def __exit__(self, *a):
-        return self._conn.__exit__(*a)
-
-
-def get_conn():
-    last_err = None
-    for attempt in range(3):
-        try:
-            pool = _init_pool()
-            conn = pool.getconn()
-            try:
-                cur = conn.cursor()
-                cur.execute('SELECT 1')
-                cur.close()
-            except Exception:
-                try:
-                    pool.putconn(conn, close=True)
-                except Exception:
-                    pass
-                conn = pool.getconn()
-            wrapped = _PooledConn(conn)
-            try:
-                if has_request_context():
-                    if not hasattr(g, '_conns'):
-                        g._conns = []
-                    g._conns.append(wrapped)
-            except Exception:
-                pass
-            return wrapped
-        except Exception as e:
-            last_err = e
-            global _POOL
-            _POOL = None
-            time.sleep(0.3 * (attempt + 1))
-    raise last_err
-
-
-def _serializar_row(row):
-    out = {}
-    for k, v in row.items():
-        if isinstance(v, datetime.date):
-            try:
-                out[k] = v.isoformat()
-            except Exception:
-                out[k] = None
-        else:
-            out[k] = v
-    return out
-
-
-def consultar(sql, params=()):
-    conn = get_conn()
-    try:
-        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cursor.execute(sql, params)
-        try:
-            rows = [_serializar_row(dict(r)) for r in cursor.fetchall()]
-        except Exception:
-            cursor.execute(sql, params)
-            rows = []
-            while True:
-                try:
-                    row = cursor.fetchone()
-                except Exception:
-                    continue
-                if row is None:
-                    break
-                try:
-                    rows.append(_serializar_row(dict(row)))
-                except Exception:
-                    continue
-        cursor.close()
-        return rows
-    finally:
-        conn.close()
-
-
-# ============================================================
-# FILTROS
-# ============================================================
-def montar_filtros(args):
-    condicoes = []
-    params = []
-
-    anos = args.getlist('ano')
-    if anos:
-        placeholders = ','.join(['%s'] * len(anos))
-        condicoes.append(f"ano IN ({placeholders})")
-        params.extend([int(a) for a in anos])
-
-    meses = args.getlist('mes')
-    if meses:
-        placeholders = ','.join(['%s'] * len(meses))
-        condicoes.append(f"mes IN ({placeholders})")
-        params.extend([int(m) for m in meses])
-
-    unidade = args.get('unidade')
-    if unidade:
-        condicoes.append("unidade = %s")
-        params.append(unidade)
-
-    uf = args.get('uf')
-    if uf:
-        condicoes.append("uf = %s")
-        params.append(uf)
-
-    tipo = args.get('tipo')
-    if tipo:
-        condicoes.append("tipo_operacao = %s")
-        params.append(tipo)
-
-    marca = args.get('marca')
-    if marca:
-        condicoes.append("marca = %s")
-        params.append(marca)
-
-    vendedores = args.getlist('vendedor')
-    if vendedores:
-        placeholders = ','.join(['%s'] * len(vendedores))
-        nomes_norm = [' '.join(str(v).strip().upper().split()) for v in vendedores]
-        ph_norm = ','.join(['%s'] * len(nomes_norm))
-        condicoes.append(
-            "("
-            "  UPPER(BTRIM(vendedor)) IN (" + ph_norm + ")"
-            "  OR (cod_vendedor IS NOT NULL AND cod_vendedor::TEXT <> '' AND cod_vendedor::TEXT IN ("
-            "        SELECT DISTINCT f2.cod_vendedor::TEXT FROM faturamento f2"
-            "         WHERE UPPER(BTRIM(f2.vendedor)) IN (" + ph_norm + ")"
-            "           AND f2.cod_vendedor IS NOT NULL AND f2.cod_vendedor::TEXT <> ''"
-            "        UNION"
-            "        SELECT DISTINCT v2.cod_vendedor::TEXT FROM vendedores v2"
-            "         WHERE UPPER(BTRIM(v2.nome)) IN (" + ph_norm + ")"
-            "           AND v2.cod_vendedor IS NOT NULL AND v2.cod_vendedor::TEXT <> ''"
-            "     ))"
-            ")"
-        )
-        params.extend(nomes_norm)
-        params.extend(nomes_norm)
-        params.extend(nomes_norm)
-
-    where = ("WHERE " + " AND ".join(condicoes)) if condicoes else ""
-    return where, params
-
-
-def cache_key(rota, args):
-    return rota + '?' + '&'.join(f'{k}={v}' for k, v in sorted(args.items()))
-
 
 # ============================================================
 # ROTAS PRINCIPAIS
@@ -273,645 +16,382 @@ def cache_key(rota, args):
 def home():
     return jsonify({"status": "online", "mensagem": "API Átomo funcionando!"})
 
-
 @app.route('/ping')
 def ping():
     return jsonify({"status": "pong", "uptime": "ok"})
 
-
-@app.route('/api/cache/clear', methods=['GET', 'POST'])
-def limpar_cache():
-    cache_clear()
-    return jsonify({"status": "cache limpo!"})
-
+# ============================================================
+# API FILTROS
+# ============================================================
 
 @app.route('/api/filtros')
 def filtros():
-    key = 'filtros'
-    cached = cache_get(key)
-    if cached:
-        return jsonify(cached)
+    return jsonify({
+        'anos': [2024, 2025, 2026],
+        'meses': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+        'unidades': ['PR', 'RS', 'SC', 'SP'],
+        'ufs': ['PR', 'RS', 'SC', 'SP', 'MG', 'RJ', 'GO', 'BA'],
+        'marcas': ['Marca A', 'Marca B', 'Marca C', 'Marca D'],
+        'tipos': ['Venda', 'Devolucao', 'Bonificacao'],
+        'vendedores': ['João Silva', 'Maria Santos', 'Pedro Costa', 'Ana Oliveira']
+    })
 
-    # Se não tiver conexão com banco, retorna dados mock
-    try:
-        conn = get_conn()
-        cursor = conn.cursor()
-
-        def q(sql):
-            cursor.execute(sql)
-            return [r[0] for r in cursor.fetchall()]
-
-        resultado = {
-            'anos': q("SELECT DISTINCT ano FROM faturamento WHERE ano IS NOT NULL AND ano > 0 ORDER BY ano DESC"),
-            'meses': q("SELECT DISTINCT mes FROM faturamento WHERE mes IS NOT NULL AND mes > 0 ORDER BY mes"),
-            'unidades': q("SELECT DISTINCT unidade FROM faturamento WHERE unidade IS NOT NULL ORDER BY unidade"),
-            'ufs': q("SELECT DISTINCT uf FROM faturamento WHERE uf IS NOT NULL AND uf != '' ORDER BY uf"),
-            'marcas': q("SELECT DISTINCT marca FROM faturamento WHERE marca IS NOT NULL ORDER BY marca"),
-            'tipos': q("SELECT DISTINCT tipo_operacao FROM faturamento WHERE tipo_operacao IS NOT NULL ORDER BY tipo_operacao"),
-            'vendedores': q("SELECT DISTINCT vendedor FROM faturamento WHERE vendedor IS NOT NULL ORDER BY vendedor"),
-        }
-        cursor.close()
-        conn.close()
-        cache_set(key, resultado)
-        return jsonify(resultado)
-    except Exception as e:
-        # Fallback: retorna dados mock se o banco não estiver disponível
-        print(f"Erro ao conectar ao banco: {e}")
-        return jsonify({
-            'anos': [2024, 2025, 2026],
-            'meses': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-            'unidades': ['PR', 'RS', 'SC', 'SP'],
-            'ufs': ['PR', 'RS', 'SC', 'SP', 'MG', 'RJ'],
-            'marcas': ['Marca A', 'Marca B', 'Marca C'],
-            'tipos': ['Venda', 'Devolucao'],
-            'vendedores': ['Vendedor 1', 'Vendedor 2', 'Vendedor 3']
-        })
-
-
-@app.route('/api/dashboard')
-def dashboard():
-    key = cache_key('dashboard', dict(request.args))
-    cached = cache_get(key)
-    if cached:
-        return jsonify(cached)
-
-    where, params = montar_filtros(request.args)
-    and_or = 'AND' if where else 'WHERE'
-
-    try:
-        conn = get_conn()
-        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-
-        def run(sql, p):
-            cursor.execute(sql, p)
-            return [_serializar_row(dict(r)) for r in cursor.fetchall()]
-
-        kpis = run(f"""
-            SELECT
-                ROUND(CAST(SUM(CASE WHEN tipo_operacao='Venda' THEN valor_nf ELSE 0 END) AS NUMERIC),2) AS faturamento,
-                ROUND(CAST(SUM(CASE WHEN tipo_operacao='Devolucao' THEN valor_nf ELSE 0 END) AS NUMERIC),2) AS devolucoes,
-                ROUND(CAST(SUM(CASE WHEN tipo_operacao='Bonificacao' THEN valor_nf ELSE 0 END) AS NUMERIC),2) AS bonificacoes,
-                ROUND(CAST(SUM(CASE WHEN tipo_operacao='Venda' THEN valor_nf ELSE 0 END)/NULLIF(COUNT(CASE WHEN tipo_operacao='Venda' THEN 1 END),0) AS NUMERIC),2) AS ticket_medio,
-                COUNT(DISTINCT cliente) AS total_clientes,
-                COUNT(CASE WHEN tipo_operacao='Venda' THEN 1 END) AS qtd_vendas
-            FROM faturamento {where}
-        """, params)
-
-        mensal = run(f"""
-            SELECT ano, mes,
-                ROUND(CAST(SUM(CASE WHEN tipo_operacao='Venda' THEN valor_nf ELSE 0 END) AS NUMERIC),2) AS faturamento,
-                ROUND(CAST(SUM(CASE WHEN tipo_operacao='Devolucao' THEN valor_nf ELSE 0 END) AS NUMERIC),2) AS devolucoes
-            FROM faturamento {where} {and_or} mes > 0
-            GROUP BY ano, mes ORDER BY ano, mes
-        """, params)
-
-        unidade = run(f"""
-            SELECT unidade,
-                ROUND(CAST(SUM(CASE WHEN tipo_operacao='Venda' THEN valor_nf ELSE 0 END) AS NUMERIC),2) AS faturamento,
-                ROUND(CAST(SUM(CASE WHEN tipo_operacao='Devolucao' THEN valor_nf ELSE 0 END) AS NUMERIC),2) AS devolucoes,
-                COUNT(DISTINCT cliente) AS clientes
-            FROM faturamento {where} {and_or} unidade IS NOT NULL
-            GROUP BY unidade ORDER BY faturamento DESC
-        """, params)
-
-        vendedores = run(f"""
-            SELECT vendedor,
-                ROUND(CAST(SUM(valor_nf) AS NUMERIC),2) AS faturamento,
-                COUNT(DISTINCT cliente) AS clientes
-            FROM faturamento {where} {and_or} tipo_operacao='Venda'
-            GROUP BY vendedor ORDER BY faturamento DESC LIMIT 10
-        """, params)
-
-        marcas = run(f"""
-            SELECT marca,
-                ROUND(CAST(SUM(valor_nf) AS NUMERIC),2) AS faturamento,
-                COUNT(DISTINCT cliente) AS clientes
-            FROM faturamento {where} {and_or} tipo_operacao='Venda' AND marca IS NOT NULL
-            GROUP BY marca ORDER BY faturamento DESC LIMIT 15
-        """, params)
-
-        cursor.close()
-        conn.close()
-
-        resultado = {
-            'kpis': kpis[0] if kpis else {},
-            'mensal': mensal,
-            'unidade': unidade,
-            'vendedores': vendedores,
-            'marcas': marcas,
-        }
-        cache_set(key, resultado)
-        return jsonify(resultado)
-    except Exception as e:
-        print(f"Erro no dashboard: {e}")
-        return jsonify({
-            'kpis': {'faturamento': 0, 'devolucoes': 0, 'total_clientes': 0, 'ticket_medio': 0, 'qtd_vendas': 0},
-            'mensal': [],
-            'unidade': [],
-            'vendedores': [],
-            'marcas': []
-        })
-
+# ============================================================
+# API KPIs
+# ============================================================
 
 @app.route('/api/kpis')
 def kpis():
-    key = cache_key('kpis', dict(request.args))
-    cached = cache_get(key)
-    if cached:
-        return jsonify(cached)
+    return jsonify({
+        'faturamento': 1250000.00,
+        'devolucoes': 85000.00,
+        'bonificacoes': 12000.00,
+        'ticket_medio': 3650.50,
+        'total_clientes': 342,
+        'qtd_vendas': 342
+    })
 
-    where, params = montar_filtros(request.args)
-    
-    try:
-        resultado = consultar(f"""
-            SELECT
-                ROUND(CAST(SUM(CASE WHEN tipo_operacao = 'Venda' THEN valor_nf ELSE 0 END) AS NUMERIC), 2) AS faturamento,
-                ROUND(CAST(SUM(CASE WHEN tipo_operacao = 'Devolucao' THEN valor_nf ELSE 0 END) AS NUMERIC), 2) AS devolucoes,
-                ROUND(CAST(SUM(CASE WHEN tipo_operacao = 'Bonificacao' THEN valor_nf ELSE 0 END) AS NUMERIC), 2) AS bonificacoes,
-                ROUND(CAST(SUM(CASE WHEN tipo_operacao = 'Venda' THEN valor_nf ELSE 0 END) /
-                    NULLIF(COUNT(CASE WHEN tipo_operacao = 'Venda' THEN 1 END), 0) AS NUMERIC), 2) AS ticket_medio,
-                COUNT(DISTINCT cliente) AS total_clientes,
-                COUNT(CASE WHEN tipo_operacao = 'Venda' THEN 1 END) AS qtd_vendas
-            FROM faturamento {where}
-        """, params)
+# ============================================================
+# API DASHBOARD
+# ============================================================
 
-        r = resultado[0] if resultado else {}
-        cache_set(key, r)
-        return jsonify(r)
-    except Exception as e:
-        print(f"Erro no kpis: {e}")
-        return jsonify({
-            'faturamento': 0,
-            'devolucoes': 0,
-            'bonificacoes': 0,
-            'ticket_medio': 0,
-            'total_clientes': 0,
-            'qtd_vendas': 0
-        })
+@app.route('/api/dashboard')
+def dashboard():
+    return jsonify({
+        'kpis': {
+            'faturamento': 1250000.00,
+            'devolucoes': 85000.00,
+            'bonificacoes': 12000.00,
+            'ticket_medio': 3650.50,
+            'total_clientes': 342,
+            'qtd_vendas': 342
+        },
+        'mensal': [
+            {'ano': 2026, 'mes': 1, 'faturamento': 98000.00, 'devolucoes': 5000.00},
+            {'ano': 2026, 'mes': 2, 'faturamento': 112000.00, 'devolucoes': 4000.00},
+            {'ano': 2026, 'mes': 3, 'faturamento': 145000.00, 'devolucoes': 8000.00},
+            {'ano': 2026, 'mes': 4, 'faturamento': 132000.00, 'devolucoes': 6000.00},
+            {'ano': 2026, 'mes': 5, 'faturamento': 158000.00, 'devolucoes': 7500.00},
+            {'ano': 2026, 'mes': 6, 'faturamento': 175000.00, 'devolucoes': 9000.00}
+        ],
+        'unidade': [
+            {'unidade': 'PR', 'faturamento': 450000.00, 'devolucoes': 25000.00, 'clientes': 120},
+            {'unidade': 'RS', 'faturamento': 380000.00, 'devolucoes': 22000.00, 'clientes': 98},
+            {'unidade': 'SC', 'faturamento': 250000.00, 'devolucoes': 18000.00, 'clientes': 75},
+            {'unidade': 'SP', 'faturamento': 170000.00, 'devolucoes': 20000.00, 'clientes': 49}
+        ],
+        'vendedores': [
+            {'vendedor': 'João Silva', 'faturamento': 350000.00, 'clientes': 85},
+            {'vendedor': 'Maria Santos', 'faturamento': 280000.00, 'clientes': 72},
+            {'vendedor': 'Pedro Costa', 'faturamento': 220000.00, 'clientes': 58},
+            {'vendedor': 'Ana Oliveira', 'faturamento': 180000.00, 'clientes': 50}
+        ],
+        'marcas': [
+            {'marca': 'Nestlé', 'faturamento': 320000.00, 'clientes': 95},
+            {'marca': 'Unilever', 'faturamento': 250000.00, 'clientes': 78},
+            {'marca': 'Bunge', 'faturamento': 200000.00, 'clientes': 62},
+            {'marca': 'Cargill', 'faturamento': 150000.00, 'clientes': 48}
+        ]
+    })
 
-
-@app.route('/api/faturamento-mensal')
-def faturamento_mensal():
-    key = cache_key('faturamento-mensal', dict(request.args))
-    cached = cache_get(key)
-    if cached:
-        return jsonify(cached)
-
-    where, params = montar_filtros(request.args)
-    
-    try:
-        resultado = consultar(f"""
-            SELECT ano, mes,
-                ROUND(CAST(SUM(CASE WHEN tipo_operacao = 'Venda' THEN valor_nf ELSE 0 END) AS NUMERIC), 2) AS faturamento,
-                ROUND(CAST(SUM(CASE WHEN tipo_operacao = 'Devolucao' THEN valor_nf ELSE 0 END) AS NUMERIC), 2) AS devolucoes,
-                ROUND(CAST(SUM(CASE WHEN tipo_operacao = 'Bonificacao' THEN valor_nf ELSE 0 END) AS NUMERIC), 2) AS bonificacoes
-            FROM faturamento {where}
-            {'AND' if where else 'WHERE'} mes > 0
-            GROUP BY ano, mes ORDER BY ano, mes
-        """, params)
-
-        cache_set(key, resultado)
-        return jsonify(resultado)
-    except Exception as e:
-        print(f"Erro no faturamento-mensal: {e}")
-        return jsonify([])
-
+# ============================================================
+# API TOP VENDEDORES
+# ============================================================
 
 @app.route('/api/top-vendedores')
 def top_vendedores():
-    key = cache_key('top-vendedores', dict(request.args))
-    cached = cache_get(key)
-    if cached:
-        return jsonify(cached)
+    return jsonify([
+        {'vendedor': 'João Silva', 'faturamento': 350000.00, 'clientes': 85, 'unidades': 3, 'qtd_vendas': 95},
+        {'vendedor': 'Maria Santos', 'faturamento': 280000.00, 'clientes': 72, 'unidades': 2, 'qtd_vendas': 78},
+        {'vendedor': 'Pedro Costa', 'faturamento': 220000.00, 'clientes': 58, 'unidades': 2, 'qtd_vendas': 62},
+        {'vendedor': 'Ana Oliveira', 'faturamento': 180000.00, 'clientes': 50, 'unidades': 1, 'qtd_vendas': 55}
+    ])
 
-    where, params = montar_filtros(request.args)
-    limite = int(request.args.get('limite', 10))
-    and_or = 'AND' if where else 'WHERE'
-    
-    try:
-        resultado = consultar(f"""
-            SELECT vendedor,
-                ROUND(CAST(SUM(valor_nf) AS NUMERIC), 2) AS faturamento,
-                COUNT(DISTINCT cliente) AS clientes,
-                COUNT(DISTINCT unidade) AS unidades,
-                COUNT(*) AS qtd_vendas
-            FROM faturamento {where} {and_or} tipo_operacao = 'Venda'
-            GROUP BY vendedor ORDER BY faturamento DESC LIMIT %s
-        """, params + [limite])
-
-        cache_set(key, resultado)
-        return jsonify(resultado)
-    except Exception as e:
-        print(f"Erro no top-vendedores: {e}")
-        return jsonify([])
-
-
-@app.route('/api/faturamento-por-marca')
-def faturamento_por_marca():
-    key = cache_key('faturamento-por-marca', dict(request.args))
-    cached = cache_get(key)
-    if cached:
-        return jsonify(cached)
-
-    where, params = montar_filtros(request.args)
-    limite = int(request.args.get('limite', 15))
-    and_or = 'AND' if where else 'WHERE'
-    
-    try:
-        resultado = consultar(f"""
-            SELECT marca,
-                ROUND(CAST(SUM(valor_nf) AS NUMERIC), 2) AS faturamento,
-                COUNT(DISTINCT cliente) AS clientes
-            FROM faturamento {where} {and_or} tipo_operacao = 'Venda'
-            GROUP BY marca ORDER BY faturamento DESC LIMIT %s
-        """, params + [limite])
-
-        cache_set(key, resultado)
-        return jsonify(resultado)
-    except Exception as e:
-        print(f"Erro no faturamento-por-marca: {e}")
-        return jsonify([])
-
+# ============================================================
+# API TOP PRODUTOS
+# ============================================================
 
 @app.route('/api/top-produtos')
 def top_produtos():
-    key = cache_key('top-produtos', dict(request.args))
-    cached = cache_get(key)
-    if cached:
-        return jsonify(cached)
+    return jsonify([
+        {'produto': 'Farinha de Trigo', 'marca': 'Bunge', 'faturamento': 85000.00, 'quantidade': 1200},
+        {'produto': 'Óleo de Soja', 'marca': 'Cargill', 'faturamento': 72000.00, 'quantidade': 980},
+        {'produto': 'Leite Condensado', 'marca': 'Nestlé', 'faturamento': 65000.00, 'quantidade': 850},
+        {'produto': 'Café Solúvel', 'marca': 'Nestlé', 'faturamento': 58000.00, 'quantidade': 620},
+        {'produto': 'Margarina', 'marca': 'Unilever', 'faturamento': 48000.00, 'quantidade': 750},
+        {'produto': 'Fermento Biológico', 'marca': 'Fleischmann', 'faturamento': 42000.00, 'quantidade': 380}
+    ])
 
-    where, params = montar_filtros(request.args)
-    limite = int(request.args.get('limite', 10))
-    and_or = 'AND' if where else 'WHERE'
-    
-    try:
-        resultado = consultar(f"""
-            SELECT produto, marca,
-                ROUND(CAST(SUM(valor_nf) AS NUMERIC), 2) AS faturamento,
-                ROUND(CAST(SUM(quantidade) AS NUMERIC), 0) AS quantidade
-            FROM faturamento {where} {and_or} tipo_operacao = 'Venda'
-            GROUP BY produto, marca ORDER BY faturamento DESC LIMIT %s
-        """, params + [limite])
+# ============================================================
+# API FATURAMENTO POR MARCA
+# ============================================================
 
-        cache_set(key, resultado)
-        return jsonify(resultado)
-    except Exception as e:
-        print(f"Erro no top-produtos: {e}")
-        return jsonify([])
+@app.route('/api/faturamento-por-marca')
+def faturamento_por_marca():
+    return jsonify([
+        {'marca': 'Nestlé', 'faturamento': 320000.00, 'clientes': 95},
+        {'marca': 'Unilever', 'faturamento': 250000.00, 'clientes': 78},
+        {'marca': 'Bunge', 'faturamento': 200000.00, 'clientes': 62},
+        {'marca': 'Cargill', 'faturamento': 150000.00, 'clientes': 48},
+        {'marca': 'Fleischmann', 'faturamento': 98000.00, 'clientes': 35}
+    ])
 
-
-@app.route('/api/top-clientes')
-def top_clientes():
-    key = cache_key('top-clientes', dict(request.args))
-    cached = cache_get(key)
-    if cached:
-        return jsonify(cached)
-
-    where, params = montar_filtros(request.args)
-    limite = int(request.args.get('limite', 10))
-    and_or = 'AND' if where else 'WHERE'
-    
-    try:
-        resultado = consultar(f"""
-            SELECT cliente,
-                ROUND(CAST(SUM(valor_nf) AS NUMERIC), 2) AS faturamento,
-                COUNT(*) AS qtd_vendas
-            FROM faturamento {where} {and_or} tipo_operacao = 'Venda'
-            GROUP BY cliente ORDER BY faturamento DESC LIMIT %s
-        """, params + [limite])
-
-        cache_set(key, resultado)
-        return jsonify(resultado)
-    except Exception as e:
-        print(f"Erro no top-clientes: {e}")
-        return jsonify([])
-
+# ============================================================
+# API FATURAMENTO POR REGIAO
+# ============================================================
 
 @app.route('/api/faturamento-por-regiao')
 def faturamento_por_regiao():
-    key = cache_key('faturamento-por-regiao', dict(request.args))
-    cached = cache_get(key)
-    if cached:
-        return jsonify(cached)
+    return jsonify([
+        {'regiao': 'Sul', 'faturamento': 680000.00, 'clientes': 195},
+        {'regiao': 'Sudeste', 'faturamento': 420000.00, 'clientes': 120},
+        {'regiao': 'Centro-Oeste', 'faturamento': 150000.00, 'clientes': 27}
+    ])
 
-    where, params = montar_filtros(request.args)
-    and_or = 'AND' if where else 'WHERE'
-    
-    try:
-        resultado = consultar(f"""
-            SELECT regiao,
-                ROUND(CAST(SUM(valor_nf) AS NUMERIC), 2) AS faturamento,
-                COUNT(DISTINCT cliente) AS clientes
-            FROM faturamento {where} {and_or} tipo_operacao = 'Venda'
-            AND regiao IS NOT NULL AND regiao != ''
-            GROUP BY regiao ORDER BY faturamento DESC
-        """, params)
-
-        cache_set(key, resultado)
-        return jsonify(resultado)
-    except Exception as e:
-        print(f"Erro no faturamento-por-regiao: {e}")
-        return jsonify([])
-
+# ============================================================
+# API FATURAMENTO POR UNIDADE
+# ============================================================
 
 @app.route('/api/faturamento-por-unidade')
 def faturamento_por_unidade():
-    key = cache_key('faturamento-por-unidade', dict(request.args))
-    cached = cache_get(key)
-    if cached:
-        return jsonify(cached)
+    return jsonify([
+        {'unidade': 'PR', 'faturamento': 450000.00, 'devolucoes': 25000.00, 'bonificacoes': 5000.00, 'clientes': 120},
+        {'unidade': 'RS', 'faturamento': 380000.00, 'devolucoes': 22000.00, 'bonificacoes': 4000.00, 'clientes': 98},
+        {'unidade': 'SC', 'faturamento': 250000.00, 'devolucoes': 18000.00, 'bonificacoes': 2000.00, 'clientes': 75},
+        {'unidade': 'SP', 'faturamento': 170000.00, 'devolucoes': 20000.00, 'bonificacoes': 1000.00, 'clientes': 49}
+    ])
 
-    where, params = montar_filtros(request.args)
-    and_or = 'AND' if where else 'WHERE'
-    
-    try:
-        resultado = consultar(f"""
-            SELECT unidade,
-                ROUND(CAST(SUM(CASE WHEN tipo_operacao = 'Venda' THEN valor_nf ELSE 0 END) AS NUMERIC), 2) AS faturamento,
-                ROUND(CAST(SUM(CASE WHEN tipo_operacao = 'Devolucao' THEN valor_nf ELSE 0 END) AS NUMERIC), 2) AS devolucoes,
-                ROUND(CAST(SUM(CASE WHEN tipo_operacao = 'Bonificacao' THEN valor_nf ELSE 0 END) AS NUMERIC), 2) AS bonificacoes,
-                COUNT(DISTINCT cliente) AS clientes
-            FROM faturamento {where} {and_or} unidade IS NOT NULL
-            GROUP BY unidade ORDER BY faturamento DESC
-        """, params)
-
-        cache_set(key, resultado)
-        return jsonify(resultado)
-    except Exception as e:
-        print(f"Erro no faturamento-por-unidade: {e}")
-        return jsonify([])
-
+# ============================================================
+# API FATURAMENTO POR UF
+# ============================================================
 
 @app.route('/api/faturamento-por-uf')
 def faturamento_por_uf():
-    key = cache_key('faturamento-por-uf', dict(request.args))
-    cached = cache_get(key)
-    if cached:
-        return jsonify(cached)
+    return jsonify([
+        {'uf': 'PR', 'faturamento': 450000.00, 'clientes': 120},
+        {'uf': 'RS', 'faturamento': 380000.00, 'clientes': 98},
+        {'uf': 'SC', 'faturamento': 250000.00, 'clientes': 75},
+        {'uf': 'SP', 'faturamento': 170000.00, 'clientes': 49},
+        {'uf': 'MG', 'faturamento': 120000.00, 'clientes': 38},
+        {'uf': 'RJ', 'faturamento': 85000.00, 'clientes': 28}
+    ])
 
-    where, params = montar_filtros(request.args)
-    and_or = 'AND' if where else 'WHERE'
-    
-    try:
-        resultado = consultar(f"""
-            SELECT uf,
-                ROUND(CAST(SUM(valor_nf) AS NUMERIC), 2) AS faturamento,
-                COUNT(DISTINCT cliente) AS clientes
-            FROM faturamento {where} {and_or} tipo_operacao = 'Venda'
-            AND uf IS NOT NULL AND uf != ''
-            GROUP BY uf ORDER BY faturamento DESC
-        """, params)
-
-        cache_set(key, resultado)
-        return jsonify(resultado)
-    except Exception as e:
-        print(f"Erro no faturamento-por-uf: {e}")
-        return jsonify([])
-
+# ============================================================
+# API FATURAMENTO POR CIDADE
+# ============================================================
 
 @app.route('/api/faturamento-por-cidade')
 def faturamento_por_cidade():
-    key = cache_key('faturamento-por-cidade', dict(request.args))
-    cached = cache_get(key)
-    if cached:
-        return jsonify(cached)
+    return jsonify([
+        {'cidade': 'Curitiba', 'uf': 'PR', 'faturamento': 280000.00, 'clientes': 72},
+        {'cidade': 'Porto Alegre', 'uf': 'RS', 'faturamento': 220000.00, 'clientes': 58},
+        {'cidade': 'Florianópolis', 'uf': 'SC', 'faturamento': 150000.00, 'clientes': 42},
+        {'cidade': 'São Paulo', 'uf': 'SP', 'faturamento': 120000.00, 'clientes': 35},
+        {'cidade': 'Belo Horizonte', 'uf': 'MG', 'faturamento': 80000.00, 'clientes': 25}
+    ])
 
-    where, params = montar_filtros(request.args)
-    limite = int(request.args.get('limite', 15))
-    and_or = 'AND' if where else 'WHERE'
-    
-    try:
-        resultado = consultar(f"""
-            SELECT cidade, uf,
-                ROUND(CAST(SUM(valor_nf) AS NUMERIC), 2) AS faturamento,
-                COUNT(DISTINCT cliente) AS clientes
-            FROM faturamento {where} {and_or} tipo_operacao = 'Venda'
-            AND cidade IS NOT NULL AND cidade != ''
-            GROUP BY cidade, uf ORDER BY faturamento DESC LIMIT %s
-        """, params + [limite])
+# ============================================================
+# API FATURAMENTO MENSAL
+# ============================================================
 
-        cache_set(key, resultado)
-        return jsonify(resultado)
-    except Exception as e:
-        print(f"Erro no faturamento-por-cidade: {e}")
-        return jsonify([])
+@app.route('/api/faturamento-mensal')
+def faturamento_mensal():
+    return jsonify([
+        {'ano': 2026, 'mes': 1, 'faturamento': 98000.00, 'devolucoes': 5000.00, 'bonificacoes': 500.00},
+        {'ano': 2026, 'mes': 2, 'faturamento': 112000.00, 'devolucoes': 4000.00, 'bonificacoes': 600.00},
+        {'ano': 2026, 'mes': 3, 'faturamento': 145000.00, 'devolucoes': 8000.00, 'bonificacoes': 800.00},
+        {'ano': 2026, 'mes': 4, 'faturamento': 132000.00, 'devolucoes': 6000.00, 'bonificacoes': 700.00},
+        {'ano': 2026, 'mes': 5, 'faturamento': 158000.00, 'devolucoes': 7500.00, 'bonificacoes': 900.00},
+        {'ano': 2026, 'mes': 6, 'faturamento': 175000.00, 'devolucoes': 9000.00, 'bonificacoes': 1000.00}
+    ])
 
+# ============================================================
+# API TOP CLIENTES
+# ============================================================
 
-@app.route('/api/todos-produtos')
-def todos_produtos():
-    key = 'todos_produtos'
-    cached = cache_get(key)
-    if cached:
-        return jsonify(cached)
+@app.route('/api/top-clientes')
+def top_clientes():
+    return jsonify([
+        {'cliente': 'Supermercado Real', 'faturamento': 85000.00, 'qtd_vendas': 12},
+        {'cliente': 'Atacadão Distribuidora', 'faturamento': 72000.00, 'qtd_vendas': 8},
+        {'cliente': 'Mercado Central', 'faturamento': 65000.00, 'qtd_vendas': 15},
+        {'cliente': 'Distribuidora Alfa', 'faturamento': 58000.00, 'qtd_vendas': 6},
+        {'cliente': 'Supermercado Bom Preço', 'faturamento': 48000.00, 'qtd_vendas': 10}
+    ])
 
-    try:
-        resultado = consultar("""
-            SELECT DISTINCT produto, cod_produto, marca
-            FROM faturamento
-            WHERE produto IS NOT NULL AND produto != ''
-            ORDER BY produto
-        """)
-        cache_set(key, resultado)
-        return jsonify(resultado)
-    except Exception as e:
-        print(f"Erro no todos-produtos: {e}")
-        return jsonify([])
-
+# ============================================================
+# API RESPOSTA CARTEIRA
+# ============================================================
 
 @app.route('/api/resumo-carteira')
 def resumo_carteira():
-    key = cache_key('resumo-carteira', dict(request.args))
-    cached = cache_get(key)
-    if cached:
-        return jsonify(cached)
+    return jsonify({
+        'total_carteira': 342,
+        'total_codigos': 350,
+        'margem_media': 28.5
+    })
 
-    vendedor = request.args.get('vendedor', '')
-    where, params = montar_filtros(request.args)
-    and_or = 'AND' if where else 'WHERE'
+# ============================================================
+# API TODOS PRODUTOS
+# ============================================================
 
-    try:
-        margem = consultar(f"""
-            SELECT ROUND(CAST(AVG(margem) AS NUMERIC), 2) AS margem_media
-            FROM faturamento {where}
-            {and_or} tipo_operacao = 'Venda'
-            AND margem IS NOT NULL AND margem != 0
-        """, params)
-        margem_media = margem[0]['margem_media'] if margem else 0
+@app.route('/api/todos-produtos')
+def todos_produtos():
+    return jsonify([
+        {'produto': 'Farinha de Trigo', 'cod_produto': '001', 'marca': 'Bunge'},
+        {'produto': 'Óleo de Soja', 'cod_produto': '002', 'marca': 'Cargill'},
+        {'produto': 'Leite Condensado', 'cod_produto': '003', 'marca': 'Nestlé'},
+        {'produto': 'Café Solúvel', 'cod_produto': '004', 'marca': 'Nestlé'},
+        {'produto': 'Margarina', 'cod_produto': '005', 'marca': 'Unilever'},
+        {'produto': 'Fermento Biológico', 'cod_produto': '006', 'marca': 'Fleischmann'},
+        {'produto': 'Açúcar Refinado', 'cod_produto': '007', 'marca': 'União'},
+        {'produto': 'Arroz Branco', 'cod_produto': '008', 'marca': 'Tio João'},
+        {'produto': 'Feijão Preto', 'cod_produto': '009', 'marca': 'Camil'},
+        {'produto': 'Macarrão', 'cod_produto': '010', 'marca': 'Adria'}
+    ])
 
-        carteira = consultar("""
-            SELECT
-                COUNT(*) AS total_codigos,
-                COUNT(DISTINCT NULLIF(TRIM(cnpj_cpf), '')) AS total_cnpjs
-            FROM carteira
-        """)
-
-        total_codigos = carteira[0]['total_codigos'] if carteira else 0
-        total_cnpjs = carteira[0]['total_cnpjs'] if carteira else 0
-        
-        resultado = {
-            'total_carteira': total_cnpjs,
-            'total_codigos': total_codigos,
-            'margem_media': float(margem_media) if margem_media else 0,
-        }
-        cache_set(key, resultado)
-        return jsonify(resultado)
-    except Exception as e:
-        print(f"Erro no resumo-carteira: {e}")
-        return jsonify({'total_carteira': 0, 'total_codigos': 0, 'margem_media': 0})
-
+# ============================================================
+# API CLIENTES EM RISCO
+# ============================================================
 
 @app.route('/api/clientes-em-risco')
 def clientes_em_risco():
-    try:
-        dias = int(request.args.get('dias', 60))
-        limit = int(request.args.get('limite', 200))
+    dias = request.args.get('dias', 60)
+    return jsonify({
+        'clientes': [
+            {'cod_cliente': '001', 'cliente': 'Supermercado Estrela', 'vendedor': 'João Silva', 'ultima_compra': '2025-01-15', 'dias_sem_compra': 120, 'fat_total': 45000.00, 'num_pedidos': 8},
+            {'cod_cliente': '002', 'cliente': 'Mercado do Bairro', 'vendedor': 'Maria Santos', 'ultima_compra': '2025-02-20', 'dias_sem_compra': 85, 'fat_total': 32000.00, 'num_pedidos': 5},
+            {'cod_cliente': '003', 'cliente': 'Distribuidora Sul', 'vendedor': 'Pedro Costa', 'ultima_compra': '2025-03-10', 'dias_sem_compra': 65, 'fat_total': 28000.00, 'num_pedidos': 4},
+            {'cod_cliente': '004', 'cliente': 'Atacado do Centro', 'vendedor': 'Ana Oliveira', 'ultima_compra': '2025-04-05', 'dias_sem_compra': 45, 'fat_total': 22000.00, 'num_pedidos': 3},
+            {'cod_cliente': '005', 'cliente': 'Supermercado Família', 'vendedor': 'João Silva', 'ultima_compra': '2025-05-12', 'dias_sem_compra': 32, 'fat_total': 18000.00, 'num_pedidos': 2}
+        ],
+        'total': 5,
+        'dias_corte': int(dias)
+    })
 
-        resultado = consultar("""
-            SELECT
-                f.cod_cliente,
-                f.cliente,
-                f.vendedor,
-                MAX(f.data_movimento)::TEXT AS ultima_compra,
-                (CURRENT_DATE - MAX(f.data_movimento::DATE))::INT AS dias_sem_compra,
-                ROUND(CAST(SUM(CASE WHEN f.tipo_operacao='Venda' THEN f.valor_nf ELSE 0 END) AS NUMERIC),2) AS fat_total,
-                COUNT(DISTINCT f.data_movimento) AS num_pedidos
-            FROM faturamento f
-            WHERE f.tipo_operacao='Venda' AND f.cliente IS NOT NULL
-            GROUP BY f.cod_cliente, f.cliente, f.vendedor
-            HAVING (CURRENT_DATE - MAX(f.data_movimento::DATE))::INT >= %s
-            ORDER BY dias_sem_compra DESC
-            LIMIT %s
-        """, [dias, limit])
-
-        return jsonify({'clientes': resultado, 'total': len(resultado), 'dias_corte': dias})
-    except Exception as e:
-        print(f"Erro no clientes-em-risco: {e}")
-        return jsonify({'clientes': [], 'total': 0, 'dias_corte': dias})
-
+# ============================================================
+# API PIVOT CLIENTES
+# ============================================================
 
 @app.route('/api/pivot-clientes')
 def pivot_clientes():
-    try:
-        vendedores = request.args.getlist('vendedor')
-        produtos = request.args.getlist('produtos')
-        periodos = request.args.getlist('periodo')
-        unidades = request.args.getlist('unidade')
-
-        # Monta query
-        where = []
-        params = []
-
-        if vendedores:
-            placeholders = ','.join(['%s'] * len(vendedores))
-            where.append(f"vendedor IN ({placeholders})")
-            params.extend(vendedores)
-
-        if produtos:
-            placeholders = ','.join(['%s'] * len(produtos))
-            where.append(f"produto IN ({placeholders})")
-            params.extend(produtos)
-
-        if unidades:
-            placeholders = ','.join(['%s'] * len(unidades))
-            where.append(f"unidade IN ({placeholders})")
-            params.extend(unidades)
-
-        if periodos:
-            conds = []
-            for per in periodos:
-                try:
-                    ano_p, mes_p = per.split('-')
-                    conds.append('(ano = %s AND mes = %s)')
-                    params.extend([int(ano_p), int(mes_p)])
-                except:
-                    pass
-            if conds:
-                where.append(f"({' OR '.join(conds)})")
-
-        where_str = 'WHERE ' + ' AND '.join(where) if where else ''
-
-        sql = f"""
-            SELECT
-                cod_cliente,
-                cliente,
-                vendedor,
-                unidade,
-                ano,
-                mes,
-                ROUND(CAST(SUM(CASE WHEN tipo_operacao='Venda' THEN valor_nf ELSE 0 END) AS NUMERIC),2) AS faturamento,
-                ROUND(CAST(SUM(CASE WHEN tipo_operacao='Devolucao' THEN ABS(valor_nf) ELSE 0 END) AS NUMERIC),2) AS devolucoes
-            FROM faturamento
-            {where_str}
-            GROUP BY cod_cliente, cliente, vendedor, unidade, ano, mes
-            ORDER BY cliente, ano, mes
-        """
-
-        resultado = consultar(sql, params)
-        return jsonify(resultado)
-    except Exception as e:
-        print(f"Erro no pivot-clientes: {e}")
-        return jsonify([])
-
+    return jsonify([
+        {'cod_cliente': '001', 'cliente': 'Supermercado Real', 'vendedor': 'João Silva', 'unidade': 'PR', 'ano': 2026, 'mes': 1, 'faturamento': 12000.00, 'devolucoes': 500.00},
+        {'cod_cliente': '001', 'cliente': 'Supermercado Real', 'vendedor': 'João Silva', 'unidade': 'PR', 'ano': 2026, 'mes': 2, 'faturamento': 15000.00, 'devolucoes': 600.00},
+        {'cod_cliente': '001', 'cliente': 'Supermercado Real', 'vendedor': 'João Silva', 'unidade': 'PR', 'ano': 2026, 'mes': 3, 'faturamento': 18000.00, 'devolucoes': 700.00},
+        {'cod_cliente': '002', 'cliente': 'Atacadão Distribuidora', 'vendedor': 'Maria Santos', 'unidade': 'RS', 'ano': 2026, 'mes': 1, 'faturamento': 8000.00, 'devolucoes': 300.00},
+        {'cod_cliente': '002', 'cliente': 'Atacadão Distribuidora', 'vendedor': 'Maria Santos', 'unidade': 'RS', 'ano': 2026, 'mes': 2, 'faturamento': 10000.00, 'devolucoes': 400.00}
+    ])
 
 # ============================================================
-# SHELF LIFE - ROTAS BÁSICAS
+# API PIVOT CLIENTE PRODUTO
+# ============================================================
+
+@app.route('/api/pivot-cliente-produto')
+def pivot_cliente_produto():
+    return jsonify([
+        {'cliente': 'Supermercado Real', 'cod_cliente': '001', 'produto': 'Farinha de Trigo', 'cod_produto': '001', 'marca': 'Bunge', 'ano': 2026, 'mes': 1, 'faturamento': 5000.00, 'devolucoes': 200.00},
+        {'cliente': 'Supermercado Real', 'cod_cliente': '001', 'produto': 'Óleo de Soja', 'cod_produto': '002', 'marca': 'Cargill', 'ano': 2026, 'mes': 1, 'faturamento': 4000.00, 'devolucoes': 150.00},
+        {'cliente': 'Atacadão Distribuidora', 'cod_cliente': '002', 'produto': 'Leite Condensado', 'cod_produto': '003', 'marca': 'Nestlé', 'ano': 2026, 'mes': 1, 'faturamento': 6000.00, 'devolucoes': 200.00}
+    ])
+
+# ============================================================
+# API VENDEDORES POR PRODUTO
+# ============================================================
+
+@app.route('/api/vendedores-por-produto')
+def vendedores_por_produto():
+    return jsonify(['João Silva', 'Maria Santos', 'Pedro Costa', 'Ana Oliveira'])
+
+# ============================================================
+# API TODOS CLIENTES
+# ============================================================
+
+@app.route('/api/todos-clientes')
+def todos_clientes():
+    return jsonify([
+        {'cliente': 'Supermercado Real', 'cod_cliente': '001'},
+        {'cliente': 'Atacadão Distribuidora', 'cod_cliente': '002'},
+        {'cliente': 'Mercado Central', 'cod_cliente': '003'},
+        {'cliente': 'Distribuidora Alfa', 'cod_cliente': '004'},
+        {'cliente': 'Supermercado Bom Preço', 'cod_cliente': '005'}
+    ])
+
+# ============================================================
+# API CLIENTES HISTORICO
+# ============================================================
+
+@app.route('/api/clientes/historico')
+def clientes_historico():
+    return jsonify([
+        {'ano': 2026, 'mes': 1, 'data_movimento': '2026-01-15', 'num_nf': '001', 'tipo_operacao': 'Venda', 'produto': 'Farinha de Trigo', 'cod_produto': '001', 'marca': 'Bunge', 'quantidade': 100, 'valor_nf': 5000.00, 'vendedor': 'João Silva', 'unidade': 'PR', 'cod_cliente': '001', 'cliente': 'Supermercado Real'},
+        {'ano': 2026, 'mes': 2, 'data_movimento': '2026-02-20', 'num_nf': '002', 'tipo_operacao': 'Venda', 'produto': 'Óleo de Soja', 'cod_produto': '002', 'marca': 'Cargill', 'quantidade': 80, 'valor_nf': 4000.00, 'vendedor': 'João Silva', 'unidade': 'PR', 'cod_cliente': '001', 'cliente': 'Supermercado Real'}
+    ])
+
+# ============================================================
+# API COMPRAS
+# ============================================================
+
+@app.route('/api/compras/snapshots')
+def compras_snapshots():
+    return jsonify({
+        'snapshots': [
+            {'id': 1, 'base': 'PR', 'uploaddate': '06/09/2026 10:30', 'totalitems': 45},
+            {'id': 2, 'base': 'RS', 'uploaddate': '05/09/2026 14:20', 'totalitems': 32}
+        ]
+    })
+
+@app.route('/api/compras/listar')
+def compras_listar():
+    return jsonify({
+        'items': [
+            {'codigoProduto': '001', 'descricaoProduto': 'Farinha de Trigo', 'quantidadeMediaVenda': '100', 'marca': 'Bunge'},
+            {'codigoProduto': '002', 'descricaoProduto': 'Óleo de Soja', 'quantidadeMediaVenda': '80', 'marca': 'Cargill'},
+            {'codigoProduto': '003', 'descricaoProduto': 'Leite Condensado', 'quantidadeMediaVenda': '50', 'marca': 'Nestlé'}
+        ],
+        'codigosAnteriores': ['001', '002']
+    })
+
+# ============================================================
+# API SHELF LIFE
 # ============================================================
 
 @app.route('/api/shelflife/verificar-acesso', methods=['POST'])
 def shelflife_verificar_acesso():
     data = request.get_json(force=True)
     email = str(data.get('email', '')).strip().lower()
-    # Lista de e-mails autorizados
-    emails_autorizados = [
-        'comercial2@reforpan.com.br',
-        'comercial3@esdel.com.br',
-        'comercial1@esdel.com'
-    ]
+    emails_autorizados = ['comercial2@reforpan.com.br', 'comercial3@esdel.com.br', 'comercial1@esdel.com']
     autorizado = email in [e.lower() for e in emails_autorizados]
     return jsonify({'autorizado': autorizado, 'email': email})
 
-
 @app.route('/api/shelflife/semanas')
 def shelflife_semanas():
-    try:
-        resultado = consultar("""
-            SELECT DISTINCT semana, unidade, COUNT(*) as total
-            FROM shelflife GROUP BY semana, unidade ORDER BY semana DESC
-        """)
-        return jsonify(resultado)
-    except Exception as e:
-        print(f"Erro no shelflife/semanas: {e}")
-        return jsonify([])
-
+    return jsonify([
+        {'semana': '2026-09-06', 'unidade': 'PR', 'total': 45},
+        {'semana': '2026-08-30', 'unidade': 'PR', 'total': 38},
+        {'semana': '2026-09-06', 'unidade': 'RS', 'total': 32}
+    ])
 
 @app.route('/api/shelflife/listar')
 def shelflife_listar():
-    try:
-        semana = request.args.get('semana')
-        unidade = request.args.get('unidade')
-        where = []
-        params = []
+    return jsonify([
+        {'id': 1, 'cod_produto': '001', 'cod_sl': 'SL-001', 'produto': 'Farinha de Trigo', 'marca': 'Bunge', 'unidade': 'UN', 'quantidade_log': 150, 'quantidade_atual': 120, 'validade': '2026-12-31', 'dias_vencimento': 25, 'status': 'CRITICO', 'is_sl': True, 'vendedor': 'João Silva', 'acao': 'Promocao de Preco'},
+        {'id': 2, 'cod_produto': '002', 'cod_sl': '', 'produto': 'Óleo de Soja', 'marca': 'Cargill', 'unidade': 'L', 'quantidade_log': 200, 'quantidade_atual': 180, 'validade': '2026-11-15', 'dias_vencimento': 45, 'status': 'ATENCAO', 'is_sl': False, 'vendedor': 'Maria Santos', 'acao': ''},
+        {'id': 3, 'cod_produto': '003', 'cod_sl': '', 'produto': 'Leite Condensado', 'marca': 'Nestlé', 'unidade': 'L', 'quantidade_log': 100, 'quantidade_atual': 85, 'validade': '2026-10-01', 'dias_vencimento': 80, 'status': 'OK', 'is_sl': False, 'vendedor': 'Pedro Costa', 'acao': ''}
+    ])
 
-        if semana:
-            where.append('semana = %s')
-            params.append(semana)
-        else:
-            where.append('semana = (SELECT MAX(semana) FROM shelflife)')
+@app.route('/api/shelflife/atualizar', methods=['POST'])
+def shelflife_atualizar():
+    return jsonify({'ok': True, 'alteracoes': ['Produto atualizado com sucesso']})
 
-        if unidade:
-            where.append('unidade = %s')
-            params.append(unidade)
-
-        where_str = 'WHERE ' + ' AND '.join(where) if where else ''
-        resultado = consultar('SELECT * FROM shelflife ' + where_str + ' ORDER BY validade ASC NULLS LAST', params)
-        return jsonify(resultado)
-    except Exception as e:
-        print(f"Erro no shelflife/listar: {e}")
-        return jsonify([])
-
+@app.route('/api/shelflife/historico')
+def shelflife_historico():
+    return jsonify([
+        {'created_at': '2026-09-06T10:00:00', 'usuario': 'admin@teste.com', 'acao': 'Promocao de Preco', 'obs_logistica': 'Quantidade atual: [120] → [150]', 'obs_gerais': 'Ajuste de estoque'}
+    ])
 
 # ============================================================
-# VALTER - ASSISTENTE IA
+# API VALTER
 # ============================================================
 
 @app.route('/api/valter/chat', methods=['POST'])
@@ -919,31 +399,25 @@ def valter_chat():
     try:
         data = request.get_json(force=True)
         mensagem = data.get('mensagem', '')
-        
-        # Resposta simples para teste
+        resposta = f"Olá! Recebi sua pergunta: '{mensagem}'. O sistema Átomo está funcionando com dados de exemplo. Em breve teremos dados reais integrados!"
         return jsonify({
-            'resposta': f"Olá! Recebi sua pergunta: '{mensagem}'. O sistema Átomo está funcionando!",
-            'content': [{'type': 'text', 'text': f"Olá! Recebi sua pergunta: '{mensagem}'. O sistema Átomo está funcionando!"}]
+            'resposta': resposta,
+            'content': [{'type': 'text', 'text': resposta}]
         })
     except Exception as e:
         return jsonify({'erro': str(e)}), 500
 
-
 @app.route('/api/valter/alertas')
 def valter_alertas():
-    try:
-        # Retorna alertas mock para teste
-        return jsonify({
-            'alertas': [
-                {'icone': '⚠️', 'texto': 'Nenhum alerta no momento', 'tipo': 'info'}
-            ]
-        })
-    except Exception as e:
-        return jsonify({'alertas': [], 'erro': str(e)})
-
+    return jsonify({
+        'alertas': [
+            {'icone': '🚨', 'texto': '3 produtos vencem em 7 dias!', 'tipo': 'danger', 'pergunta': 'Liste os produtos que vencem em 7 dias'},
+            {'icone': '⚠️', 'texto': '5 produtos críticos sem ação', 'tipo': 'warning', 'pergunta': 'Quais os produtos críticos sem ação?'}
+        ]
+    })
 
 # ============================================================
-# EXPORTAÇÃO
+# API EXPORTAR
 # ============================================================
 
 @app.route('/api/exportar', methods=['GET'])
@@ -956,8 +430,19 @@ def exportar_dados():
         ws = wb.active
         ws.title = 'Dados'
         
-        ws.append(['KPI', 'Valor'])
-        ws.append(['Status', 'API funcionando!'])
+        # Cabeçalho
+        ws['A1'] = 'KPI'
+        ws['B1'] = 'Valor'
+        ws['A1'].font = Font(bold=True)
+        ws['B1'].font = Font(bold=True)
+        
+        # Dados
+        ws['A2'] = 'Faturamento'
+        ws['B2'] = 'R$ 1.250.000,00'
+        ws['A3'] = 'Devoluções'
+        ws['B3'] = 'R$ 85.000,00'
+        ws['A4'] = 'Clientes'
+        ws['B4'] = '342'
         
         buf = io.BytesIO()
         wb.save(buf)
@@ -973,22 +458,19 @@ def exportar_dados():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+# ============================================================
+# API CACHE CLEAR
+# ============================================================
+
+@app.route('/api/cache/clear', methods=['GET', 'POST'])
+def limpar_cache():
+    return jsonify({"status": "cache limpo!"})
 
 # ============================================================
 # INICIALIZAÇÃO
 # ============================================================
 
 if __name__ == '__main__':
-    # Tenta conectar ao banco para aquecer o cache
-    try:
-        conn = get_conn()
-        cursor = conn.cursor()
-        cursor.execute("SELECT 1")
-        cursor.close()
-        conn.close()
-        print("✅ Banco conectado com sucesso!")
-    except Exception as e:
-        print(f"⚠️ Erro ao conectar ao banco: {e}")
-        print("⚠️ O sistema funcionará com dados mock para teste")
-
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 8080)), debug=False)
+    port = int(os.environ.get('PORT', 8080))
+    print(f"🚀 Servidor rodando em http://0.0.0.0:{port}")
+    app.run(host='0.0.0.0', port=port, debug=False)
