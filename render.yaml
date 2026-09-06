@@ -3,87 +3,18 @@ services:
     name: horus
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app --timeout 300 --workers 2 --preload
+    startCommand: gunicorn app:app --timeout 300 --workers 1
     plan: free
-    
-    # Configurações de ambiente
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
-      - key: DB_HOST
-        sync: false
-      - key: DB_PORT
-        sync: false
-      - key: DB_NAME
-        sync: false
-      - key: DB_USER
-        sync: false
-      - key: DB_PASS
-        sync: false
-      - key: GROQ_API_KEY
-        sync: false
-      - key: SERPER_API_KEY
-        sync: false
-      - key: DB_POOL_MAX
-        value: 10
-      - key: PYTHONPATH
-        value: /opt/render/project/src
-    
-    # Health check para manter o serviço ativo
-    healthCheckPath: /ping
-    healthCheckTimeout: 100
-    
-    # Configurações de rede
-    ports:
-      - port: 5000
-        protocol: http
-    
-    # Domínios customizados (opcional)
-    # domains:
-    #   - horus.seudominio.com.br
-    
-    # Escala automática (apenas para planos pagos)
-    # scaling:
-    #   minInstances: 1
-    #   maxInstances: 2
-    #   targetMemoryPercent: 80
-    #   targetCPUPercent: 60
-
-  # Serviço opcional: Worker para tarefas em background
-  # - type: worker
-  #   name: horus-worker
-  #   env: python
-  #   buildCommand: pip install -r requirements.txt
-  #   startCommand: python worker.py
-  #   plan: free
-  #   envVars:
-  #     - key: DB_HOST
-  #       sync: false
-  #     - key: DB_PORT
-  #       sync: false
-  #     - key: DB_NAME
-  #       sync: false
-  #     - key: DB_USER
-  #       sync: false
-  #     - key: DB_PASS
-  #       sync: false
-
-  # Serviço opcional: Cron job para tarefas agendadas
-  # - type: cron
-  #   name: horus-cron
-  #   env: python
-  #   buildCommand: pip install -r requirements.txt
-  #   schedule: "0 6 * * *"  # Todos os dias às 6h
-  #   startCommand: python cron_jobs.py
-  #   plan: free
-  #   envVars:
-  #     - key: DB_HOST
-  #       sync: false
-  #     - key: DB_PORT
-  #       sync: false
-  #     - key: DB_NAME
-  #       sync: false
-  #     - key: DB_USER
-  #       sync: false
-  #     - key: DB_PASS
-  #       sync: false
+      - key: FLASK_APP
+        value: app.py
+      - key: FLASK_ENV
+        value: production
+      - key: FLASK_DEBUG
+        value: False
+      - key: APP_NAME
+        value: Átomo
+      - key: APP_VERSION
+        value: 2.0.0
