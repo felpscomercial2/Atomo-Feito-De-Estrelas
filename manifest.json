@@ -1,22 +1,26 @@
 {
-  "name": "Átomo",
+  "name": "Átomo Feito de Estrelas",
   "short_name": "Átomo",
-  "description": "Sistema de inteligência de negócios",
-  "start_url": "/home.html",
+  "description": "Sistema de Gestão Comercial",
+  "start_url": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "theme_color": "#0A1628",
-  "background_color": "#0A1628",
+  "background_color": "#1a1a2e",
+  "theme_color": "#1a1a2e",
+  "categories": ["business", "finance"],
+  "lang": "pt-BR",
   "icons": [
     {
-      "src": "/logo.png",
+      "src": "/static/logo.svg",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
     },
     {
-      "src": "/logo.png",
+      "src": "/static/logo.svg",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
     }
   ]
 }
