@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Átomo - Compras</title>
+  
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0A1628">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  
+  <link rel="stylesheet" href="/static/css/atomo.css">
+  <link rel="stylesheet" href="/static/css/widgets.css">
+</head>
+<body>
+  <!-- LOADING -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-spinner"></div>
+    <span style="color:var(--text);margin-top:12px;">Carregando compras...</span>
+  </div>
+  
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="mainSidebar">
+    <img class="sidebar-logo" src="/logo.png" alt="Átomo" onerror="this.style.display='none'">
+    <div class="sidebar-title">ÁTOMO</div>
+    
+    <div class="nav-section">Dashboards</div>
+    <a class="nav-item" href="/home.html"><span class="icon">🏠</span> Página Inicial</a>
+    <a class="nav-item" href="/visao-geral.html"><span class="icon">📊</span> Visão Geral</a>
+    <a class="nav-item" href="/vendedor.html"><span class="icon">👤</span> Vendedor</a>
+    <a class="nav-item" href="/regiao.html"><span class="icon">🗺️</span> Região</a>
+    <a class="nav-item" href="/marcas.html"><span class="icon">🏷️</span> Marcas</a>
+    <a class="nav-item" href="/produtos.html"><span class="icon">📦</span> Produtos</a>
+    <a class="nav-item" href="/produtos-cliente.html"><span class="icon">🛍️</span> Produtos por Cliente</a>
+    
+    <div class="sidebar-divider"></div>
+    <div class="nav-section">Gestão</div>
+    <a class="nav-item" href="/carteira.html"><span class="icon">👥</span> Carteira</a>
+    <a class="nav-item" href="/positivacao.html"><span class="icon">👥</span> Positivação</a>
+    <a class="nav-item" href="/shelflife.html"><span class="icon">🕒</span> Shelf Life</a>
+    <a class="nav-item" href="/risco.html"><span class="icon">⚠️</span> Clientes em Risco</a>
+    <a class="nav-item active" href="/compras.html"><span class="icon">🛒</span> Compras</a>
+    
+    <div class="sidebar-divider"></div>
+    <div class="nav-section">🏆 Metas <span class="badge-meta" id="badgeMetas">0</span></div>
+    
+    <button class="btn-logout" onclick="logout()">🚪 Sair</button>
+  </div>
+  
+  <!-- MAIN CONTENT -->
+  <div class="main-content">
+    <div id="notificationContainer"></div>
+    
+    <div class="page-header">
+      <div class="breadcrumb">
+        <a href="/home.html">🏠 Portal</a>
+        <span class="sep">›</span>
+        <span>🛒 Gestão de Compras</span>
+      </div>
+      <div class="header-actions">
+        <button onclick="exportarPDF()">📄 <span>PDF</span></button>
+        <button onclick="exportarExcelCompras()">📊 <span>Excel</span></button>
+        <button onclick="compartilharFiltros()">🔗</button>
+        <button onclick="toggleTheme()">🌓</button>
+        <button onclick="abrirNotificacoes()" style="position:relative;">
+          🔔 <span class="badge-notification" id="notifBadge">0</span>
+        </button>
+      </div>
+    </div>
+    
+    <div class="nota">📋 Faça upload da planilha de compras para análise. Os dados são armazenados permanentemente no banco de dados.</div>
+    
+    <!-- FILTROS GLOBAIS -->
+    <div class="filtros-card">
+      <div class="filtros-grid">
+        <div class="filtro-group">
+          <label>📅 Ano</label>
+          <select class="filtro-select" id="filtroAno" onchange="aplicarFiltros()"></select>
+        </div>
+        <div class="filtro-group">
+          <label>📅 Mês</label>
+          <select class="filtro-select" id="filtroMes" onchange="aplicarFiltros()">
+            <option value="">Todos</option>
+            <option value="1">Janeiro</option><option value="2">Fevereiro</option>
+            <option value="3">Março</option><option value="4">Abril</option>
+            <option value="5">Maio</option><option value="6">Junho</option>
+            <option value="7">Julho</option><option value="8">Agosto</option>
+            <option value="9">Setembro</option><option value="10">Outubro</option>
+            <option value="11">Novembro</option><option value="12">Dezembro</option>
+          </select>
+        </div>
+        <div class="filtro-group">
+          <label>🏢 Unidade</label>
+          <select class="filtro-select" id="filtroUnidade" onchange="aplicarFiltros()"></select>
+        </div>
+        <div class="filtro-group">
+          <label>🏷️ Marca</label>
+          <select class="filtro-select" id="filtroMarca" onchange="aplicarFiltros()"></select>
+        </div>
+        <div class="filtro-group">
+          <label>👤 Vendedor</label>
+          <select class="filtro-select" id="filtroVendedor" onchange="aplicarFiltros()"></select>
+        </div>
+      </div>
+      <div class="filtros-ativos" id="filtrosAtivos"></div>
+    </div>
+    
+    <!-- UPLOAD -->
+    <div class="widget-card" style="margin-bottom:16px;">
+      <div class="widget-header">
+        <div class="widget-title">📤 Upload de Planilha</div>
+      </div>
+      <div class="widget-content">
+        <div class="upload-section" onclick="document.getElementById('file-upload').click()" 
+             style="border:2px dashed var(--accent);border-radius:var(--radius);padding:20px;cursor:pointer;text-align:center;transition:all 0.2s;"
+             onmouseover="this.style.borderColor='var(--accent2)';this.style.background='rgba(25,118,210,0.05)';"
+             onmouseout="this.style.borderColor='var(--accent)';this.style.background='';">
+          <input type="file" id="file-upload" accept=".xlsx, .xls" style="display:none;">
+          <div style="font-size:36px;margin-bottom:8px;">📂</div>
+          <div id="upload-status">
+            <h4 style="font-size:14px;font-weight:600;">Enviar Nova Planilha</h4>
+            <p style="font-size:12px;color:var(--muted);">Clique ou arraste o .xlsx da logística</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- KPIs RÁPIDOS -->
+    <div class="kpi-grid" style="margin-bottom:16px;">
+      <div class="kpi-card">
+        <div class="kpi-label">📦 Total Itens</div>
+        <div class="kpi-value" id="kpi-total">0</div>
+      </div>
+      <div class="kpi-card amarelo">
+        <div class="kpi-label">🆕 Produtos Novos</div>
+        <div class="kpi-value" id="kpi-novos">0</div>
+      </div>
+      <div class="kpi-card verde">
+        <div class="kpi-label">🔄 Já Existiam</div>
+        <div class="kpi-value" id="kpi-repetidos">0</div>
+      </div>
+      <div class="kpi-card ciano">
+        <div class="kpi-label">📊 Planilhas</div>
+        <div class="kpi-value" id="kpi-snapshots">0</div>
+      </div>
+    </div>
+    
+    <!-- CONTROLES -->
+    <div class="filtros-card" style="margin-bottom:16px;">
+      <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;">
+        <label style="font-size:12px;color:var(--muted);font-weight:500;">📋 Planilha:</label>
+        <select id="snapshot-select" class="filtro-select" style="flex:1;min-width:200px;max-width:400px;"></select>
+        
+        <button class="btn-comp" onclick="exportarExcelCompras()" style="background:rgba(22,163,74,0.1);color:var(--success);border:1px solid rgba(22,163,74,0.2);">
+          ⬇ Exportar Excel
+        </button>
+        
+        <button class="btn-comp" onclick="excluirPlanilha()" style="background:rgba(220,38,38,0.1);color:var(--danger);border:1px solid rgba(220,38,38,0.2);">
+          🗑 Excluir Planilha
+        </button>
+        
+        <div style="flex:1;"></div>
+        
+        <div id="filter-buttons" style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="status-chip active" data-filter="todos" onclick="setFiltroCompras('todos', this)">Todos</button>
+          <button class="status-chip" data-filter="novos" onclick="setFiltroCompras('novos', this)">🆕 Novos</button>
+          <button class="status-chip" data-filter="repetidos" onclick="setFiltroCompras('repetidos', this)">🔄 Repetidos</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- BARRA DE BUSCA -->
+    <div class="filtros-card" style="margin-bottom:16px;">
+      <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;">
+        <div style="flex:1;min-width:200px;position:relative;">
+          <input type="text" id="buscaCompras" class="filtro-select" placeholder="🔍 Buscar produto ou código..." style="width:100%;padding-left:35px;" oninput="filtrarTabelaCompras()">
+          <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:14px;">🔍</span>
+        </div>
+        <span style="font-size:12px;color:var(--muted);" id="totalItensLabel">0 itens</span>
+      </div>
+    </div>
+    
+    <!-- TABELA -->
+    <div class="table-wrap" style="max-height:calc(100vh - 200px);overflow:auto;">
+      <table class="custom-table" style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead style="position:sticky;top:0;z-index:5;">
+          <tr>
+            <th style="background:var(--bg);padding:11px 12px;text-align:left;font-weight:600;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:1px;border-bottom:2px solid var(--border);">STATUS</th>
+            <th style="background:var(--bg);padding:11px 12px;text-align:left;font-weight:600;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:1px;border-bottom:2px solid var(--border);">DATA</th>
+            <th style="background:var(--bg);padding:11px 12px;text-align:left;font-weight:600;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:1px;border-bottom:2px solid var(--border);">BASE</th>
+            <th style="background:var(--bg);padding:11px 12px;text-align:left;font-weight:600;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:1px;border-bottom:2px solid var(--border);">VENDEDOR</th>
+            <th style="background:var(--bg);padding:11px 12px;text-align:left;font-weight:600;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:1px;border-bottom:2px solid var(--border);">CÓDIGO</th>
+            <th style="background:var(--bg);padding:11px 12px;text-align:left;font-weight:600;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:1px;border-bottom:2px solid var(--border);min-width:200px;">PRODUTO</th>
+            <th style="background:var(--bg);padding:11px 12px;text-align:right;font-weight:600;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:1px;border-bottom:2px solid var(--border);">QTD</th>
+            <th style="background:var(--bg);padding:11px 12px;text-align:left;font-weight:600;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:1px;border-bottom:2px solid var(--border);">FABRICANTE</th>
+            <th style="background:var(--bg);padding:11px 12px;text-align:left;font-weight:600;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:1px;border-bottom:2px solid var(--border);">PREVISÃO CHEGADA</th>
+          </tr>
+        </thead>
+        <tbody id="tabela-corpo">
+          <tr><td colspan="9" style="padding:40px;text-align:center;color:var(--muted);">
+            <span style="font-size:32px;opacity:0.5;display:block;margin-bottom:8px;">📂</span>
+            Envie uma planilha para começar
+          </td></tr>
+        </tbody>
+      </table>
+    </div>
+    
+    <!-- FOOTER -->
+    <div class="dashboard-footer" id="dashboardFooter">
+      <span id="footerInfo"></span>
+    </div>
+  </div>
+  
+  <!-- VALTER -->
+  <button class="ia-fab" id="iaFab" onclick="toggleValter()">
+    <svg width="28" height="28" viewBox="0 0 38 38"><circle cx="19" cy="19" r="19" fill="#0A1628"/><ellipse cx="19" cy="19" rx="15" ry="5.5" fill="none" stroke="#fff" stroke-width="1.2" transform="rotate(-40 19 19)"/><ellipse cx="19" cy="19" rx="15" ry="5.5" fill="none" stroke="#fff" stroke-width="1.2" transform="rotate(40 19 19)"/><ellipse cx="19" cy="19" rx="15" ry="5.5" fill="none" stroke="#fff" stroke-width="1.2" transform="rotate(90 19 19)"/><circle cx="19" cy="19" r="5" fill="#fff"/><circle cx="19" cy="19" r="3" fill="#0096FF"/></svg>
+    <span class="ia-badge" id="iaBadge">0</span>
+  </button>
+  
+  <div class="ia-panel" id="iaPanel">
+    <div class="ia-header">
+      <div class="ia-avatar">⚛️</div>
+      <div class="ia-header-info">
+        <div class="ia-header-name">Valter</div>
+        <div class="ia-header-status"><span class="ia-status-dot"></span> Assistente</div>
+      </div>
+      <button class="ia-header-btn" onclick="toggleValter()">✕</button>
+    </div>
+    <div class="ia-messages" id="iaMessages">
+      <div class="ia-msg bot"><div class="ia-msg-bubble">Olá! Pergunte sobre compras, produtos ou análise de estoque.</div></div>
+    </div>
+    <div class="ia-quick-bar">
+      <button class="ia-quick" onclick="enviarPergunta('Resumo das compras')">📊 Resumo</button>
+      <button class="ia-quick" onclick="enviarPergunta('Produtos mais comprados')">📦 Top produtos</button>
+      <button class="ia-quick" onclick="enviarPergunta('Análise de compras')">📈 Análise</button>
+    </div>
+    <div class="ia-input-area">
+      <input class="ia-input" id="iaInput" placeholder="Digite sua pergunta..." onkeydown="if(event.key==='Enter') enviarPergunta()">
+      <button class="ia-send-btn" onclick="enviarPergunta()">➤</button>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="/static/js/app.js"></script>
+  <script>
+    // ============================================================
+    // VARIÁVEIS GLOBAIS
+    // ============================================================
+    const API = 'https://horus-production.up.railway.app';
+    let itensAtuais = [];
+    let codigosAnteriores = new Set();
+    let filtroAtivo = 'todos';
+    let uploadIdAtual = null;
+    let termoBusca = '';
+    
+    // ============================================================
+    // INICIALIZAÇÃO
+    // ============================================================
+    document.addEventListener('DOMContentLoaded', function() {
+      carregarFiltros();
+      carregarTheme();
+      carregarMetas();
+      carregarSnapshots();
+      
+      document.addEventListener('filtrosAplicados', function() {
+        carregarSnapshots();
+      });
+      
+      if (!localStorage.getItem('atomo_logged_in')) {
+        window.location.href = '/index.html';
+      }
+      
+      // Evento de upload
+      document.getElementById('file-upload').addEventListener('change', function(e) {
+        if (e.target.files[0]) processarArquivo(e.target.files[0]);
+      });
+      
+      // Drag and drop
+      const uploadSection = document.querySelector('.upload-section');
+      uploadSection.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        this.style.borderColor = 'var(--accent2)';
+        this.style.background = 'rgba(25,118,210,0.1)';
+      });
+      
+      uploadSection.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        this.style.borderColor = 'var(--accent)';
+        this.style.background = '';
+      });
+      
+      uploadSection.addEventListener('drop', function(e) {
+        e.preventDefault();
+        this.style.borderColor = 'var(--accent)';
+        this.style.background = '';
+        if (e.dataTransfer.files[0]) processarArquivo(e.dataTransfer.files[0]);
+      });
+    });
+    
+    // ============================================================
+    // PROCESSAR ARQUIVO
+    // ============================================================
+    async function processarArquivo(file) {
+      if (!file) return;
+      
+      const loader = document.getElementById('loadingOverlay');
+      loader.classList.add('show');
+      
+      const statusEl = document.getElementById('upload-status');
+      statusEl.innerHTML = `<h4>⏳ Lendo arquivo...</h4><p>${file.name}</p>`;
+      
+      try {
+        const buf = await file.arrayBuffer();
+        await new Promise(r => setTimeout(r, 30));
+        
+        const wb = XLSX.read(buf, { type: 'array', cellDates: true });
+        const sheet = wb.Sheets[wb.SheetNames[0]];
+        
+        // Limita o range a A:I (9 colunas úteis)
+        const refOriginal = XLSX.utils.decode_range(sheet['!ref'] || 'A1');
+        sheet['!ref'] = XLSX.utils.encode_range({
+          s: { r: refOriginal.s.r, c: 0 },
+          e: { r: refOriginal.e.r, c: 8 }
+        });
+        
+        const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+        await new Promise(r => setTimeout(r, 30));
+        
+        const items = [];
+        for (const r of rows) {
+          const rawData = getCol(r, 'carimbo');
+          let dataHora = '';
+          if (rawData instanceof Date) {
+            dataHora = rawData.toLocaleDateString('pt-BR');
+          } else if (rawData) {
+            dataHora = String(rawData).trim();
+          }
+          
+          const rawPrevisao = getCol(r, 'previsão de chegada', 'previsao de chegada', 'previsão', 'previsao');
+          let previsaoChegada = '';
+          if (rawPrevisao instanceof Date) {
+            previsaoChegada = rawPrevisao.toLocaleDateString('pt-BR');
+          } else if (rawPrevisao) {
+            previsaoChegada = String(rawPrevisao).trim();
+          }
+          
+          const nomeProduto = String(getCol(r, 'descrição produto', 'descricao produto', 'descrição', 'descricao')).trim();
+          if (!nomeProduto) continue;
+          
+          items.push({
+            dataHora,
+            base: String(getCol(r, 'base')).trim(),
+            nomeVendedor: String(getCol(r, 'nome vendedor', 'vendedor')).trim(),
+            codigoProduto: String(getCol(r, 'código produto', 'codigo produto', 'código', 'codigo')).trim(),
+            nomeProduto,
+            quantidade: String(getCol(r, 'quantidade media', 'quantidade', 'qtd')).trim(),
+            total: String(getCol(r, 'marca')).trim(),
+            previsaoChegada,
+          });
+        }
+        
+        if (!items.length) {
+          alert('Nenhum item válido encontrado.');
+          statusEl.innerHTML = `<h4>❌ Erro</h4><p>Nenhum item válido encontrado</p>`;
+          loader.classList.remove('show');
+          return;
+        }
+        
+        // Envia em lotes de 50
+        const LOTE = 50;
+        let uploadId = null;
+        let baseDetectada = '';
+        
+        for (let i = 0; i < items.length; i += LOTE) {
+          const lote = items.slice(i, i + LOTE);
+          const progresso = Math.min(i + LOTE, items.length);
+          statusEl.innerHTML = `<h4>⏳ Salvando ${progresso}/${items.length}...</h4><p>${file.name}</p>`;
+          await new Promise(r => setTimeout(r, 20));
+          
+          const res = await fetch(API + '/api/compras/upload', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              items: lote,
+              nomeArquivo: file.name,
+              uploadIdExistente: uploadId
+            })
+          });
+          
+          const data = await res.json();
+          if (!data.success) {
+            throw new Error(data.message || 'Erro no upload');
+          }
+          if (!uploadId) {
+            uploadId = data.uploadId;
+            baseDetectada = data.base || '';
+          }
+        }
+        
+        statusEl.innerHTML = `<h4>✅ ${items.length} itens salvos! Base: ${baseDetectada || '?'}</h4><p>${file.name}</p>`;
+        adicionarNotificacao(`✅ ${items.length} itens importados com sucesso!`, 'success', '✅');
+        
+        await carregarSnapshots(uploadId);
+        
+      } catch (err) {
+        console.error('Erro no upload:', err);
+        statusEl.innerHTML = `<h4>❌ Erro</h4><p>${err.message}</p>`;
+        adicionarNotificacao('❌ Erro ao processar arquivo: ' + err.message, 'danger', '❌');
+      }
+      
+      loader.classList.remove('show');
+      document.getElementById('file-upload').value = '';
+    }
+    
+    // ============================================================
+    // AUXILIAR: GET COL
+    // ============================================================
+    function getCol(row, ...nomes) {
+      const keys = Object.keys(row);
+      for (const n of nomes) {
+        const k = keys.find(x => x.toString().toLowerCase().includes(n.toLowerCase()));
+        if (k) return row[k];
+      }
+      return '';
+    }
+    
+    // ============================================================
+    // CARREGAR SNAPSHOTS
+    // ============================================================
+    async function carregarSnapshots(selecionarId) {
+      try {
+        const res = await fetch(API + '/api/compras/snapshots');
+        const data = await res.json();
+        const sel = document.getElementById('snapshot-select');
+        sel.innerHTML = '';
+        const lista = data.snapshots || [];
+        
+        lista.forEach(s => {
+          const opt = document.createElement('option');
+          opt.value = s.id;
+          opt.textContent = '#' + s.id + ' — [' + (s.base || '?') + '] ' + s.uploaddate + ' (' + s.totalitems + ' itens)';
+          sel.appendChild(opt);
+        });
+        
+        animarContador(document.getElementById('kpi-snapshots'), lista.length);
+        
+        if (selecionarId) sel.value = selecionarId;
+        if (sel.value) {
+          await carregarItens(sel.value);
+        } else {
+          itensAtuais = [];
+          codigosAnteriores = new Set();
+          document.getElementById('kpi-total').textContent = 0;
+          document.getElementById('kpi-novos').textContent = 0;
+          document.getElementById('kpi-repetidos').textContent = 0;
+          renderTabelaCompras();
+        }
+      } catch (err) {
+        console.error('Erro ao carregar snapshots:', err);
+        adicionarNotificacao('❌ Erro ao carregar snapshots: ' + err.message, 'danger', '❌');
+      }
+    }
+    
+    // ============================================================
+    // CARREGAR ITENS
+    // ============================================================
+    async function carregarItens(uploadId) {
+      try {
+        uploadIdAtual = uploadId;
+        const res = await fetch(API + '/api/compras/listar?uploadId=' + uploadId);
+        const data = await res.json();
+        
+        itensAtuais = data.items || [];
+        codigosAnteriores = new Set(data.codigosAnteriores || []);
+        
+        animarContador(document.getElementById('kpi-total'), itensAtuais.length);
+        const novos = itensAtuais.filter(i => !codigosAnteriores.has(String(i.descricaoProduto || i.descricaoproduto || '').trim().toLowerCase())).length;
+        animarContador(document.getElementById('kpi-novos'), novos);
+        animarContador(document.getElementById('kpi-repetidos'), itensAtuais.length - novos);
+        
+        renderTabelaCompras();
+        
+      } catch (err) {
+        console.error('Erro ao carregar itens:', err);
+        adicionarNotificacao('❌ Erro ao carregar itens: ' + err.message, 'danger', '❌');
+      }
+    }
+    
+    // ============================================================
+    // RENDER TABELA
+    // ============================================================
+    function renderTabelaCompras() {
+      const tbody = document.getElementById('tabela-corpo');
+      let lista = itensAtuais;
+      
+      // Aplica filtro de status
+      if (filtroAtivo === 'novos') {
+        lista = lista.filter(i => !codigosAnteriores.has(String(i.descricaoProduto || i.descricaoproduto || '').trim().toLowerCase()));
+      } else if (filtroAtivo === 'repetidos') {
+        lista = lista.filter(i => codigosAnteriores.has(String(i.descricaoProduto || i.descricaoproduto || '').trim().toLowerCase()));
+      }
+      
+      // Aplica busca
+      if (termoBusca.trim()) {
+        const busca = termoBusca.toLowerCase().trim();
+        lista = lista.filter(i => {
+          const produto = String(i.descricaoProduto || i.descricaoproduto || '').toLowerCase();
+          const codigo = String(i.codigoProduto || i.codigoproduto || '').toLowerCase();
+          return produto.indexOf(busca) >= 0 || codigo.indexOf(busca) >= 0;
+        });
+      }
+      
+      document.getElementById('totalItensLabel').textContent = lista.length + ' itens';
+      
+      if (!lista.length) {
+        tbody.innerHTML = `
+          <tr><td colspan="9" style="padding:40px;text-align:center;color:var(--muted);">
+            <span style="font-size:32px;opacity:0.5;display:block;margin-bottom:8px;">🔍</span>
+            Nenhum item encontrado para esse filtro
+          </td></tr>
+        `;
+        return;
+      }
+      
+      tbody.innerHTML = lista.map(i => {
+        const nomeProd = i.descricaoProduto || i.descricaoproduto || '';
+        const codProd = i.codigoProduto || i.codigoproduto || '';
+        const qtd = i.quantidadeMediaVenda || i.quantidademediavenda || '';
+        const marca = i.marca || '';
+        const data = i.dataHora || '';
+        const base = i.base || '';
+        const vendedor = i.nomeVendedor || '';
+        const previsao = i.previsaoChegada || '';
+        
+        const novo = !codigosAnteriores.has(String(nomeProd).trim().toLowerCase());
+        
+        return `<tr style="${novo ? 'border-left:3px solid var(--warning);' : ''}">
+          <td style="padding:10px 12px;border-bottom:1px solid rgba(255,255,255,0.04);">
+            <span class="badge-status ${novo ? 'badge-warning' : 'badge-info'}" 
+                  style="padding:4px 10px;border-radius:12px;font-size:11px;font-weight:600;${novo ? 'background:rgba(245,158,11,0.15);color:var(--warning);border:1px solid rgba(245,158,11,0.3);' : 'background:rgba(25,118,210,0.1);color:var(--accent);border:1px solid rgba(25,118,210,0.2);'}">
+              ${novo ? '🆕 NOVO' : '🔄 REPETIDO'}
+            </span>
+          </td>
+          <td style="padding:10px 12px;border-bottom:1px solid rgba(255,255,255,0.04);font-size:12px;color:var(--muted);">${data || '—'}</td>
+          <td style="padding:10px 12px;border-bottom:1px solid rgba(255,255,255,0.04);font-size:12px;">${base || '—'}</td>
+          <td style="padding:10px 12px;border-bottom:1px solid rgba(255,255,255,0.04);font-size:12px;color:var(--muted);">${vendedor || '—'}</td>
+          <td style="padding:10px 12px;border-bottom:1px solid rgba(255,255,255,0.04);font-size:12px;color:var(--muted);">${codProd || '—'}</td>
+          <td style="padding:10px 12px;border-bottom:1px solid rgba(255,255,255,0.04);font-weight:600;">${nomeProd || '—'}</td>
+          <td style="padding:10px 12px;border-bottom:1px solid rgba(255,255,255,0.04);text-align:right;font-weight:600;">${qtd || '0'}</td>
+          <td style="padding:10px 12px;border-bottom:1px solid rgba(255,255,255,0.04);font-size:12px;color:var(--muted);">${marca || '—'}</td>
+          <td style="padding:10px 12px;border-bottom:1px solid rgba(255,255,255,0.04);font-size:12px;color:var(--muted);">${previsao || '—'}</td>
+        </tr>`;
+      }).join('');
+    }
+    
+    // ============================================================
+    // FILTROS DA TABELA
+    // ============================================================
+    function setFiltroCompras(filtro, btn) {
+      filtroAtivo = filtro;
+      document.querySelectorAll('#filter-buttons .status-chip').forEach(el => el.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      renderTabelaCompras();
+    }
+    
+    function filtrarTabelaCompras() {
+      const input = document.getElementById('buscaCompras');
+      termoBusca = input.value || '';
+      renderTabelaCompras();
+    }
+    
+    // ============================================================
+    // EXPORTAR EXCEL
+    // ============================================================
+    function exportarExcelCompras() {
+      const id = document.getElementById('snapshot-select').value;
+      if (!id) {
+        adicionarNotificacao('Nenhuma planilha selecionada', 'warning', '⚠️');
+        return;
+      }
+      
+      adicionarNotificacao('📊 Gerando Excel...', 'info', '📊');
+      
+      // Aplica os mesmos filtros da tabela
+      let lista = itensAtuais;
+      if (filtroAtivo === 'novos') {
+        lista = lista.filter(i => !codigosAnteriores.has(String(i.descricaoProduto || i.descricaoproduto || '').trim().toLowerCase()));
+      } else if (filtroAtivo === 'repetidos') {
+        lista = lista.filter(i => codigosAnteriores.has(String(i.descricaoProduto || i.descricaoproduto || '').trim().toLowerCase()));
+      }
+      
+      if (termoBusca.trim()) {
+        const busca = termoBusca.toLowerCase().trim();
+        lista = lista.filter(i => {
+          const produto = String(i.descricaoProduto || i.descricaoproduto || '').toLowerCase();
+          const codigo = String(i.codigoProduto || i.codigoproduto || '').toLowerCase();
+          return produto.indexOf(busca) >= 0 || codigo.indexOf(busca) >= 0;
+        });
+      }
+      
+      if (!lista.length) {
+        adicionarNotificacao('Nenhum item para exportar com os filtros atuais', 'warning', '⚠️');
+        return;
+      }
+      
+      const rows = [
+        ['Status', 'Data', 'Base', 'Vendedor', 'Código', 'Produto', 'Quantidade', 'Fabricante', 'Previsão Chegada']
+      ];
+      
+      lista.forEach(i => {
+        const nomeProd = i.descricaoProduto || i.descricaoproduto || '';
+        const novo = !codigosAnteriores.has(String(nomeProd).trim().toLowerCase());
+        rows.push([
+          novo ? 'NOVO' : 'REPETIDO',
+          i.dataHora || '',
+          i.base || '',
+          i.nomeVendedor || '',
+          i.codigoProduto || i.codigoproduto || '',
+          nomeProd,
+          i.quantidadeMediaVenda || i.quantidademediavenda || '0',
+          i.marca || '',
+          i.previsaoChegada || ''
+        ]);
+      });
+      
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.aoa_to_sheet(rows);
+      ws['!cols'] = [
+        { wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 20 },
+        { wch: 12 }, { wch: 35 }, { wch: 10 }, { wch: 20 }, { wch: 15 }
+      ];
+      XLSX.utils.book_append_sheet(wb, ws, 'Compras');
+      
+      const fileName = 'Atomo-Compras-' + new Date().toISOString().slice(0,10) + '.xlsx';
+      XLSX.writeFile(wb, fileName);
+      adicionarNotificacao('✅ Excel gerado com sucesso!', 'success', '✅');
+    }
+    
+    // ============================================================
+    // EXCLUIR PLANILHA
+    // ============================================================
+    async function excluirPlanilha() {
+      const id = document.getElementById('snapshot-select').value;
+      if (!id) {
+        adicionarNotificacao('Nenhuma planilha selecionada', 'warning', '⚠️');
+        return;
+      }
+      
+      const texto = document.getElementById('snapshot-select').options[document.getElementById('snapshot-select').selectedIndex]?.text || '';
+      if (!confirm(`Deseja excluir a planilha:\n${texto}?`)) return;
+      
+      const loader = document.getElementById('loadingOverlay');
+      loader.classList.add('show');
+      
+      try {
+        const res = await fetch(API + '/api/compras/upload/' + id, { method: 'DELETE' });
+        const data = await res.json();
+        if (!data.success) {
+          throw new Error(data.message || 'Erro ao excluir');
+        }
+        adicionarNotificacao('✅ Planilha excluída com sucesso!', 'success', '✅');
+        await carregarSnapshots();
+      } catch (err) {
+        console.error('Erro ao excluir:', err);
+        adicionarNotificacao('❌ Erro ao excluir: ' + err.message, 'danger', '❌');
+      }
+      
+      loader.classList.remove('show');
+    }
+    
+    // ============================================================
+    // ANIMAÇÃO DE CONTADOR
+    // ============================================================
+    function animarContador(elemento, valorFinal) {
+      if (!elemento) return;
+      const valorInicial = parseInt(elemento.textContent, 10) || 0;
+      const destino = parseInt(valorFinal, 10) || 0;
+      if (valorInicial === destino) {
+        elemento.textContent = destino;
+        return;
+      }
+      const duracao = 500;
+      const inicioTempo = performance.now();
+      function passo(agora) {
+        const progresso = Math.min((agora - inicioTempo) / duracao, 1);
+        const valorAtual = Math.round(valorInicial + (destino - valorInicial) * progresso);
+        elemento.textContent = valorAtual;
+        if (progresso < 1) requestAnimationFrame(passo);
+      }
+      requestAnimationFrame(passo);
+    }
+    
+    // ============================================================
+    // EVENTO: SELECT DE SNAPSHOT
+    // ============================================================
+    document.getElementById('snapshot-select').addEventListener('change', function(e) {
+      if (e.target.value) {
+        carregarItens(e.target.value);
+      }
+    });
+    
+    // ============================================================
+    // EXPORTA FUNÇÕES GLOBAIS
+    // ============================================================
+    window.setFiltroCompras = setFiltroCompras;
+    window.filtrarTabelaCompras = filtrarTabelaCompras;
+    window.exportarExcelCompras = exportarExcelCompras;
+    window.excluirPlanilha = excluirPlanilha;
+    window.carregarSnapshots = carregarSnapshots;
+  </script>
+</body>
+</html>
