@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Átomo — Positivação por Clientes</title>
+  
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0A1628">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  
+  <link rel="stylesheet" href="/static/css/atomo.css">
+  <link rel="stylesheet" href="/static/css/widgets.css">
+</head>
+<body>
+  <!-- LOADING -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-spinner"></div>
+    <span style="color:var(--text);margin-top:12px;">Carregando dados de positivação...</span>
+  </div>
+  
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="mainSidebar">
+    <img class="sidebar-logo" src="/logo.png" alt="Átomo" onerror="this.style.display='none'">
+    <div class="sidebar-title">ÁTOMO</div>
+    
+    <div class="nav-section">Dashboards</div>
+    <a class="nav-item" href="/home.html"><span class="icon">🏠</span> Página Inicial</a>
+    <a class="nav-item" href="/visao-geral.html"><span class="icon">📊</span> Visão Geral</a>
+    <a class="nav-item" href="/vendedor.html"><span class="icon">👤</span> Vendedor</a>
+    <a class="nav-item" href="/regiao.html"><span class="icon">🗺️</span> Região</a>
+    <a class="nav-item" href="/marcas.html"><span class="icon">🏷️</span> Marcas</a>
+    <a class="nav-item" href="/produtos.html"><span class="icon">📦</span> Produtos</a>
+    <a class="nav-item" href="/produtos-cliente.html"><span class="icon">🛍️</span> Produtos por Cliente</a>
+    
+    <div class="sidebar-divider"></div>
+    <div class="nav-section">Gestão</div>
+    <a class="nav-item" href="/carteira.html"><span class="icon">👥</span> Carteira</a>
+    <a class="nav-item active" href="/positivacao.html"><span class="icon">👥</span> Positivação</a>
+    <a class="nav-item" href="/shelflife.html"><span class="icon">🕒</span> Shelf Life</a>
+    <a class="nav-item" href="/risco.html"><span class="icon">⚠️</span> Clientes em Risco</a>
+    <a class="nav-item" href="/compras.html"><span class="icon">🛒</span> Compras</a>
+    
+    <div class="sidebar-divider"></div>
+    <div class="nav-section">🏆 Metas <span class="badge-meta" id="badgeMetas">0</span></div>
+    
+    <button class="btn-logout" onclick="logout()">🚪 Sair</button>
+  </div>
+  
+  <!-- MAIN CONTENT -->
+  <div class="main-content">
+    <div id="notificationContainer"></div>
+    
+    <div class="page-header">
+      <div class="breadcrumb">
+        <a href="/home.html">🏠 Portal</a>
+        <span class="sep">›</span>
+        <span>👥 Positivação por Clientes</span>
+      </div>
+      <div class="header-actions">
+        <button onclick="exportarPDF()">📄 <span>PDF</span></button>
+        <button onclick="exportarExcelPositivacao()">📊 <span>Excel</span></button>
+        <button onclick="compartilharFiltros()">🔗</button>
+        <button onclick="toggleTheme()">🌓</button>
+        <button onclick="abrirNotificacoes()" style="position:relative;">
+          🔔 <span class="badge-notification" id="notifBadge">0</span>
+        </button>
+      </div>
+    </div>
+    
+    <div class="nota">📋 Selecione um vendedor e os períodos desejados para visualizar os valores separados mês a mês.</div>
+    
+    <!-- FILTROS GLOBAIS -->
+    <div class="filtros-card">
+      <div class="filtros-grid">
+        <div class="filtro-group">
+          <label>📅 Ano</label>
+          <select class="filtro-select" id="filtroAno" onchange="aplicarFiltros()"></select>
+        </div>
+        <div class="filtro-group">
+          <label>📅 Mês</label>
+          <select class="filtro-select" id="filtroMes" onchange="aplicarFiltros()">
+            <option value="">Todos</option>
+            <option value="1">Janeiro</option><option value="2">Fevereiro</option>
+            <option value="3">Março</option><option value="4">Abril</option>
+            <option value="5">Maio</option><option value="6">Junho</option>
+            <option value="7">Julho</option><option value="8">Agosto</option>
+            <option value="9">Setembro</option><option value="10">Outubro</option>
+            <option value="11">Novembro</option><option value="12">Dezembro</option>
+          </select>
+        </div>
+        <div class="filtro-group">
+          <label>🏢 Unidade</label>
+          <select class="filtro-select" id="filtroUnidade" onchange="aplicarFiltros()"></select>
+        </div>
+        <div class="filtro-group">
+          <label>🏷️ Marca</label>
+          <select class="filtro-select" id="filtroMarca" onchange="aplicarFiltros()"></select>
+        </div>
+      </div>
+      <div class="filtros-ativos" id="filtrosAtivos"></div>
+    </div>
+    
+    <!-- FILTROS ESPECÍFICOS -->
+    <div class="filtros-grid" style="margin-bottom:16px;">
+      <!-- Busca de Vendedor -->
+      <div class="filtro-card" style="border:1px solid var(--border);border-radius:var(--radius);padding:16px;">
+        <div class="filtro-titulo" style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">👤 Filtrar por Vendedor</div>
+        <div style="position:relative;">
+          <input type="text" id="inputVend" class="filtro-select" placeholder="Digite o nome do vendedor..." oninput="onBuscaVend()" style="width:100%;">
+          <div class="sug-lista" id="listaVend" style="position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--card);border:1px solid var(--border);border-radius:8px;z-index:200;max-height:200px;overflow-y:auto;display:none;box-shadow:var(--shadow);"></div>
+        </div>
+        <div class="tags-wrap" id="tagsVend" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;min-height:24px;align-items:center;">
+          <span style="color:var(--muted);font-size:12px;">Selecione um vendedor</span>
+        </div>
+      </div>
+      
+      <!-- Calendário de Períodos -->
+      <div class="filtro-card" style="border:1px solid var(--border);border-radius:var(--radius);padding:16px;">
+        <div class="filtro-titulo" style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">📅 Selecionar Períodos</div>
+        <div id="calendarioMeses"></div>
+        <div class="tags-wrap" id="tagsPeriodo" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;min-height:24px;align-items:center;">
+          <span style="color:var(--muted);font-size:12px;">Selecione os períodos</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- RESUMO -->
+    <div class="resumo-bar" style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:rgba(25,118,210,0.06);border:1px solid rgba(25,118,210,0.2);border-radius:8px;margin-bottom:12px;font-size:13px;flex-wrap:wrap;gap:8px;">
+      <span class="resumo-info" id="resumoInfo" style="color:var(--accent2);font-weight:500;">Aguardando seleção...</span>
+      <div style="display:flex;gap:8px;">
+        <button class="btn-comp" onclick="exportarExcelPositivacao()" style="background:rgba(22,163,74,0.1);color:var(--success);border:1px solid rgba(22,163,74,0.2);">📊 Exportar Excel</button>
+        <button class="btn-comp" onclick="limparFiltrosPositivacao()" style="background:rgba(220,38,38,0.1);color:var(--danger);border:1px solid rgba(220,38,38,0.2);">✕ Limpar filtros</button>
+      </div>
+    </div>
+    
+    <!-- TABELA PIVOT -->
+    <div class="table-wrap" id="pivotWrap" style="max-height:calc(100vh - 200px);overflow:auto;">
+      <table class="pivot-table" id="tabelaClientes" style="width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap;">
+        <thead style="position:sticky;top:0;z-index:10;">
+          <tr>
+            <th style="background:var(--bg);padding:10px 14px;text-align:left;font-weight:600;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:1px;border-bottom:2px solid var(--border);border-right:1px solid var(--border);position:sticky;top:0;">Cód. Cliente</th>
+            <th style="background:var(--bg);padding:10px 14px;text-align:left;font-weight:600;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:1px;border-bottom:2px solid var(--border);border-right:1px solid var(--border);position:sticky;top:0;">Cliente</th>
+            <th style="background:var(--bg);padding:10px 14px;text-align:right;font-weight:700;color:var(--success);font-size:11px;text-transform:uppercase;letter-spacing:1px;border-bottom:2px solid var(--border);position:sticky;top:0;">Total NF</th>
+          </tr>
+        </thead>
+        <tbody id="corpoTabela">
+          <tr>
+            <td colspan="3" style="padding:40px;text-align:center;color:var(--muted);">
+              <span style="font-size:32px;opacity:0.5;display:block;margin-bottom:8px;">👤</span>
+              Selecione um vendedor e os períodos para visualizar os dados.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    
+    <!-- FOOTER -->
+    <div class="dashboard-footer" id="dashboardFooter">
+      <span id="footerInfo"></span>
+    </div>
+  </div>
+  
+  <!-- VALTER -->
+  <button class="ia-fab" id="iaFab" onclick="toggleValter()">
+    <svg width="28" height="28" viewBox="0 0 38 38"><circle cx="19" cy="19" r="19" fill="#0A1628"/><ellipse cx="19" cy="19" rx="15" ry="5.5" fill="none" stroke="#fff" stroke-width="1.2" transform="rotate(-40 19 19)"/><ellipse cx="19" cy="19" rx="15" ry="5.5" fill="none" stroke="#fff" stroke-width="1.2" transform="rotate(40 19 19)"/><ellipse cx="19" cy="19" rx="15" ry="5.5" fill="none" stroke="#fff" stroke-width="1.2" transform="rotate(90 19 19)"/><circle cx="19" cy="19" r="5" fill="#fff"/><circle cx="19" cy="19" r="3" fill="#0096FF"/></svg>
+    <span class="ia-badge" id="iaBadge">0</span>
+  </button>
+  
+  <div class="ia-panel" id="iaPanel">
+    <div class="ia-header">
+      <div class="ia-avatar">⚛️</div>
+      <div class="ia-header-info">
+        <div class="ia-header-name">Valter</div>
+        <div class="ia-header-status"><span class="ia-status-dot"></span> Assistente</div>
+      </div>
+      <button class="ia-header-btn" onclick="toggleValter()">✕</button>
+    </div>
+    <div class="ia-messages" id="iaMessages">
+      <div class="ia-msg bot"><div class="ia-msg-bubble">Olá! Pergunte sobre positivação de clientes, análise de compras ou desempenho.</div></div>
+    </div>
+    <div class="ia-quick-bar">
+      <button class="ia-quick" onclick="enviarPergunta('Resumo da positivação')">📊 Resumo</button>
+      <button class="ia-quick" onclick="enviarPergunta('Clientes com maior compra')">🏆 Top clientes</button>
+      <button class="ia-quick" onclick="enviarPergunta('Análise de positivação')">📈 Análise</button>
+    </div>
+    <div class="ia-input-area">
+      <input class="ia-input" id="iaInput" placeholder="Digite sua pergunta..." onkeydown="if(event.key==='Enter') enviarPergunta()">
+      <button class="ia-send-btn" onclick="enviarPergunta()">➤</button>
+    </div>
+  </div>
+  
+  <script src="/static/js/app.js"></script>
+  <script>
+    // ============================================================
+    // VARIÁVEIS GLOBAIS
+    // ============================================================
+    const API = 'https://horus-production.up.railway.app';
+    const MESES_NOME = ['','Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+    
+    let vendedoresSel = [];
+    let periodosSel = [];
+    let todosVendedores = [];
+    let dadosCompletos = [];
+    
+    // ============================================================
+    // INICIALIZAÇÃO
+    // ============================================================
+    document.addEventListener('DOMContentLoaded', function() {
+      carregarFiltros();
+      carregarTheme();
+      carregarMetas();
+      carregarFiltrosPositivacao();
+      
+      document.addEventListener('filtrosAplicados', function() {
+        carregarDadosPositivacao();
+      });
+      
+      if (!localStorage.getItem('atomo_logged_in')) {
+        window.location.href = '/index.html';
+      }
+    });
+    
+    // ============================================================
+    // CARREGA FILTROS
+    // ============================================================
+    function carregarFiltrosPositivacao() {
+      fetch(`${API}/api/filtros`)
+        .then(res => res.json())
+        .then(data => {
+          todosVendedores = data.vendedores || [];
+          const anos = data.anos || [];
+          
+          // Renderiza calendário
+          const container = document.getElementById('calendarioMeses');
+          container.innerHTML = '';
+          
+          // Seleciona ano atual por padrão
+          const anoAtual = new Date().getFullYear();
+          const temAnoAtual = anos.includes(anoAtual);
+          const anosExibir = temAnoAtual ? [anoAtual] : anos.slice(0, 1);
+          
+          anosExibir.forEach(ano => {
+            const div = document.createElement('div');
+            div.className = 'cal-ano';
+            div.style.marginBottom = '12px';
+            
+            const label = document.createElement('div');
+            label.className = 'cal-ano-label';
+            label.style.fontSize = '12px';
+            label.style.fontWeight = '700';
+            label.style.color = 'var(--accent2)';
+            label.style.marginBottom = '8px';
+            label.style.letterSpacing = '1px';
+            label.textContent = ano;
+            div.appendChild(label);
+            
+            const meses = document.createElement('div');
+            meses.className = 'cal-meses';
+            meses.style.display = 'flex';
+            meses.style.flexWrap = 'wrap';
+            meses.style.gap = '6px';
+            
+            for (let m = 1; m <= 12; m++) {
+              const btn = document.createElement('div');
+              btn.className = 'cal-mes';
+              btn.style.padding = '5px 10px';
+              btn.style.background = 'rgba(255,255,255,0.05)';
+              btn.style.border = '1px solid var(--border)';
+              btn.style.borderRadius = '6px';
+              btn.style.fontSize = '12px';
+              btn.style.cursor = 'pointer';
+              btn.style.transition = 'all 0.15s';
+              btn.style.userSelect = 'none';
+              btn.setAttribute('data-ano', ano);
+              btn.setAttribute('data-mes', m);
+              btn.textContent = MESES_NOME[m];
+              btn.addEventListener('click', function() {
+                togglePeriodoPositivacao(ano, m);
+              });
+              meses.appendChild(btn);
+            }
+            div.appendChild(meses);
+            container.appendChild(div);
+          });
+          
+          renderTagsVendPositivacao();
+          renderTagsPeriodoPositivacao();
+        })
+        .catch(err => {
+          console.error('Erro ao carregar filtros:', err);
+          adicionarNotificacao('❌ Erro ao carregar filtros', 'danger', '❌');
+        });
+    }
+    
+    // ============================================================
+    // BUSCA DE VENDEDOR
+    // ============================================================
+    function onBuscaVend() {
+      const q = document.getElementById('inputVend').value.trim().toLowerCase();
+      const lista = document.getElementById('listaVend');
+      if (!q) {
+        lista.style.display = 'none';
+        return;
+      }
+      
+      const filtrados = todosVendedores.filter(v => v.toLowerCase().includes(q));
+      if (!filtrados.length) {
+        lista.style.display = 'none';
+        return;
+      }
+      
+      lista.innerHTML = '';
+      filtrados.slice(0, 10).forEach(v => {
+        const ok = vendedoresSel.includes(v);
+        const el = document.createElement('div');
+        el.className = 'sug-item' + (ok ? ' sug-ok' : '');
+        el.style.padding = '9px 14px';
+        el.style.cursor = 'pointer';
+        el.style.display = 'flex';
+        el.style.alignItems = 'center';
+        el.style.gap = '8px';
+        el.style.borderBottom = '1px solid var(--border)';
+        el.style.transition = 'background 0.15s';
+        el.onmouseover = function() { this.style.background = 'rgba(25,118,210,0.1)'; };
+        el.onmouseout = function() { this.style.background = ''; };
+        el.innerHTML = `<span style="flex:1;font-size:13px;">${v}</span>${ok ? '<span style="color:var(--success);font-weight:700;">✓</span>' : ''}`;
+        el.addEventListener('click', function() {
+          addVendedorPositivacao(v);
+        });
+        lista.appendChild(el);
+      });
+      lista.style.display = 'block';
+    }
+    
+    function addVendedorPositivacao(nome) {
+      if (!vendedoresSel.includes(nome)) {
+        vendedoresSel = [nome];
+      }
+      document.getElementById('inputVend').value = '';
+      document.getElementById('listaVend').style.display = 'none';
+      renderTagsVendPositivacao();
+      carregarDadosPositivacao();
+    }
+    
+    function remVendedorPositivacao(nome) {
+      vendedoresSel = vendedoresSel.filter(v => v !== nome);
+      renderTagsVendPositivacao();
+      carregarDadosPositivacao();
+    }
+    
+    function renderTagsVendPositivacao() {
+      const container = document.getElementById('tagsVend');
+      if (!vendedoresSel.length) {
+        container.innerHTML = '<span style="color:var(--muted);font-size:12px;">Selecione um vendedor</span>';
+        return;
+      }
+      container.innerHTML = '';
+      vendedoresSel.forEach(v => {
+        const tag = document.createElement('div');
+        tag.className = 'tag-item';
+        tag.style.display = 'flex';
+        tag.style.alignItems = 'center';
+        tag.style.gap = '5px';
+        tag.style.background = 'rgba(0,195,255,0.12)';
+        tag.style.border = '1px solid rgba(0,195,255,0.3)';
+        tag.style.borderRadius = '20px';
+        tag.style.padding = '3px 8px 3px 12px';
+        tag.style.fontSize = '11px';
+        tag.style.color = 'var(--accent2)';
+        tag.appendChild(document.createTextNode(v));
+        const btn = document.createElement('button');
+        btn.innerHTML = '×';
+        btn.style.background = 'none';
+        btn.style.border = 'none';
+        btn.style.color = 'var(--accent2)';
+        btn.style.cursor = 'pointer';
+        btn.style.fontSize = '14px';
+        btn.style.lineHeight = '1';
+        btn.style.padding = '0';
+        btn.style.opacity = '0.7';
+        btn.onmouseover = function() { this.style.opacity = '1'; };
+        btn.onmouseout = function() { this.style.opacity = '0.7'; };
+        btn.addEventListener('click', function() {
+          remVendedorPositivacao(v);
+        });
+        tag.appendChild(btn);
+        container.appendChild(tag);
+      });
+    }
+    
+    // ============================================================
+    // PERÍODOS
+    // ============================================================
+    function togglePeriodoPositivacao(ano, mes) {
+      const idx = periodosSel.findIndex(p => p.ano === ano && p.mes === mes);
+      if (idx >= 0) periodosSel.splice(idx, 1);
+      else periodosSel.push({ ano, mes });
+      
+      periodosSel.sort((a, b) => {
+        if (a.ano !== b.ano) return a.ano - b.ano;
+        return a.mes - b.mes;
+      });
+      
+      renderTagsPeriodoPositivacao();
+      atualizarCalendarioPositivacao();
+      carregarDadosPositivacao();
+    }
+    
+    function renderTagsPeriodoPositivacao() {
+      const container = document.getElementById('tagsPeriodo');
+      if (!periodosSel.length) {
+        container.innerHTML = '<span style="color:var(--muted);font-size:12px;">Selecione os períodos</span>';
+        return;
+      }
+      container.innerHTML = '';
+      periodosSel.forEach(p => {
+        const tag = document.createElement('div');
+        tag.className = 'tag-item';
+        tag.style.display = 'flex';
+        tag.style.alignItems = 'center';
+        tag.style.gap = '5px';
+        tag.style.background = 'rgba(0,195,255,0.12)';
+        tag.style.border = '1px solid rgba(0,195,255,0.3)';
+        tag.style.borderRadius = '20px';
+        tag.style.padding = '3px 8px 3px 12px';
+        tag.style.fontSize = '11px';
+        tag.style.color = 'var(--accent2)';
+        tag.appendChild(document.createTextNode(MESES_NOME[p.mes] + '/' + p.ano));
+        const btn = document.createElement('button');
+        btn.innerHTML = '×';
+        btn.style.background = 'none';
+        btn.style.border = 'none';
+        btn.style.color = 'var(--accent2)';
+        btn.style.cursor = 'pointer';
+        btn.style.fontSize = '14px';
+        btn.style.lineHeight = '1';
+        btn.style.padding = '0';
+        btn.style.opacity = '0.7';
+        btn.onmouseover = function() { this.style.opacity = '1'; };
+        btn.onmouseout = function() { this.style.opacity = '0.7'; };
+        btn.addEventListener('click', function() {
+          togglePeriodoPositivacao(p.ano, p.mes);
+        });
+        tag.appendChild(btn);
+        container.appendChild(tag);
+      });
+    }
+    
+    function atualizarCalendarioPositivacao() {
+      document.querySelectorAll('.cal-mes').forEach(el => {
+        const ano = parseInt(el.getAttribute('data-ano'));
+        const mes = parseInt(el.getAttribute('data-mes'));
+        const sel = periodosSel.some(p => p.ano === ano && p.mes === mes);
+        el.style.background = sel ? 'rgba(25,118,210,0.4)' : 'rgba(255,255,255,0.05)';
+        el.style.borderColor = sel ? 'var(--accent)' : 'var(--border)';
+        el.style.color = sel ? '#fff' : '';
+        el.style.fontWeight = sel ? '600' : '';
+      });
+    }
+    
+    // ============================================================
+    // CARREGAR DADOS
+    // ============================================================
+    function carregarDadosPositivacao() {
+      if (!vendedoresSel.length) {
+        document.getElementById('corpoTabela').innerHTML = `
+          <tr><td colspan="3" style="padding:40px;text-align:center;color:var(--muted);">
+            <span style="font-size:32px;opacity:0.5;display:block;margin-bottom:8px;">👤</span>
+            Selecione um vendedor para visualizar os dados.
+          </td></tr>
+        `;
+        document.getElementById('resumoInfo').textContent = 'Aguardando seleção...';
+        return;
+      }
+      
+      const loader = document.getElementById('loadingOverlay');
+      loader.classList.add('show');
+      
+      try {
+        const vendedorAtual = vendedoresSel[0];
+        const res = await fetch(`${API}/api/clientes/historico?vendedor=${encodeURIComponent(vendedorAtual)}`);
+        
+        if (!res.ok) throw new Error(`Erro ${res.status}`);
+        
+        const dadosBrutos = await res.json();
+        
+        // Filtra por períodos selecionados
+        if (periodosSel.length > 0) {
+          dadosCompletos = dadosBrutos.filter(item => {
+            return periodosSel.some(p => Number(item.ano) === Number(p.ano) && Number(item.mes) === Number(p.mes));
+          });
+        } else {
+          dadosCompletos = dadosBrutos;
+        }
+        
+        renderTabelaPositivacao();
+        loader.classList.remove('show');
+        
+      } catch (e) {
+        console.error('Erro ao carregar dados:', e);
+        document.getElementById('corpoTabela').innerHTML = `
+          <tr><td colspan="3" style="padding:40px;text-align:center;color:var(--danger);">
+            ❌ Erro ao carregar dados: ${e.message}
+          </td></tr>
+        `;
+        document.getElementById('resumoInfo').textContent = 'Erro ao carregar';
+        loader.classList.remove('show');
+        adicionarNotificacao('❌ Erro ao carregar dados: ' + e.message, 'danger', '❌');
+      }
+    }
+    
+    // ============================================================
+    // RENDER TABELA
+    // ============================================================
+    function renderTabelaPositivacao() {
+      const corpo = document.getElementById('corpoTabela');
+      corpo.innerHTML = '';
+      
+      if (!dadosCompletos.length) {
+        corpo.innerHTML = `
+          <tr><td colspan="3" style="padding:40px;text-align:center;color:var(--muted);">
+            <span style="font-size:32px;opacity:0.5;display:block;margin-bottom:8px;">📭</span>
+            Nenhum dado encontrado para os filtros selecionados.
+          </td></tr>
+        `;
+        document.getElementById('resumoInfo').textContent = 'Nenhum resultado encontrado';
+        return;
+      }
+      
+      let totalGeral = 0;
+      const clientesMap = {};
+      
+      // Define períodos ativos (colunas)
+      let colunasPeriodos = periodosSel;
+      if (colunasPeriodos.length === 0) {
+        const setAnosMeses = new Set();
+        dadosCompletos.forEach(i => setAnosMeses.add(`${i.ano}-${String(i.mes).padStart(2, '0')}`));
+        colunasPeriodos = Array.from(setAnosMeses).sort().map(am => {
+          const [ano, mes] = am.split('-');
+          return { ano: Number(ano), mes: Number(mes) };
+        });
+      }
+      
+      // Agrupa por cliente e produto
+      dadosCompletos.forEach(item => {
+        const codCli = item.cod_cliente || 'SEM_COD';
+        if (!clientesMap[codCli]) {
+          clientesMap[codCli] = {
+            cod: codCli,
+            nome: item.cliente || 'Cliente Desconhecido',
+            total: 0,
+            produtosMap: {}
+          };
+        }
+        
+        const val = parseFloat(item.valor_nf) || 0;
+        clientesMap[codCli].total += val;
+        
+        const codProd = item.cod_produto || '-';
+        const prodNome = item.produto || '-';
+        const marca = item.marca || '-';
+        const chaveProd = `${codProd}_${prodNome}_${marca}`;
+        
+        if (!clientesMap[codCli].produtosMap[chaveProd]) {
+          clientesMap[codCli].produtosMap[chaveProd] = {
+            cod_prod: codProd,
+            produto: prodNome,
+            marca: marca,
+            meses: {}
+          };
+        }
+        
+        const anoMesKey = `${item.ano}-${String(item.mes).padStart(2, '0')}`;
+        clientesMap[codCli].produtosMap[chaveProd].meses[anoMesKey] = 
+          (clientesMap[codCli].produtosMap[chaveProd].meses[anoMesKey] || 0) + val;
+      });
+      
+      const chavesClientes = Object.keys(clientesMap);
+      if (!chavesClientes.length) {
+        corpo.innerHTML = `
+          <tr><td colspan="3" style="padding:40px;text-align:center;color:var(--muted);">
+            Nenhum dado encontrado para este vendedor.
+          </td></tr>
+        `;
+        document.getElementById('resumoInfo').textContent = 'Nenhum resultado encontrado';
+        return;
+      }
+      
+      // Renderiza clientes
+      chavesClientes.forEach(cod => {
+        const c = clientesMap[cod];
+        totalGeral += c.total;
+        
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="pivot-td clickable" onclick="toggleDetalhePositivacao('${c.cod}')" style="padding:9px 10px;border-bottom:1px solid rgba(255,255,255,0.04);border-right:1px solid var(--border);color:var(--accent2);font-size:11px;cursor:pointer;">${c.cod}</td>
+          <td class="pivot-td clickable" onclick="toggleDetalhePositivacao('${c.cod}')" style="padding:9px 14px;border-bottom:1px solid rgba(255,255,255,0.04);border-right:1px solid var(--border);font-weight:600;max-width:220px;overflow:hidden;text-overflow:ellipsis;cursor:pointer;color:var(--accent2);">${c.nome}</td>
+          <td class="pivot-td" style="padding:9px 14px;border-bottom:1px solid rgba(255,255,255,0.04);text-align:right;font-weight:700;color:var(--success);background:rgba(0,255,136,0.04);">${formatarMoeda(c.total)}</td>
+        `;
+        corpo.appendChild(tr);
+        
+        // Linha de detalhe (produtos por mês)
+        const trDetalhe = document.createElement('tr');
+        trDetalhe.id = `detalhe-${c.cod}`;
+        trDetalhe.style.display = 'none';
+        trDetalhe.className = 'detalhe-row';
+        
+        let htmlProdutos = `
+          <td colspan="3" style="padding:0 20px 20px 20px;background:rgba(0,0,0,0.25);">
+            <div style="border:1px solid var(--border);border-radius:10px;overflow:auto;max-height:420px;">
+              <table style="width:100%;border-collapse:collapse;font-size:12px;background:rgba(13,37,88,0.35);">
+                <thead>
+                  <tr>
+                    <th style="position:sticky;top:0;background:var(--bg);color:var(--accent2);font-size:11px;text-transform:uppercase;letter-spacing:.5px;padding:8px 10px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;">Cód. Prod</th>
+                    <th style="position:sticky;top:0;background:var(--bg);color:var(--accent2);font-size:11px;text-transform:uppercase;letter-spacing:.5px;padding:8px 10px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;">Produto</th>
+                    <th style="position:sticky;top:0;background:var(--bg);color:var(--accent2);font-size:11px;text-transform:uppercase;letter-spacing:.5px;padding:8px 10px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;">Marca</th>
+        `;
+        
+        colunasPeriodos.forEach(p => {
+          htmlProdutos += `
+            <th style="position:sticky;top:0;background:var(--bg);color:var(--accent2);font-size:11px;text-transform:uppercase;letter-spacing:.5px;padding:8px 10px;text-align:right;border-bottom:1px solid var(--border);white-space:nowrap;">${MESES_NOME[p.mes]}/${p.ano}</th>
+          `;
+        });
+        
+        htmlProdutos += `
+                  </tr>
+                </thead>
+                <tbody>
+        `;
+        
+        Object.values(c.produtosMap).forEach(p => {
+          htmlProdutos += `
+            <tr>
+              <td style="padding:7px 10px;border-bottom:1px solid rgba(255,255,255,0.04);color:var(--text);white-space:nowrap;">${p.cod_prod}</td>
+              <td style="padding:7px 10px;border-bottom:1px solid rgba(255,255,255,0.04);color:var(--text);white-space:nowrap;">${p.produto}</td>
+              <td style="padding:7px 10px;border-bottom:1px solid rgba(255,255,255,0.04);color:var(--text);white-space:nowrap;">${p.marca}</td>
+          `;
+          
+          colunasPeriodos.forEach(cp => {
+            const key = `${cp.ano}-${String(cp.mes).padStart(2, '0')}`;
+            const valorMes = p.meses[key] || 0;
+            htmlProdutos += `
+              <td style="padding:7px 10px;border-bottom:1px solid rgba(255,255,255,0.04);color:${valorMes > 0 ? 'var(--success)' : 'var(--text)'};white-space:nowrap;text-align:right;font-variant-numeric:tabular-nums;">${valorMes > 0 ? formatarMoeda(valorMes) : '—'}</td>
+            `;
+          });
+          
+          htmlProdutos += `</tr>`;
+        });
+        
+        htmlProdutos += `
+                </tbody>
+              </table>
+            </div>
+          </td>
+        `;
+        
+        trDetalhe.innerHTML = htmlProdutos;
+        corpo.appendChild(trDetalhe);
+      });
+      
+      document.getElementById('resumoInfo').textContent = 
+        `${chavesClientes.length} clientes | Total: ${formatarMoeda(totalGeral)}`;
+    }
+    
+    // ============================================================
+    // DETALHE DO CLIENTE (expandir)
+    // ============================================================
+    function toggleDetalhePositivacao(cod) {
+      const el = document.getElementById(`detalhe-${cod}`);
+      if (el) {
+        el.style.display = el.style.display === 'none' ? 'table-row' : 'none';
+      }
+    }
+    
+    // ============================================================
+    // EXPORTAR EXCEL
+    // ============================================================
+    function exportarExcelPositivacao() {
+      if (!dadosCompletos.length) {
+        adicionarNotificacao('Não há dados para exportar. Selecione um vendedor.', 'warning', '⚠️');
+        return;
+      }
+      
+      // Define períodos ativos
+      let colunasPeriodos = periodosSel;
+      if (colunasPeriodos.length === 0) {
+        const setAnosMeses = new Set();
+        dadosCompletos.forEach(i => setAnosMeses.add(`${i.ano}-${String(i.mes).padStart(2, '0')}`));
+        colunasPeriodos = Array.from(setAnosMeses).sort().map(am => {
+          const [ano, mes] = am.split('-');
+          return { ano: Number(ano), mes: Number(mes) };
+        });
+      }
+      
+      // Cabeçalho
+      const cabecalho = ['Cód. Cliente', 'Cliente', 'Cód. Produto', 'Produto', 'Marca'];
+      colunasPeriodos.forEach(p => {
+        cabecalho.push(`${MESES_NOME[p.mes]}/${p.ano}`);
+      });
+      
+      const rows = [cabecalho];
+      
+      // Agrupa dados
+      const clientesMap = {};
+      dadosCompletos.forEach(item => {
+        const codCli = item.cod_cliente || 'SEM_COD';
+        if (!clientesMap[codCli]) {
+          clientesMap[codCli] = {
+            cod: codCli,
+            nome: item.cliente || 'Cliente Desconhecido',
+            produtosMap: {}
+          };
+        }
+        
+        const val = parseFloat(item.valor_nf) || 0;
+        const codProd = item.cod_produto || '-';
+        const prodNome = item.produto || '-';
+        const marca = item.marca || '-';
+        const chaveProd = `${codProd}_${prodNome}_${marca}`;
+        
+        if (!clientesMap[codCli].produtosMap[chaveProd]) {
+          clientesMap[codCli].produtosMap[chaveProd] = {
+            cod_prod: codProd,
+            produto: prodNome,
+            marca: marca,
+            meses: {}
+          };
+        }
+        
+        const anoMesKey = `${item.ano}-${String(item.mes).padStart(2, '0')}`;
+        clientesMap[codCli].produtosMap[chaveProd].meses[anoMesKey] = 
+          (clientesMap[codCli].produtosMap[chaveProd].meses[anoMesKey] || 0) + val;
+      });
+      
+      // Preenche linhas
+      Object.values(clientesMap).forEach(c => {
+        Object.values(c.produtosMap).forEach(p => {
+          const linha = [c.cod, c.nome, p.cod_prod, p.produto, p.marca];
+          colunasPeriodos.forEach(cp => {
+            const key = `${cp.ano}-${String(cp.mes).padStart(2, '0')}`;
+            linha.push(p.meses[key] || 0);
+          });
+          rows.push(linha);
+        });
+      });
+      
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.aoa_to_sheet(rows);
+      
+      // Formata colunas de meses como moeda
+      const range = XLSX.utils.decode_range(ws['!ref']);
+      for (let r = 1; r <= range.e.r; r++) {
+        for (let c = 5; c <= range.e.c; c++) {
+          const cellRef = XLSX.utils.encode_cell({r: r, c: c});
+          if (ws[cellRef] && typeof ws[cellRef].v === 'number') {
+            ws[cellRef].z = '#,##0.00';
+          }
+        }
+      }
+      
+      ws['!cols'] = [
+        { wch: 14 }, { wch: 35 }, { wch: 14 }, { wch: 35 }, { wch: 20 }
+      ];
+      colunasPeriodos.forEach(() => { ws['!cols'].push({ wch: 14 }); });
+      
+      XLSX.utils.book_append_sheet(wb, ws, 'Positivação Mês a Mês');
+      
+      const fileName = `Positivacao_${vendedoresSel[0] || 'geral'}_${new Date().toISOString().slice(0,10)}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+      adicionarNotificacao('✅ Excel gerado com sucesso!', 'success', '✅');
+    }
+    
+    // ============================================================
+    // LIMPAR FILTROS
+    // ============================================================
+    function limparFiltrosPositivacao() {
+      vendedoresSel = [];
+      periodosSel = [];
+      document.getElementById('inputVend').value = '';
+      document.querySelectorAll('.cal-mes-sel').forEach(el => el.classList.remove('cal-mes-sel'));
+      renderTagsVendPositivacao();
+      renderTagsPeriodoPositivacao();
+      carregarDadosPositivacao();
+      adicionarNotificacao('🧹 Filtros limpos!', 'info', '🧹');
+    }
+    
+    // ============================================================
+    // FECHA SUGESTÕES AO CLICAR FORA
+    // ============================================================
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('.filtro-card') && !e.target.closest('.sug-lista')) {
+        document.getElementById('listaVend').style.display = 'none';
+      }
+    });
+    
+    // ============================================================
+    // EXPORTA FUNÇÕES GLOBAIS
+    // ============================================================
+    window.onBuscaVend = onBuscaVend;
+    window.toggleDetalhePositivacao = toggleDetalhePositivacao;
+    window.exportarExcelPositivacao = exportarExcelPositivacao;
+    window.limparFiltrosPositivacao = limparFiltrosPositivacao;
+    window.togglePeriodoPositivacao = togglePeriodoPositivacao;
+  </script>
+</body>
+</html>
