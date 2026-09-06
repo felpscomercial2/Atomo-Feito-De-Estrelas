@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- Fundo -->
+  <circle cx="100" cy="100" r="90" fill="#1a1a2e"/>
+  
+  <!-- Efeito de brilho -->
+  <circle cx="100" cy="100" r="90" fill="url(#glow)" opacity="0.3"/>
+  <defs>
+    <radialGradient id="glow">
+      <stop offset="0%" stop-color="#00d4ff" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#1a1a2e" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  
+  <!-- Órbitas do átomo -->
+  <ellipse cx="100" cy="100" rx="65" ry="25" fill="none" stroke="#00d4ff" stroke-width="2.5" transform="rotate(0, 100, 100)"/>
+  <ellipse cx="100" cy="100" rx="65" ry="25" fill="none" stroke="#ff6b6b" stroke-width="2.5" transform="rotate(60, 100, 100)"/>
+  <ellipse cx="100" cy="100" rx="65" ry="25" fill="none" stroke="#ffd93d" stroke-width="2.5" transform="rotate(120, 100, 100)"/>
+  
+  <!-- Núcleo -->
+  <circle cx="100" cy="100" r="18" fill="#00d4ff" opacity="0.3"/>
+  <circle cx="100" cy="100" r="12" fill="#00d4ff"/>
+  <circle cx="100" cy="100" r="6" fill="#ffffff"/>
+  
+  <!-- Elétrons -->
+  <circle cx="38" cy="78" r="7" fill="#ff6b6b"/>
+  <circle cx="162" cy="78" r="7" fill="#ffd93d"/>
+  <circle cx="100" cy="160" r="7" fill="#00d4ff"/>
+  
+  <!-- Brilho dos elétrons -->
+  <circle cx="38" cy="78" r="10" fill="#ff6b6b" opacity="0.3"/>
+  <circle cx="162" cy="78" r="10" fill="#ffd93d" opacity="0.3"/>
+  <circle cx="100" cy="160" r="10" fill="#00d4ff" opacity="0.3"/>
+  
+  <!-- Texto -->
+  <text x="100" y="195" text-anchor="middle" fill="#ffffff" font-size="12" font-family="Arial, sans-serif" font-weight="bold" letter-spacing="2">
+    ÁTOMO
+  </text>
+</svg>
