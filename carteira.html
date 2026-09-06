@@ -1,0 +1,1444 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Átomo — Carteira de Clientes</title>
+  
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0A1628">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  
+  <link rel="stylesheet" href="/static/css/atomo.css">
+  <link rel="stylesheet" href="/static/css/widgets.css">
+</head>
+<body>
+  <!-- LOADING -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-spinner"></div>
+    <span style="color:var(--text);margin-top:12px;">Carregando carteira...</span>
+  </div>
+  
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="mainSidebar">
+    <img class="sidebar-logo" src="/logo.png" alt="Átomo" onerror="this.style.display='none'">
+    <div class="sidebar-title">ÁTOMO</div>
+    
+    <div class="nav-section">Dashboards</div>
+    <a class="nav-item" href="/home.html"><span class="icon">🏠</span> Página Inicial</a>
+    <a class="nav-item" href="/visao-geral.html"><span class="icon">📊</span> Visão Geral</a>
+    <a class="nav-item" href="/vendedor.html"><span class="icon">👤</span> Vendedor</a>
+    <a class="nav-item" href="/regiao.html"><span class="icon">🗺️</span> Região</a>
+    <a class="nav-item" href="/marcas.html"><span class="icon">🏷️</span> Marcas</a>
+    <a class="nav-item" href="/produtos.html"><span class="icon">📦</span> Produtos</a>
+    <a class="nav-item" href="/produtos-cliente.html"><span class="icon">🛍️</span> Produtos por Cliente</a>
+    
+    <div class="sidebar-divider"></div>
+    <div class="nav-section">Gestão</div>
+    <a class="nav-item active" href="/carteira.html"><span class="icon">👥</span> Carteira</a>
+    <a class="nav-item" href="/positivacao.html"><span class="icon">👥</span> Positivação</a>
+    <a class="nav-item" href="/shelflife.html"><span class="icon">🕒</span> Shelf Life</a>
+    <a class="nav-item" href="/risco.html"><span class="icon">⚠️</span> Clientes em Risco</a>
+    <a class="nav-item" href="/compras.html"><span class="icon">🛒</span> Compras</a>
+    
+    <div class="sidebar-divider"></div>
+    <div class="nav-section">🏆 Metas <span class="badge-meta" id="badgeMetas">0</span></div>
+    
+    <button class="btn-logout" onclick="logout()">🚪 Sair</button>
+  </div>
+  
+  <!-- MAIN CONTENT -->
+  <div class="main-content">
+    <div id="notificationContainer"></div>
+    
+    <div class="page-header">
+      <div class="breadcrumb">
+        <a href="/home.html">🏠 Portal</a>
+        <span class="sep">›</span>
+        <span>👥 Carteira de Clientes</span>
+      </div>
+      <div class="header-actions">
+        <button onclick="exportarPDF()">📄 <span>PDF</span></button>
+        <button onclick="exportarCarteira()">📊 <span>Excel</span></button>
+        <button onclick="exportarProduto()">📦 <span>Produtos</span></button>
+        <button onclick="compartilharFiltros()">🔗</button>
+        <button onclick="toggleTheme()">🌓</button>
+        <button onclick="abrirNotificacoes()" style="position:relative;">
+          🔔 <span class="badge-notification" id="notifBadge">0</span>
+        </button>
+      </div>
+    </div>
+    
+    <div class="nota">📋 Selecione os filtros para visualizar a carteira de clientes e suas compras mês a mês.</div>
+    
+    <!-- FILTROS -->
+    <div class="filtros-card">
+      <div class="filtros-grid">
+        <div class="filtro-group">
+          <label>📅 Ano</label>
+          <select class="filtro-select" id="filtroAno" onchange="aplicarFiltros()"></select>
+        </div>
+        <div class="filtro-group">
+          <label>📅 Mês</label>
+          <select class="filtro-select" id="filtroMes" onchange="aplicarFiltros()">
+            <option value="">Todos</option>
+            <option value="1">Janeiro</option><option value="2">Fevereiro</option>
+            <option value="3">Março</option><option value="4">Abril</option>
+            <option value="5">Maio</option><option value="6">Junho</option>
+            <option value="7">Julho</option><option value="8">Agosto</option>
+            <option value="9">Setembro</option><option value="10">Outubro</option>
+            <option value="11">Novembro</option><option value="12">Dezembro</option>
+          </select>
+        </div>
+        <div class="filtro-group">
+          <label>🏢 Unidade</label>
+          <select class="filtro-select" id="filtroUnidade" onchange="aplicarFiltros()"></select>
+        </div>
+        <div class="filtro-group">
+          <label>🏷️ Marca</label>
+          <select class="filtro-select" id="filtroMarca" onchange="aplicarFiltros()"></select>
+        </div>
+      </div>
+      <div class="filtros-ativos" id="filtrosAtivos"></div>
+    </div>
+    
+    <!-- FILTROS ESPECÍFICOS DA CARTEIRA -->
+    <div class="filtros-grid" style="margin-bottom:16px;">
+      <!-- Busca de Produto -->
+      <div class="filtro-card" style="border:1px solid var(--border);border-radius:var(--radius);padding:16px;">
+        <div class="filtro-titulo" style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">🔍 Filtrar por Produto</div>
+        <div style="position:relative;">
+          <input type="text" id="inputProd" class="filtro-select" placeholder="Digite nome ou código do produto..." oninput="onBuscaProd()" style="width:100%;">
+          <div class="sug-lista" id="listaProd" style="position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--card);border:1px solid var(--border);border-radius:8px;z-index:200;max-height:200px;overflow-y:auto;display:none;box-shadow:var(--shadow);"></div>
+        </div>
+        <div class="tags-wrap" id="tagsProd" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;min-height:24px;align-items:center;">
+          <span style="color:var(--muted);font-size:12px;">Todos os produtos</span>
+        </div>
+      </div>
+      
+      <!-- Busca de Vendedor -->
+      <div class="filtro-card" style="border:1px solid var(--border);border-radius:var(--radius);padding:16px;">
+        <div class="filtro-titulo" style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">👤 Filtrar por Vendedor</div>
+        <div style="position:relative;">
+          <input type="text" id="inputVend" class="filtro-select" placeholder="Digite o nome do vendedor..." oninput="onBuscaVend()" style="width:100%;">
+          <div class="sug-lista" id="listaVend" style="position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--card);border:1px solid var(--border);border-radius:8px;z-index:200;max-height:200px;overflow-y:auto;display:none;box-shadow:var(--shadow);"></div>
+        </div>
+        <div class="tags-wrap" id="tagsVend" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;min-height:24px;align-items:center;">
+          <span style="color:var(--muted);font-size:12px;">Todos os vendedores</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- FILTRO DE BASE (Unidade) -->
+    <div class="filtro-card" style="border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:16px;">
+      <div class="filtro-titulo" style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">🏢 Filtrar por Base</div>
+      <div class="status-bar" id="basesWrap" style="display:flex;gap:8px;flex-wrap:wrap;padding:0;border:0;background:none;">
+        <span style="color:var(--muted);font-size:12px;">Carregando bases...</span>
+      </div>
+    </div>
+    
+    <!-- CALENDÁRIO DE PERÍODOS -->
+    <div class="filtro-card" style="border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:16px;">
+      <div class="filtro-titulo" style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">📅 Selecionar Períodos — clique nos meses desejados</div>
+      <div id="calendarioMeses"></div>
+      <div class="tags-wrap" id="tagsPeriodo" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;min-height:24px;align-items:center;">
+        <span style="color:var(--muted);font-size:12px;">Todos os períodos</span>
+      </div>
+    </div>
+    
+    <!-- RESUMO -->
+    <div class="resumo-bar" style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:rgba(25,118,210,0.06);border:1px solid rgba(25,118,210,0.2);border-radius:8px;margin-bottom:12px;font-size:13px;flex-wrap:wrap;gap:8px;">
+      <span class="resumo-info" id="resumoInfo" style="color:var(--accent2);font-weight:500;">Carregando dados...</span>
+      <div style="display:flex;gap:8px;">
+        <button class="btn-comp" onclick="exportarCarteira()" style="background:rgba(22,163,74,0.1);color:var(--success);border:1px solid rgba(22,163,74,0.2);">📊 Exportar carteira</button>
+        <button class="btn-comp" onclick="exportarProduto()" id="btnExpCompleto" style="background:rgba(25,118,210,0.1);color:var(--accent);border:1px solid rgba(25,118,210,0.2);">📦 Exportar produto</button>
+        <button class="btn-comp" onclick="limparFiltrosCarteira()" style="background:rgba(220,38,38,0.1);color:var(--danger);border:1px solid rgba(220,38,38,0.2);">✕ Limpar filtros</button>
+      </div>
+    </div>
+    
+    <!-- STATUS CHIPS (Comprantes / Não comprantes) -->
+    <div class="status-bar" id="statusBar" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
+      <button class="status-chip active" id="chipTodos" onclick="setFiltroStatus('todos')">
+        <span class="chip-dot dot-all"></span>Todos
+      </button>
+      <button class="status-chip" id="chipPos" onclick="setFiltroStatus('comprantes')">
+        <span class="chip-dot dot-pos"></span>Comprantes
+      </button>
+      <button class="status-chip" id="chipNeg" onclick="setFiltroStatus('naocomprantes')">
+        <span class="chip-dot dot-neg"></span>Não comprantes
+      </button>
+      <span style="font-size:11px;color:var(--muted);margin-left:6px;">Clique no código ou no nome do cliente para ver os produtos comprados por período.</span>
+    </div>
+    
+    <!-- TABELA PIVOT -->
+    <div class="table-wrap" id="pivotWrap" style="max-height:calc(100vh - 200px);overflow:auto;">
+      <div style="padding:60px;text-align:center;color:var(--muted);">Carregando dados...</div>
+    </div>
+    
+    <!-- FOOTER -->
+    <div class="dashboard-footer" id="dashboardFooter">
+      <span id="footerInfo"></span>
+    </div>
+  </div>
+  
+  <!-- VALTER -->
+  <button class="ia-fab" id="iaFab" onclick="toggleValter()">
+    <svg width="28" height="28" viewBox="0 0 38 38"><circle cx="19" cy="19" r="19" fill="#0A1628"/><ellipse cx="19" cy="19" rx="15" ry="5.5" fill="none" stroke="#fff" stroke-width="1.2" transform="rotate(-40 19 19)"/><ellipse cx="19" cy="19" rx="15" ry="5.5" fill="none" stroke="#fff" stroke-width="1.2" transform="rotate(40 19 19)"/><ellipse cx="19" cy="19" rx="15" ry="5.5" fill="none" stroke="#fff" stroke-width="1.2" transform="rotate(90 19 19)"/><circle cx="19" cy="19" r="5" fill="#fff"/><circle cx="19" cy="19" r="3" fill="#0096FF"/></svg>
+    <span class="ia-badge" id="iaBadge">0</span>
+  </button>
+  
+  <div class="ia-panel" id="iaPanel">
+    <div class="ia-header">
+      <div class="ia-avatar">⚛️</div>
+      <div class="ia-header-info">
+        <div class="ia-header-name">Valter</div>
+        <div class="ia-header-status"><span class="ia-status-dot"></span> Assistente</div>
+      </div>
+      <button class="ia-header-btn" onclick="toggleValter()">✕</button>
+    </div>
+    <div class="ia-messages" id="iaMessages">
+      <div class="ia-msg bot"><div class="ia-msg-bubble">Olá! Pergunte sobre clientes, carteira ou análises de compras.</div></div>
+    </div>
+    <div class="ia-quick-bar">
+      <button class="ia-quick" onclick="enviarPergunta('Quais os maiores clientes?')">🏆 Top clientes</button>
+      <button class="ia-quick" onclick="enviarPergunta('Clientes sem compra')">📉 Inativos</button>
+      <button class="ia-quick" onclick="enviarPergunta('Análise de carteira')">📊 Análise</button>
+    </div>
+    <div class="ia-input-area">
+      <input class="ia-input" id="iaInput" placeholder="Digite sua pergunta..." onkeydown="if(event.key==='Enter') enviarPergunta()">
+      <button class="ia-send-btn" onclick="enviarPergunta()">➤</button>
+    </div>
+  </div>
+  
+  <script src="/static/js/app.js"></script>
+  <script>
+    // ============================================================
+    // VARIÁVEIS GLOBAIS
+    // ============================================================
+    const API = 'https://horus-production.up.railway.app';
+    const MESES_NOME = ['','Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+    
+    let produtosSel = [];
+    let vendedoresSel = [];
+    let periodosSel = [];
+    let basesSel = [];
+    let todosVendedores = [];
+    let todosProdutos = [];
+    let todasBases = [];
+    let filtroStatus = 'todos';
+    let clientesRender = [];
+    let pivotCols = [];
+    let pivotValMap = {};
+    let histCache = {};
+    let detalheAberto = {};
+    let pivotSort = { key: null, dir: 'desc' };
+    let carteiraCompleta = [];
+    
+    // ============================================================
+    // INICIALIZAÇÃO
+    // ============================================================
+    document.addEventListener('DOMContentLoaded', function() {
+      carregarFiltros();
+      carregarTheme();
+      carregarMetas();
+      carregarFiltrosCarteira();
+      
+      document.addEventListener('filtrosAplicados', function() {
+        recarregarCarteira();
+      });
+      
+      if (!localStorage.getItem('atomo_logged_in')) {
+        window.location.href = '/index.html';
+      }
+    });
+    
+    // ============================================================
+    // CARREGA FILTROS DA CARTEIRA
+    // ============================================================
+    function carregarFiltrosCarteira() {
+      // Carrega produtos para busca local
+      fetch(`${API}/api/todos-produtos`)
+        .then(res => res.json())
+        .then(data => {
+          todosProdutos = data || [];
+        })
+        .catch(() => {});
+      
+      // Carrega vendedores
+      fetch(`${API}/api/filtros`)
+        .then(res => res.json())
+        .then(data => {
+          todosVendedores = data.vendedores || [];
+          todasBases = (data.unidades || []).map(u => typeof u === 'string' ? u : (u.unidade || u.nome || '')).filter(u => !!u);
+          renderBases();
+          
+          // Se houver vendedor nos filtros globais, seleciona
+          if (filtrosAtuais.vendedor) {
+            vendedoresSel = [filtrosAtuais.vendedor];
+            renderTagsVend();
+            recarregarCarteira();
+          }
+        })
+        .catch(() => {});
+      
+      // Carrega calendário
+      fetch(`${API}/api/filtros`)
+        .then(res => res.json())
+        .then(data => {
+          const anos = data.anos || [];
+          const container = document.getElementById('calendarioMeses');
+          container.innerHTML = '';
+          
+          // Seleciona ano atual por padrão
+          const anoAtual = new Date().getFullYear();
+          const temAnoAtual = anos.includes(anoAtual);
+          const anosExibir = temAnoAtual ? [anoAtual] : anos.slice(0, 1);
+          
+          anosExibir.forEach(ano => {
+            const div = document.createElement('div');
+            div.className = 'cal-ano';
+            div.style.marginBottom = '12px';
+            
+            const label = document.createElement('div');
+            label.className = 'cal-ano-label';
+            label.style.fontSize = '12px';
+            label.style.fontWeight = '700';
+            label.style.color = 'var(--accent2)';
+            label.style.marginBottom = '8px';
+            label.style.letterSpacing = '1px';
+            label.textContent = ano;
+            div.appendChild(label);
+            
+            const meses = document.createElement('div');
+            meses.className = 'cal-meses';
+            meses.style.display = 'flex';
+            meses.style.flexWrap = 'wrap';
+            meses.style.gap = '6px';
+            
+            for (let m = 1; m <= 12; m++) {
+              const btn = document.createElement('div');
+              btn.className = 'cal-mes';
+              btn.style.padding = '5px 10px';
+              btn.style.background = 'rgba(255,255,255,0.05)';
+              btn.style.border = '1px solid var(--border)';
+              btn.style.borderRadius = '6px';
+              btn.style.fontSize = '12px';
+              btn.style.cursor = 'pointer';
+              btn.style.transition = 'all 0.15s';
+              btn.style.userSelect = 'none';
+              btn.setAttribute('data-ano', ano);
+              btn.setAttribute('data-mes', m);
+              btn.textContent = MESES_NOME[m];
+              btn.addEventListener('click', function() {
+                togglePeriodo(ano, m);
+              });
+              meses.appendChild(btn);
+            }
+            div.appendChild(meses);
+            container.appendChild(div);
+          });
+          
+          // Seleciona meses do ano atual por padrão
+          const mesAtual = new Date().getMonth() + 1;
+          for (let m = 1; m <= mesAtual; m++) {
+            periodosSel.push({ ano: anoAtual, mes: m });
+          }
+          renderTagsPeriodo();
+          atualizarCalendario();
+          recarregarCarteira();
+        })
+        .catch(() => {});
+    }
+    
+    // ============================================================
+    // BASES (UNIDADES)
+    // ============================================================
+    function renderBases() {
+      const w = document.getElementById('basesWrap');
+      if (!w) return;
+      if (!todasBases.length) {
+        w.innerHTML = '<span style="color:var(--muted);font-size:12px;">Nenhuma base encontrada</span>';
+        return;
+      }
+      let html = `<button class="status-chip ${basesSel.length ? '' : 'active'}" onclick="limparBases()">Todas as bases</button>`;
+      todasBases.forEach(b => {
+        const on = basesSel.indexOf(b) >= 0;
+        html += `<button class="status-chip ${on ? 'active' : ''}" onclick="toggleBase('${b.replace(/'/g, "\\'")}')">${b}</button>`;
+      });
+      w.innerHTML = html;
+    }
+    
+    function toggleBase(b) {
+      const i = basesSel.indexOf(b);
+      if (i >= 0) basesSel.splice(i, 1);
+      else basesSel.push(b);
+      histCache = {};
+      detalheAberto = {};
+      renderBases();
+      recarregarCarteira();
+    }
+    
+    function limparBases() {
+      if (!basesSel.length) return;
+      basesSel = [];
+      histCache = {};
+      detalheAberto = {};
+      renderBases();
+      recarregarCarteira();
+    }
+    
+    // ============================================================
+    // BUSCA DE PRODUTO
+    // ============================================================
+    function onBuscaProd() {
+      const q = document.getElementById('inputProd').value.trim();
+      const lista = document.getElementById('listaProd');
+      if (q.length < 2) {
+        lista.style.display = 'none';
+        return;
+      }
+      
+      const q_low = q.toLowerCase();
+      const resultados = todosProdutos.filter(d => {
+        return (d.produto || '').toLowerCase().indexOf(q_low) >= 0 ||
+               (d.cod_produto || '').toLowerCase().indexOf(q_low) >= 0;
+      }).slice(0, 20);
+      
+      if (!resultados.length) {
+        lista.style.display = 'none';
+        return;
+      }
+      
+      lista.innerHTML = '';
+      resultados.forEach(d => {
+        const ok = produtosSel.indexOf(d.produto) >= 0;
+        const el = document.createElement('div');
+        el.className = 'sug-item' + (ok ? ' sug-ok' : '');
+        el.style.padding = '9px 14px';
+        el.style.cursor = 'pointer';
+        el.style.display = 'flex';
+        el.style.alignItems = 'center';
+        el.style.gap = '8px';
+        el.style.borderBottom = '1px solid var(--border)';
+        el.style.transition = 'background 0.15s';
+        el.onmouseover = function() { this.style.background = 'rgba(25,118,210,0.1)'; };
+        el.onmouseout = function() { this.style.background = ''; };
+        el.innerHTML = `<span style="flex:1;font-size:13px;">${d.produto}</span><span style="font-size:11px;color:var(--muted);background:rgba(255,255,255,0.05);padding:2px 8px;border-radius:4px;">${d.marca || ''}</span>${ok ? '<span style="color:var(--success);font-weight:700;">✓</span>' : ''}`;
+        el.addEventListener('click', function() {
+          addProduto(d.produto);
+        });
+        lista.appendChild(el);
+      });
+      lista.style.display = 'block';
+    }
+    
+    function addProduto(nome) {
+      if (produtosSel.indexOf(nome) < 0) produtosSel.push(nome);
+      document.getElementById('inputProd').value = '';
+      document.getElementById('listaProd').style.display = 'none';
+      renderTagsProd();
+      atualizarVendedoresPorProduto();
+      recarregarCarteira();
+    }
+    
+    function remProduto(nome) {
+      produtosSel = produtosSel.filter(x => x !== nome);
+      renderTagsProd();
+      atualizarVendedoresPorProduto();
+      recarregarCarteira();
+    }
+    
+    function renderTagsProd() {
+      const c = document.getElementById('tagsProd');
+      if (!produtosSel.length) {
+        c.innerHTML = '<span style="color:var(--muted);font-size:12px;">Todos os produtos</span>';
+        return;
+      }
+      c.innerHTML = '';
+      produtosSel.forEach(v => {
+        const d = document.createElement('div');
+        d.className = 'tag-item';
+        d.style.display = 'flex';
+        d.style.alignItems = 'center';
+        d.style.gap = '5px';
+        d.style.background = 'rgba(0,195,255,0.12)';
+        d.style.border = '1px solid rgba(0,195,255,0.3)';
+        d.style.borderRadius = '20px';
+        d.style.padding = '3px 8px 3px 12px';
+        d.style.fontSize = '11px';
+        d.style.color = 'var(--accent2)';
+        d.appendChild(document.createTextNode(v));
+        const btn = document.createElement('button');
+        btn.innerHTML = '×';
+        btn.style.background = 'none';
+        btn.style.border = 'none';
+        btn.style.color = 'var(--accent2)';
+        btn.style.cursor = 'pointer';
+        btn.style.fontSize = '14px';
+        btn.style.lineHeight = '1';
+        btn.style.padding = '0';
+        btn.style.opacity = '0.7';
+        btn.onmouseover = function() { this.style.opacity = '1'; };
+        btn.onmouseout = function() { this.style.opacity = '0.7'; };
+        btn.addEventListener('click', function() {
+          remProduto(v);
+        });
+        d.appendChild(btn);
+        c.appendChild(d);
+      });
+    }
+    
+    function atualizarVendedoresPorProduto() {
+      if (!produtosSel.length) {
+        fetch(`${API}/api/filtros`)
+          .then(res => res.json())
+          .then(data => {
+            todosVendedores = data.vendedores || [];
+          })
+          .catch(() => {});
+        return;
+      }
+      
+      const p = new URLSearchParams();
+      produtosSel.forEach(v => p.append('produtos', v));
+      fetch(`${API}/api/vendedores-por-produto?${p}`)
+        .then(res => res.json())
+        .then(lista => {
+          todosVendedores = lista || [];
+          vendedoresSel = vendedoresSel.filter(v => lista.indexOf(v) >= 0);
+          renderTagsVend();
+        })
+        .catch(() => {});
+    }
+    
+    // ============================================================
+    // BUSCA DE VENDEDOR
+    // ============================================================
+    function onBuscaVend() {
+      const q = document.getElementById('inputVend').value.trim().toLowerCase();
+      const lista = document.getElementById('listaVend');
+      if (q.length < 1 && !produtosSel.length) {
+        lista.style.display = 'none';
+        return;
+      }
+      const filtrados = todosVendedores.filter(v => v.toLowerCase().indexOf(q) >= 0);
+      const resultados = q.length >= 1 ? filtrados.slice(0, 20) : filtrados;
+      if (!resultados.length) {
+        lista.style.display = 'none';
+        return;
+      }
+      lista.innerHTML = '';
+      resultados.forEach(v => {
+        const ok = vendedoresSel.indexOf(v) >= 0;
+        const el = document.createElement('div');
+        el.className = 'sug-item' + (ok ? ' sug-ok' : '');
+        el.style.padding = '9px 14px';
+        el.style.cursor = 'pointer';
+        el.style.display = 'flex';
+        el.style.alignItems = 'center';
+        el.style.gap = '8px';
+        el.style.borderBottom = '1px solid var(--border)';
+        el.style.transition = 'background 0.15s';
+        el.onmouseover = function() { this.style.background = 'rgba(25,118,210,0.1)'; };
+        el.onmouseout = function() { this.style.background = ''; };
+        el.innerHTML = `<span style="flex:1;font-size:13px;">${v}</span>${ok ? '<span style="color:var(--success);font-weight:700;">✓</span>' : ''}`;
+        el.addEventListener('click', function() {
+          addVendedor(v);
+        });
+        lista.appendChild(el);
+      });
+      lista.style.display = 'block';
+    }
+    
+    function addVendedor(nome) {
+      if (vendedoresSel.indexOf(nome) < 0) vendedoresSel.push(nome);
+      document.getElementById('inputVend').value = '';
+      document.getElementById('listaVend').style.display = 'none';
+      renderTagsVend();
+      recarregarCarteira();
+    }
+    
+    function remVendedor(nome) {
+      vendedoresSel = vendedoresSel.filter(x => x !== nome);
+      renderTagsVend();
+      recarregarCarteira();
+    }
+    
+    function renderTagsVend() {
+      const c = document.getElementById('tagsVend');
+      if (!vendedoresSel.length) {
+        c.innerHTML = '<span style="color:var(--muted);font-size:12px;">Todos os vendedores</span>';
+        return;
+      }
+      c.innerHTML = '';
+      vendedoresSel.forEach(v => {
+        const d = document.createElement('div');
+        d.className = 'tag-item';
+        d.style.display = 'flex';
+        d.style.alignItems = 'center';
+        d.style.gap = '5px';
+        d.style.background = 'rgba(0,195,255,0.12)';
+        d.style.border = '1px solid rgba(0,195,255,0.3)';
+        d.style.borderRadius = '20px';
+        d.style.padding = '3px 8px 3px 12px';
+        d.style.fontSize = '11px';
+        d.style.color = 'var(--accent2)';
+        d.appendChild(document.createTextNode(v));
+        const btn = document.createElement('button');
+        btn.innerHTML = '×';
+        btn.style.background = 'none';
+        btn.style.border = 'none';
+        btn.style.color = 'var(--accent2)';
+        btn.style.cursor = 'pointer';
+        btn.style.fontSize = '14px';
+        btn.style.lineHeight = '1';
+        btn.style.padding = '0';
+        btn.style.opacity = '0.7';
+        btn.onmouseover = function() { this.style.opacity = '1'; };
+        btn.onmouseout = function() { this.style.opacity = '0.7'; };
+        btn.addEventListener('click', function() {
+          remVendedor(v);
+        });
+        d.appendChild(btn);
+        c.appendChild(d);
+      });
+    }
+    
+    // ============================================================
+    // PERÍODOS
+    // ============================================================
+    function togglePeriodo(ano, mes) {
+      const idx = periodosSel.findIndex(p => p.ano === ano && p.mes === mes);
+      if (idx >= 0) periodosSel.splice(idx, 1);
+      else periodosSel.push({ ano, mes });
+      
+      periodosSel.sort((a, b) => {
+        if (a.ano !== b.ano) return a.ano - b.ano;
+        return a.mes - b.mes;
+      });
+      
+      renderTagsPeriodo();
+      atualizarCalendario();
+      recarregarCarteira();
+    }
+    
+    function renderTagsPeriodo() {
+      const c = document.getElementById('tagsPeriodo');
+      if (!periodosSel.length) {
+        c.innerHTML = '<span style="color:var(--muted);font-size:12px;">Todos os períodos</span>';
+        return;
+      }
+      c.innerHTML = '';
+      periodosSel.forEach(p => {
+        const d = document.createElement('div');
+        d.className = 'tag-item';
+        d.style.display = 'flex';
+        d.style.alignItems = 'center';
+        d.style.gap = '5px';
+        d.style.background = 'rgba(0,195,255,0.12)';
+        d.style.border = '1px solid rgba(0,195,255,0.3)';
+        d.style.borderRadius = '20px';
+        d.style.padding = '3px 8px 3px 12px';
+        d.style.fontSize = '11px';
+        d.style.color = 'var(--accent2)';
+        d.appendChild(document.createTextNode(MESES_NOME[p.mes] + '/' + p.ano));
+        const btn = document.createElement('button');
+        btn.innerHTML = '×';
+        btn.style.background = 'none';
+        btn.style.border = 'none';
+        btn.style.color = 'var(--accent2)';
+        btn.style.cursor = 'pointer';
+        btn.style.fontSize = '14px';
+        btn.style.lineHeight = '1';
+        btn.style.padding = '0';
+        btn.style.opacity = '0.7';
+        btn.onmouseover = function() { this.style.opacity = '1'; };
+        btn.onmouseout = function() { this.style.opacity = '0.7'; };
+        btn.addEventListener('click', function() {
+          togglePeriodo(p.ano, p.mes);
+        });
+        d.appendChild(btn);
+        c.appendChild(d);
+      });
+    }
+    
+    function atualizarCalendario() {
+      document.querySelectorAll('.cal-mes').forEach(el => {
+        const ano = parseInt(el.getAttribute('data-ano'));
+        const mes = parseInt(el.getAttribute('data-mes'));
+        const sel = periodosSel.some(p => p.ano === ano && p.mes === mes);
+        el.style.background = sel ? 'rgba(25,118,210,0.4)' : 'rgba(255,255,255,0.05)';
+        el.style.borderColor = sel ? 'var(--accent)' : 'var(--border)';
+        el.style.color = sel ? '#fff' : '';
+        el.style.fontWeight = sel ? '600' : '';
+      });
+    }
+    
+    // ============================================================
+    // STATUS (Comprantes / Não comprantes)
+    // ============================================================
+    function setFiltroStatus(v) {
+      filtroStatus = v;
+      detalheAberto = {};
+      if (carteiraCompleta && carteiraCompleta.length) {
+        renderPivot(carteiraCompleta);
+      }
+      // Atualiza chips
+      document.querySelectorAll('.status-chip').forEach(el => el.classList.remove('active'));
+      if (v === 'todos') document.getElementById('chipTodos').classList.add('active');
+      else if (v === 'comprantes') document.getElementById('chipPos').classList.add('active');
+      else if (v === 'naocomprantes') document.getElementById('chipNeg').classList.add('active');
+    }
+    
+    // ============================================================
+    // RECARREGAR CARTEIRA
+    // ============================================================
+    function recarregarCarteira() {
+      atualizarCalendario();
+      
+      // Sem nenhum filtro, não carrega a base inteira
+      if (!vendedoresSel.length && !produtosSel.length && !periodosSel.length && !basesSel.length) {
+        document.getElementById('pivotWrap').innerHTML = `
+          <div style="padding:60px;text-align:center;color:var(--muted);font-size:14px;">
+            <span style="font-size:28px;opacity:0.5;display:block;margin-bottom:10px;">🔎</span>
+            Selecione um vendedor, produto ou período para começar.
+            <br><span style="font-size:12px;opacity:0.8;">Isso evita carregar a base inteira de uma só vez.</span>
+          </div>
+        `;
+        document.getElementById('resumoInfo').textContent = 'Aguardando seleção de filtro';
+        return;
+      }
+      
+      const loader = document.getElementById('loadingOverlay');
+      loader.classList.add('show');
+      
+      try {
+        const p = new URLSearchParams();
+        vendedoresSel.forEach(v => p.append('vendedor', v));
+        produtosSel.forEach(v => p.append('produtos', v));
+        basesSel.forEach(b => p.append('unidade', b));
+        periodosSel.forEach(per => p.append('periodo', per.ano + '-' + String(per.mes).padStart(2, '0')));
+        
+        fetch(`${API}/api/pivot-clientes?${p}`)
+          .then(res => {
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            return res.json();
+          })
+          .then(data => {
+            carteiraCompleta = data;
+            renderPivot(data);
+            loader.classList.remove('show');
+          })
+          .catch(err => {
+            console.error('Erro ao recarregar:', err);
+            document.getElementById('pivotWrap').innerHTML = `
+              <div style="padding:40px;text-align:center;color:var(--danger);">
+                ❌ Erro ao carregar dados: ${err.message}
+              </div>
+            `;
+            document.getElementById('resumoInfo').textContent = 'Erro ao carregar';
+            loader.classList.remove('show');
+            adicionarNotificacao('❌ Erro ao carregar dados: ' + err.message, 'danger', '❌');
+          });
+      } catch (e) {
+        console.error('Erro no recarregar:', e);
+        loader.classList.remove('show');
+        adicionarNotificacao('❌ Erro ao carregar dados: ' + e.message, 'danger', '❌');
+      }
+    }
+    
+    // ============================================================
+    // RENDER PIVOT
+    // ============================================================
+    function renderPivot(data) {
+      const wrap = document.getElementById('pivotWrap');
+      
+      // Colunas únicas (ano-mes)
+      const colsMap = {};
+      if (periodosSel.length) {
+        periodosSel.forEach(p => {
+          colsMap[p.ano + '-' + p.mes] = { ano: p.ano, mes: p.mes };
+        });
+      } else {
+        data.forEach(r => {
+          if (r.ano && r.mes) {
+            colsMap[r.ano + '-' + r.mes] = { ano: r.ano, mes: r.mes };
+          }
+        });
+      }
+      const cols = Object.values(colsMap).sort((a, b) => {
+        if (a.ano !== b.ano) return a.ano - b.ano;
+        return a.mes - b.mes;
+      });
+      
+      // Clientes únicos
+      const clientesMap = {};
+      function chaveCliente(r) {
+        const c = (r.cod_cliente === null || r.cod_cliente === undefined) ? '' : String(r.cod_cliente).trim();
+        return c ? ('c:' + c) : ('n:' + (r.cliente || ''));
+      }
+      
+      data.forEach(r => {
+        const key = chaveCliente(r);
+        if (!clientesMap[key]) {
+          clientesMap[key] = {
+            key: key,
+            cod: r.cod_cliente,
+            cods: {},
+            nome: r.cliente,
+            vendedor: r.vendedor || '—',
+            cidade: r.cidade || '',
+            uf: r.uf || '',
+            bairro: r.bairro || '',
+            endereco: r.endereco || ''
+          };
+        }
+        if (r.cod_cliente !== null && r.cod_cliente !== undefined) {
+          clientesMap[key].cods[String(r.cod_cliente).trim()] = 1;
+        }
+        if (!clientesMap[key].cidade && r.cidade) clientesMap[key].cidade = r.cidade;
+        if (!clientesMap[key].uf && r.uf) clientesMap[key].uf = r.uf;
+        if (!clientesMap[key].bairro && r.bairro) clientesMap[key].bairro = r.bairro;
+        if (!clientesMap[key].endereco && r.endereco) clientesMap[key].endereco = r.endereco;
+      });
+      
+      let clientes = Object.values(clientesMap).sort((a, b) => {
+        return (a.nome || '').localeCompare(b.nome || '');
+      });
+      
+      if (!clientes.length) {
+        wrap.innerHTML = `
+          <div style="padding:60px;text-align:center;color:var(--muted);font-size:14px;">
+            <span style="font-size:28px;opacity:0.5;display:block;margin-bottom:10px;">📭</span>
+            Nenhum dado encontrado para os filtros selecionados.
+          </div>
+        `;
+        document.getElementById('resumoInfo').textContent = 'Sem dados';
+        return;
+      }
+      
+      // Mapa de valores
+      const valMap = {};
+      data.forEach(r => {
+        if (!r.ano || !r.mes) return;
+        if (periodosSel.length) {
+          const ok = periodosSel.some(per => per.ano == r.ano && per.mes == r.mes);
+          if (!ok) return;
+        }
+        const ck = chaveCliente(r);
+        const ck2 = r.ano + '-' + r.mes;
+        if (!valMap[ck]) valMap[ck] = {};
+        const liquido = (parseFloat(r.faturamento) || 0) - Math.abs(parseFloat(r.devolucoes) || 0);
+        valMap[ck][ck2] = (valMap[ck][ck2] || 0) + liquido;
+      });
+      
+      // Totais
+      const totCols = {};
+      cols.forEach(c => {
+        const key = c.ano + '-' + c.mes;
+        totCols[key] = clientes.reduce((s, cl) => {
+          const ck = cl.key;
+          return s + (valMap[ck] && valMap[ck][key] ? valMap[ck][key] : 0);
+        }, 0);
+      });
+      const totGeral = Object.values(totCols).reduce((s, v) => s + v, 0);
+      
+      // Ordenação
+      if (pivotSort.key) {
+        const sk = pivotSort.key, sdir = pivotSort.dir === 'asc' ? 1 : -1;
+        clientes.sort((a, b) => {
+          let va = 0, vb = 0;
+          const ka = a.key, kb = b.key;
+          if (sk === 'total') {
+            cols.forEach(c => {
+              const k = c.ano + '-' + c.mes;
+              va += (valMap[ka] && valMap[ka][k]) || 0;
+              vb += (valMap[kb] && valMap[kb][k]) || 0;
+            });
+          } else {
+            va = (valMap[ka] && valMap[ka][sk]) || 0;
+            vb = (valMap[kb] && valMap[kb][sk]) || 0;
+          }
+          if (va === vb) return (a.nome || '').localeCompare(b.nome || '');
+          return (va - vb) * sdir;
+        });
+      }
+      
+      const periodoLabel = periodosSel.length ? cols.length + ' período' + (cols.length > 1 ? 's' : '') : 'ano atual';
+      document.getElementById('resumoInfo').textContent = clientes.length + ' clientes · ' + periodoLabel + ' · Total: ' + formatarMoeda(totGeral);
+      
+      // Monta HTML
+      let html = `
+        <table class="pivot-table" style="width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap;">
+          <thead style="position:sticky;top:0;z-index:10;">
+            <tr>
+              <th class="pivot-th-fix" style="background:var(--bg);padding:10px 14px;text-align:left;font-weight:600;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:1px;border-bottom:2px solid var(--border);border-right:1px solid var(--border);position:sticky;top:0;">Cód</th>
+              <th class="pivot-th-fix" style="background:var(--bg);padding:10px 14px;text-align:left;font-weight:600;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:1px;border-bottom:2px solid var(--border);border-right:1px solid var(--border);position:sticky;top:0;">Cliente</th>
+              <th class="pivot-th-fix" style="background:var(--bg);padding:10px 14px;text-align:left;font-weight:600;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:1px;border-bottom:2px solid var(--border);border-right:1px solid var(--border);position:sticky;top:0;">Status</th>
+              <th class="pivot-th-fix" style="background:var(--bg);padding:10px 14px;text-align:left;font-weight:600;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:1px;border-bottom:2px solid var(--border);border-right:1px solid var(--border);position:sticky;top:0;">Vendedor</th>
+              <th class="pivot-th-fix pivot-th-end" style="background:var(--bg);padding:10px 14px;text-align:left;font-weight:600;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:1px;border-bottom:2px solid var(--border);border-right:1px solid var(--border);position:sticky;top:0;">Cidade</th>
+              <th class="pivot-th-fix pivot-th-end" style="background:var(--bg);padding:10px 14px;text-align:left;font-weight:600;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:1px;border-bottom:2px solid var(--border);border-right:1px solid var(--border);position:sticky;top:0;">UF</th>
+      `;
+      
+      cols.forEach(c => {
+        const k = c.ano + '-' + c.mes;
+        html += `
+          <th class="pivot-th-col sortable" style="background:var(--bg);padding:10px 12px;text-align:center;font-weight:600;color:var(--accent2);font-size:11px;border-bottom:2px solid var(--border);border-right:1px solid rgba(255,255,255,0.04);min-width:90px;position:sticky;top:0;cursor:pointer;" onclick="ordenarPivot('${k}')" title="Ordenar por este mês">
+            ${MESES_NOME[c.mes]}/${String(c.ano).slice(2)}
+            ${pivotSort.key === k ? (pivotSort.dir === 'desc' ? ' ▼' : ' ▲') : ' <span style="opacity:.35">⇅</span>'}
+          </th>
+        `;
+      });
+      
+      html += `
+        <th class="pivot-th-total sortable" style="background:var(--bg);padding:10px 12px;text-align:center;font-weight:700;color:var(--success);font-size:11px;border-bottom:2px solid var(--border);position:sticky;top:0;cursor:pointer;" onclick="ordenarPivot('total')" title="Ordenar pelo valor total">
+          Total ${pivotSort.key === 'total' ? (pivotSort.dir === 'desc' ? ' ▼' : ' ▲') : ' <span style="opacity:.35">⇅</span>'}
+        </th>
+      </tr></thead><tbody>
+      `;
+      
+      let clientesRenderLocal = [];
+      let nCompr = 0, nNao = 0, totVisivel = 0;
+      const totColsVis = {};
+      cols.forEach(c => { totColsVis[c.ano + '-' + c.mes] = 0; });
+      
+      clientes.forEach(cl => {
+        const ck = cl.key;
+        let totRow = 0;
+        const vals = cols.map(c => {
+          const val = (valMap[ck] && valMap[ck][c.ano + '-' + c.mes]) ? valMap[ck][c.ano + '-' + c.mes] : 0;
+          totRow += val;
+          return val;
+        });
+        const comprou = totRow > 0;
+        if (comprou) nCompr++;
+        else nNao++;
+        if (filtroStatus === 'comprantes' && !comprou) return;
+        if (filtroStatus === 'naocomprantes' && comprou) return;
+        
+        totVisivel += totRow;
+        let tds = '';
+        cols.forEach((c, i) => {
+          totColsVis[c.ano + '-' + c.mes] += vals[i];
+          tds += `<td class="pivot-val" style="padding:9px 12px;border-bottom:1px solid rgba(255,255,255,0.04);border-right:1px solid rgba(255,255,255,0.04);text-align:right;color:${vals[i] > 0 ? 'var(--text)' : 'var(--muted)'};${vals[i] > 0 ? 'font-weight:500;' : ''}">${vals[i] > 0 ? formatarMoeda(vals[i]) : '—'}</td>`;
+        });
+        
+        const idx = clientesRenderLocal.length;
+        clientesRenderLocal.push(cl);
+        
+        html += `
+          <tr>
+            <td class="pivot-cod clickable" style="padding:9px 10px;border-bottom:1px solid rgba(255,255,255,0.04);border-right:1px solid var(--border);color:var(--muted);font-size:11px;cursor:pointer;color:var(--accent2);" onclick="toggleDetalheCliente(${idx})">
+              <span class="cli-caret" id="caret-${idx}" style="display:inline-block;width:12px;color:var(--muted);font-size:10px;margin-right:4px;transition:transform .15s;">▶</span>
+              ${cl.cod || '—'}
+            </td>
+            <td class="pivot-nome clickable" style="padding:9px 14px;border-bottom:1px solid rgba(255,255,255,0.04);border-right:1px solid var(--border);font-weight:600;max-width:220px;overflow:hidden;text-overflow:ellipsis;cursor:pointer;color:var(--accent2);" onclick="toggleDetalheCliente(${idx})" title="${(cl.nome || '—').replace(/"/g, '&quot;')}">
+              ${cl.nome || '—'}
+            </td>
+            <td class="pivot-vend" style="padding:9px 12px;border-bottom:1px solid rgba(255,255,255,0.04);border-right:1px solid var(--border);font-size:11px;color:var(--muted);max-width:140px;overflow:hidden;text-overflow:ellipsis;">
+              <span class="badge-status ${comprou ? 'badge-pos' : 'badge-neg'}" style="font-size:10px;padding:2px 7px;border-radius:10px;white-space:nowrap;${comprou ? 'background:rgba(0,255,136,0.12);color:var(--success);border:1px solid rgba(0,255,136,0.25);' : 'background:rgba(255,77,77,0.10);color:var(--danger);border:1px solid rgba(255,77,77,0.22);'}">
+                ${comprou ? '🟢 Comprante' : '🔴 Não comprante'}
+              </span>
+            </td>
+            <td class="pivot-vend" style="padding:9px 12px;border-bottom:1px solid rgba(255,255,255,0.04);border-right:1px solid var(--border);font-size:11px;color:var(--muted);max-width:140px;overflow:hidden;text-overflow:ellipsis;" title="${(cl.vendedor || '').replace(/"/g, '&quot;')}">
+              ${cl.vendedor || '—'}
+            </td>
+            <td class="pivot-end" style="font-size:12px;color:var(--muted);white-space:nowrap;max-width:160px;overflow:hidden;text-overflow:ellipsis;padding:9px 12px;border-bottom:1px solid rgba(255,255,255,0.04);border-right:1px solid var(--border);" title="${(cl.cidade || '').replace(/"/g, '&quot;')}">
+              ${cl.cidade || '—'}
+            </td>
+            <td class="pivot-end pivot-uf" style="font-size:12px;color:var(--muted);white-space:nowrap;max-width:160px;overflow:hidden;text-overflow:ellipsis;padding:9px 12px;border-bottom:1px solid rgba(255,255,255,0.04);border-right:1px solid var(--border);text-align:center;font-weight:600;color:var(--accent2);">
+              ${cl.uf || '—'}
+            </td>
+            ${tds}
+            <td class="pivot-total" style="padding:9px 14px;border-bottom:1px solid rgba(255,255,255,0.04);text-align:right;font-weight:700;color:var(--success);background:rgba(0,255,136,0.04);">
+              ${formatarMoeda(totRow)}
+            </td>
+          </tr>
+          <tr class="detalhe-row" id="det-${idx}" style="display:none;">
+            <td colspan="${9 + cols.length}" style="padding:0 18px 18px 18px;background:rgba(0,0,0,0.25);">
+              <div class="det-msg" id="detbox-${idx}" style="padding:16px;color:var(--muted);font-size:12px;">Carregando produtos…</div>
+            </td>
+          </tr>
+        `;
+      });
+      
+      // Atualiza chips
+      const totalClientes = clientes.length;
+      document.getElementById('chipTodos').innerHTML = `<span class="chip-dot dot-all"></span>Todos (${totalClientes})`;
+      document.getElementById('chipPos').innerHTML = `<span class="chip-dot dot-pos"></span>Comprantes (${nCompr})`;
+      document.getElementById('chipNeg').innerHTML = `<span class="chip-dot dot-neg"></span>Não comprantes (${nNao})`;
+      
+      // Total row
+      if (cols.length > 0) {
+        html += `<tr class="pivot-row-total" style="background:rgba(25,118,210,0.1);font-weight:700;color:var(--accent2);padding:10px 12px;border-top:2px solid var(--border);">
+          <td colspan="8" style="padding:10px 12px;border-top:2px solid var(--border;">TOTAL</td>`;
+        cols.forEach(c => {
+          html += `<td style="padding:10px 12px;border-top:2px solid var(--border);text-align:right;">${formatarMoeda(totColsVis[c.ano + '-' + c.mes] || 0)}</td>`;
+        });
+        html += `<td style="padding:10px 12px;border-top:2px solid var(--border);text-align:right;">${formatarMoeda(totVisivel)}</td></tr>`;
+      }
+      
+      html += '</tbody></table>';
+      wrap.innerHTML = html;
+      
+      // Guarda para ordenação
+      clientesRender = clientesRenderLocal;
+      pivotCols = cols;
+      pivotValMap = valMap;
+      
+      document.getElementById('resumoInfo').textContent = 
+        clientesRenderLocal.length + ' clientes · ' + 
+        nCompr + ' comprantes / ' + nNao + ' não comprantes · ' + 
+        periodoLabel + ' · Total: ' + formatarMoeda(totVisivel);
+    }
+    
+    // ============================================================
+    // ORDENAÇÃO
+    // ============================================================
+    function ordenarPivot(key) {
+      if (pivotSort.key === key) {
+        pivotSort.dir = pivotSort.dir === 'desc' ? 'asc' : 'desc';
+      } else {
+        pivotSort.key = key;
+        pivotSort.dir = 'desc';
+      }
+      if (carteiraCompleta && carteiraCompleta.length) {
+        renderPivot(carteiraCompleta);
+      }
+    }
+    
+    // ============================================================
+    // DETALHE DO CLIENTE (Produtos comprados)
+    // ============================================================
+    async function toggleDetalheCliente(idx) {
+      const tr = document.getElementById('det-' + idx);
+      const box = document.getElementById('detbox-' + idx);
+      const caret = document.getElementById('caret-' + idx);
+      if (!tr || !box) return;
+      
+      if (tr.style.display !== 'none') {
+        tr.style.display = 'none';
+        detalheAberto[idx] = false;
+        if (caret) caret.style.transform = 'rotate(0deg)';
+        return;
+      }
+      
+      tr.style.display = 'table-row';
+      detalheAberto[idx] = true;
+      if (caret) caret.style.transform = 'rotate(90deg)';
+      if (box.dataset.carregado === '1') return;
+      
+      const cl = clientesRender[idx];
+      box.textContent = 'Carregando produtos…';
+      
+      const alvos = vendedoresSel.length ? vendedoresSel.slice() : [];
+      if (!alvos.length && cl.vendedor && cl.vendedor !== '—') alvos = [cl.vendedor];
+      if (!alvos.length) {
+        box.textContent = 'Selecione um vendedor para ver os produtos deste cliente.';
+        return;
+      }
+      
+      try {
+        let linhas = [];
+        for (let i = 0; i < alvos.length; i++) {
+          const dados = await historicoVendedor(alvos[i]);
+          linhas = linhas.concat(dados);
+        }
+        
+        linhas = linhas.filter(r => {
+          const c = String(r.cod_cliente).trim();
+          return (cl.cods && cl.cods[c]) || c === String(cl.cod).trim();
+        });
+        
+        if (periodosSel.length) {
+          linhas = linhas.filter(r => {
+            return periodosSel.some(p => Number(p.ano) === Number(r.ano) && Number(p.mes) === Number(r.mes));
+          });
+        }
+        
+        if (produtosSel.length) {
+          linhas = linhas.filter(r => produtosSel.indexOf(r.produto) >= 0);
+        }
+        
+        if (!linhas.length) {
+          box.textContent = 'Nenhuma compra registrada para este cliente nos filtros selecionados.';
+          box.dataset.carregado = '1';
+          return;
+        }
+        
+        const colsD = colunasDetalhe(linhas);
+        const prodMap = {};
+        const totCol = {};
+        const totQtdCol = {};
+        let totGeralProd = 0;
+        let totGeralQtd = 0;
+        
+        colsD.forEach(c => {
+          totCol[c.ano + '-' + c.mes] = 0;
+          totQtdCol[c.ano + '-' + c.mes] = 0;
+        });
+        
+        linhas.forEach(r => {
+          const chave = (r.cod_produto || '-') + '|' + (r.produto || '-') + '|' + (r.marca || '-');
+          if (!prodMap[chave]) {
+            prodMap[chave] = { cod: r.cod_produto || '—', nome: r.produto || '—', marca: r.marca || '—', meses: {}, qtdMeses: {}, total: 0, qtdTotal: 0 };
+          }
+          const v = parseFloat(r.valor_nf) || 0;
+          const q = parseFloat(r.quantidade) || 0;
+          const k = Number(r.ano) + '-' + Number(r.mes);
+          prodMap[chave].meses[k] = (prodMap[chave].meses[k] || 0) + v;
+          prodMap[chave].qtdMeses[k] = (prodMap[chave].qtdMeses[k] || 0) + q;
+          prodMap[chave].total += v;
+          prodMap[chave].qtdTotal += q;
+          if (k in totCol) totCol[k] += v;
+          if (k in totQtdCol) totQtdCol[k] += q;
+          totGeralProd += v;
+          totGeralQtd += q;
+        });
+        
+        const produtos = Object.values(prodMap).sort((a, b) => b.total - a.total);
+        
+        let h = `<div class="detalhe-box" style="border:1px solid var(--border);border-radius:10px;overflow:auto;max-height:420px;">
+          <table class="detalhe-table" style="width:100%;border-collapse:collapse;font-size:12px;background:rgba(13,37,88,0.35);">
+            <thead><tr>
+              <th style="position:sticky;top:0;background:var(--bg);color:var(--accent2);font-size:11px;text-transform:uppercase;letter-spacing:.5px;padding:8px 10px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;">Cód. Prod</th>
+              <th style="position:sticky;top:0;background:var(--bg);color:var(--accent2);font-size:11px;text-transform:uppercase;letter-spacing:.5px;padding:8px 10px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;">Produto</th>
+              <th style="position:sticky;top:0;background:var(--bg);color:var(--accent2);font-size:11px;text-transform:uppercase;letter-spacing:.5px;padding:8px 10px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;">Marca</th>`;
+        
+        colsD.forEach(c => {
+          h += `<th style="position:sticky;top:0;background:var(--bg);color:var(--accent2);font-size:11px;text-transform:uppercase;letter-spacing:.5px;padding:8px 10px;text-align:right;border-bottom:1px solid var(--border);white-space:nowrap;">Qtd ${MESES_NOME[c.mes]}/${String(c.ano).slice(2)}</th>
+                <th style="position:sticky;top:0;background:var(--bg);color:var(--accent2);font-size:11px;text-transform:uppercase;letter-spacing:.5px;padding:8px 10px;text-align:right;border-bottom:1px solid var(--border);white-space:nowrap;">${MESES_NOME[c.mes]}/${String(c.ano).slice(2)}</th>`;
+        });
+        
+        h += `<th style="position:sticky;top:0;background:var(--bg);color:var(--accent2);font-size:11px;text-transform:uppercase;letter-spacing:.5px;padding:8px 10px;text-align:right;border-bottom:1px solid var(--border);white-space:nowrap;">Qtd Total</th>
+              <th style="position:sticky;top:0;background:var(--bg);color:var(--accent2);font-size:11px;text-transform:uppercase;letter-spacing:.5px;padding:8px 10px;text-align:right;border-bottom:1px solid var(--border);white-space:nowrap;">Total</th>
+            </tr></thead><tbody>`;
+        
+        produtos.forEach(p => {
+          h += `<tr><td style="padding:7px 10px;border-bottom:1px solid rgba(255,255,255,0.04);color:var(--text);white-space:nowrap;">${p.cod}</td>
+            <td style="padding:7px 10px;border-bottom:1px solid rgba(255,255,255,0.04);color:var(--text);white-space:nowrap;">${p.nome}</td>
+            <td style="padding:7px 10px;border-bottom:1px solid rgba(255,255,255,0.04);color:var(--text);white-space:nowrap;">${p.marca}</td>`;
+          colsD.forEach(c => {
+            const k = c.ano + '-' + c.mes;
+            const v = p.meses[k] || 0;
+            const q = p.qtdMeses[k] || 0;
+            h += `<td style="padding:7px 10px;border-bottom:1px solid rgba(255,255,255,0.04);color:${q > 0 ? 'var(--success)' : 'var(--text)'};white-space:nowrap;text-align:right;font-variant-numeric:tabular-nums;">${q > 0 ? formatarNumero(q) : '—'}</td>
+                  <td style="padding:7px 10px;border-bottom:1px solid rgba(255,255,255,0.04);color:${v > 0 ? 'var(--success)' : 'var(--text)'};white-space:nowrap;text-align:right;font-variant-numeric:tabular-nums;">${v > 0 ? formatarMoeda(v) : '—'}</td>`;
+          });
+          h += `<td style="padding:7px 10px;border-bottom:1px solid rgba(255,255,255,0.04);color:var(--success);white-space:nowrap;text-align:right;font-variant-numeric:tabular-nums;">${formatarNumero(p.qtdTotal)}</td>
+                <td style="padding:7px 10px;border-bottom:1px solid rgba(255,255,255,0.04);color:var(--success);white-space:nowrap;text-align:right;font-variant-numeric:tabular-nums;">${formatarMoeda(p.total)}</td></tr>`;
+        });
+        
+        h += `</tbody><tfoot><tr style="font-weight:700;color:var(--success);background:rgba(0,255,136,0.06);border-top:1px solid var(--border);">
+          <td colspan="3" style="padding:8px 10px;text-align:left;color:var(--text);">${produtos.length} produto(s)</td>`;
+        colsD.forEach(c => {
+          h += `<td style="padding:8px 10px;text-align:right;">${formatarNumero(totQtdCol[c.ano + '-' + c.mes])}</td>
+                <td style="padding:8px 10px;text-align:right;">${formatarMoeda(totCol[c.ano + '-' + c.mes])}</td>`;
+        });
+        h += `<td style="padding:8px 10px;text-align:right;">${formatarNumero(totGeralQtd)}</td>
+              <td style="padding:8px 10px;text-align:right;">${formatarMoeda(totGeralProd)}</td>
+            </tr></tfoot></table></div>`;
+        
+        box.innerHTML = h;
+        box.dataset.carregado = '1';
+        
+      } catch (e) {
+        console.error('Erro no detalhe do cliente', e);
+        box.textContent = 'Erro ao carregar produtos: ' + e.message;
+      }
+    }
+    
+    // ============================================================
+    // HISTÓRICO DO VENDEDOR (cache)
+    // ============================================================
+    async function historicoVendedor(vendedor) {
+      const chave = vendedor + '||' + basesSel.slice().sort().join(',');
+      if (histCache[chave]) return histCache[chave];
+      
+      const qs = new URLSearchParams();
+      qs.append('vendedor', vendedor);
+      basesSel.forEach(b => qs.append('unidade', b));
+      
+      const res = await fetch(`${API}/api/clientes/historico?${qs}`);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+      histCache[chave] = Array.isArray(data) ? data : [];
+      return histCache[chave];
+    }
+    
+    // ============================================================
+    // COLUNAS DO DETALHE
+    // ============================================================
+    function colunasDetalhe(linhas) {
+      if (periodosSel.length) {
+        return periodosSel.slice().sort((a, b) => {
+          if (a.ano !== b.ano) return a.ano - b.ano;
+          return a.mes - b.mes;
+        });
+      }
+      const set = {};
+      linhas.forEach(r => {
+        if (r.ano && r.mes) {
+          set[r.ano + '-' + r.mes] = { ano: Number(r.ano), mes: Number(r.mes) };
+        }
+      });
+      return Object.values(set).sort((a, b) => {
+        if (a.ano !== b.ano) return a.ano - b.ano;
+        return a.mes - b.mes;
+      });
+    }
+    
+    // ============================================================
+    // EXPORTAÇÕES
+    // ============================================================
+    function exportarCarteira() {
+      if (!clientesRender.length) {
+        adicionarNotificacao('Nenhum dado para exportar!', 'warning', '⚠️');
+        return;
+      }
+      
+      const cols = pivotCols || [];
+      const head = ['Cód. Cliente', 'Cliente', 'Status', 'Vendedor', 'Cidade', 'UF'];
+      cols.forEach(c => head.push(MESES_NOME[c.mes] + '/' + String(c.ano).slice(2)));
+      head.push('Total');
+      
+      const rows = [head];
+      const totCol = {};
+      let totGeral = 0;
+      cols.forEach(c => totCol[c.ano + '-' + c.mes] = 0);
+      
+      clientesRender.forEach(cl => {
+        const ck = cl.key;
+        let tot = 0;
+        const r = [cl.cod || '', cl.nome || '', '', cl.vendedor || '', cl.cidade || '', cl.uf || ''];
+        const comprou = cols.some(c => {
+          const v = (pivotValMap[ck] && pivotValMap[ck][c.ano + '-' + c.mes]) ? pivotValMap[ck][c.ano + '-' + c.mes] : 0;
+          if (v > 0) return true;
+          return false;
+        });
+        r[2] = comprou ? 'Comprante' : 'Não comprante';
+        
+        cols.forEach(c => {
+          const v = (pivotValMap[ck] && pivotValMap[ck][c.ano + '-' + c.mes]) ? pivotValMap[ck][c.ano + '-' + c.mes] : 0;
+          tot += v;
+          totCol[c.ano + '-' + c.mes] += v;
+          r.push(v);
+        });
+        r.push(tot);
+        totGeral += tot;
+        rows.push(r);
+      });
+      
+      const tr = ['TOTAL', '', '', '', '', ''];
+      cols.forEach(c => tr.push(totCol[c.ano + '-' + c.mes]));
+      tr.push(totGeral);
+      rows.push(tr);
+      
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.aoa_to_sheet(rows);
+      ws['!cols'] = rows[0].map((_, i) => ({ wch: i === 1 ? 35 : (i < 6 ? 18 : 14) }));
+      XLSX.utils.book_append_sheet(wb, ws, 'Carteira');
+      
+      const fileName = 'Atomo-Carteira-' + new Date().toISOString().slice(0,10) + '.xlsx';
+      XLSX.writeFile(wb, fileName);
+      adicionarNotificacao('✅ Carteira exportada com sucesso!', 'success', '✅');
+    }
+    
+    // ============================================================
+    // EXPORTAR PRODUTO (agregado no banco)
+    // ============================================================
+    async function exportarProduto() {
+      if (!clientesRender.length) {
+        adicionarNotificacao('Nenhum dado para exportar!', 'warning', '⚠️');
+        return;
+      }
+      
+      const btn = document.getElementById('btnExpCompleto');
+      const txtOrig = btn ? btn.innerHTML : '';
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '⏳ Gerando...';
+      }
+      
+      try {
+        const alvos = vendedoresSel.length ? vendedoresSel.slice() : [];
+        if (!alvos.length) {
+          const set = {};
+          clientesRender.forEach(cl => {
+            if (cl.vendedor && cl.vendedor !== '—') set[cl.vendedor] = 1;
+          });
+          alvos = Object.keys(set);
+        }
+        
+        const infoCli = {};
+        const codsVisiveis = [];
+        clientesRender.forEach(cl => {
+          const todos = Object.keys(cl.cods || {});
+          if (!todos.length) todos = [String(cl.cod)];
+          todos.forEach(c => {
+            if (!c) return;
+            infoCli[c] = cl;
+            codsVisiveis.push(c);
+          });
+        });
+        
+        const res = await fetch(`${API}/api/clientes/produtos_export`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            unidades: basesSel,
+            vendedores: alvos,
+            produtos: produtosSel,
+            periodos: periodosSel.map(p => ({ ano: Number(p.ano), mes: Number(p.mes) })),
+            cod_clientes: codsVisiveis
+          })
+        });
+        
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const linhas = await res.json();
+        if (linhas && linhas.erro) throw new Error(linhas.erro);
+        
+        const mapa = {};
+        const mesesSet = {};
+        linhas.forEach(r => {
+          const ano = Number(r.ano);
+          const mes = Number(r.mes);
+          if (!ano || !mes) return;
+          const mk = ano + '-' + (mes < 10 ? '0' + mes : mes);
+          mesesSet[mk] = { ano: ano, mes: mes };
+          const k = String(r.cod_cliente) + '|' + (r.cod_produto || '-') + '|' + (r.produto || '-');
+          if (!mapa[k]) {
+            mapa[k] = {
+              cod_cliente: r.cod_cliente,
+              vendedor: r.vendedor || '',
+              cod_produto: r.cod_produto || '',
+              produto: r.produto || '',
+              marca: r.marca || '',
+              meses: {},
+              qtdMeses: {},
+              total: 0,
+              qtdTotal: 0
+            };
+          }
+          if (!mapa[k].vendedor && r.vendedor) mapa[k].vendedor = r.vendedor;
+          const v = parseFloat(r.valor_nf) || 0;
+          const q = parseFloat(r.quantidade) || 0;
+          mapa[k].meses[mk] = (mapa[k].meses[mk] || 0) + v;
+          mapa[k].qtdMeses[mk] = (mapa[k].qtdMeses[mk] || 0) + q;
+          mapa[k].total += v;
+          mapa[k].qtdTotal += q;
+        });
+        
+        const mesesKeys = Object.keys(mesesSet).sort();
+        const header = ['Cód. Cliente', 'Cliente', 'Vendedor', 'Cód. Produto', 'Produto', 'Marca'];
+        mesesKeys.forEach(mk => {
+          const m = mesesSet[mk];
+          const lbl = MESES_NOME[m.mes].toLowerCase() + '/' + String(m.ano).slice(-2);
+          header.push('qtd ' + lbl);
+          header.push(lbl);
+        });
+        header.push('Qtd Total');
+        header.push('Total');
+        
+        const rows = [header];
+        Object.keys(mapa).map(k => mapa[k])
+          .sort((a, b) => {
+            const na = (infoCli[String(a.cod_cliente)] || {}).nome || '';
+            const nb = (infoCli[String(b.cod_cliente)] || {}).nome || '';
+            return na === nb ? b.total - a.total : (na < nb ? -1 : 1);
+          })
+          .forEach(p => {
+            const cl = infoCli[String(p.cod_cliente)] || {};
+            const vendCl = (cl.vendedor && cl.vendedor !== '—') ? cl.vendedor : '';
+            const linha = [p.cod_cliente, cl.nome || '', p.vendedor || vendCl, p.cod_produto, p.produto, p.marca];
+            mesesKeys.forEach(mk => {
+              linha.push(p.qtdMeses[mk] || 0);
+              linha.push(p.meses[mk] || 0);
+            });
+            linha.push(p.qtdTotal);
+            linha.push(p.total);
+            rows.push(linha);
+          });
+        
+        if (rows.length === 1) {
+          adicionarNotificacao('Nenhum produto encontrado para os filtros selecionados.', 'warning', '⚠️');
+          return;
+        }
+        
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.aoa_to_sheet(rows);
+        ws['!cols'] = rows[0].map((_, i) => ({ wch: (i === 1 || i === 4) ? 38 : ((i === 2 || i === 5) ? 22 : 16) }));
+        XLSX.utils.book_append_sheet(wb, ws, 'Produtos');
+        
+        const fileName = 'Atomo-Produtos-' + new Date().toISOString().slice(0,10) + '.xlsx';
+        XLSX.writeFile(wb, fileName);
+        adicionarNotificacao('✅ Produtos exportados com sucesso!', 'success', '✅');
+        
+      } catch (e) {
+        console.error('Erro na exportação de produtos', e);
+        adicionarNotificacao('❌ Erro ao exportar: ' + e.message, 'danger', '❌');
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = txtOrig;
+        }
+      }
+    }
+    
+    // ============================================================
+    // LIMPAR FILTROS
+    // ============================================================
+    function limparFiltrosCarteira() {
+      produtosSel = [];
+      vendedoresSel = [];
+      periodosSel = [];
+      basesSel = [];
+      filtroStatus = 'todos';
+      histCache = {};
+      detalheAberto = {};
+      pivotSort = { key: null, dir: 'desc' };
+      
+      renderTagsProd();
+      renderTagsVend();
+      renderTagsPeriodo();
+      renderBases();
+      atualizarCalendario();
+      
+      document.querySelectorAll('.status-chip').forEach(el => el.classList.remove('active'));
+      document.getElementById('chipTodos').classList.add('active');
+      
+      recarregarCarteira();
+      adicionarNotificacao('🧹 Filtros limpos!', 'info', '🧹');
+    }
+    
+    // ============================================================
+    // FECHA SUGESTÕES AO CLICAR FORA
+    // ============================================================
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('.filtro-card') && !e.target.closest('.sug-lista')) {
+        document.getElementById('listaProd').style.display = 'none';
+        document.getElementById('listaVend').style.display = 'none';
+      }
+    });
+    
+    // ============================================================
+    // EXPORTA FUNÇÕES GLOBAIS
+    // ============================================================
+    window.setFiltroStatus = setFiltroStatus;
+    window.ordenarPivot = ordenarPivot;
+    window.toggleDetalheCliente = toggleDetalheCliente;
+    window.exportarCarteira = exportarCarteira;
+    window.exportarProduto = exportarProduto;
+    window.limparFiltrosCarteira = limparFiltrosCarteira;
+    window.toggleBase = toggleBase;
+    window.limparBases = limparBases;
+    window.onBuscaProd = onBuscaProd;
+    window.onBuscaVend = onBuscaVend;
+    window.togglePeriodo = togglePeriodo;
+    window.addProduto = addProduto;
+    window.addVendedor = addVendedor;
+    window.remProduto = remProduto;
+    window.remVendedor = remVendedor;
+  </script>
+</body>
+</html>
