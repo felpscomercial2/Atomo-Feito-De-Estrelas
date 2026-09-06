@@ -18,31 +18,35 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
-    --bg: #0B0F19;
-    --bg-card: #131B2E;
-    --bg-sidebar: #0E1628;
-    --accent: #7C3AED;
-    --accent-hover: #6D28D9;
-    --accent-glow: rgba(124, 58, 237, 0.4);
-    --text: #F1F5F9;
-    --text-muted: #94A3B8;
-    --border: rgba(124, 58, 237, 0.15);
-    --success: #10B981;
-    --danger: #EF4444;
+    --bg: #F1F4F9;
+    --bg-card: #FFFFFF;
+    --bg-sidebar: #FFFFFF;
+    --accent: #2563EB;
+    --accent-hover: #1D4ED8;
+    --accent-light: #EFF6FF;
+    --accent-glow: rgba(37, 99, 235, 0.15);
+    --text: #1E293B;
+    --text-muted: #64748B;
+    --text-light: #94A3B8;
+    --border: #E2E8F0;
+    --shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+    --shadow-hover: 0 8px 32px rgba(0, 0, 0, 0.10);
+    --success: #16A34A;
+    --success-light: #F0FDF4;
+    --danger: #DC2626;
+    --danger-light: #FEF2F2;
     --warning: #F59E0B;
+    --warning-light: #FFFBEB;
   }
 
   body {
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
     background: var(--bg);
     color: var(--text);
     min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
-    background-image:
-      radial-gradient(ellipse at 20% 50%, rgba(124, 58, 237, 0.08) 0%, transparent 60%),
-      radial-gradient(ellipse at 80% 50%, rgba(59, 130, 246, 0.06) 0%, transparent 60%);
   }
 
   /* LOGIN */
@@ -62,20 +66,19 @@
     max-width: 400px;
     text-align: center;
     border: 1px solid var(--border);
-    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(124, 58, 237, 0.05);
-    backdrop-filter: blur(12px);
-    animation: fadeInUp 0.6s ease forwards;
+    box-shadow: var(--shadow);
+    animation: fadeInUp 0.5s ease forwards;
     opacity: 0;
   }
 
   @keyframes fadeInUp {
-    from { opacity: 0; transform: translateY(30px); }
+    from { opacity: 0; transform: translateY(24px); }
     to { opacity: 1; transform: translateY(0); }
   }
 
   .logo {
-    width: 80px;
-    height: 80px;
+    width: 72px;
+    height: 72px;
     margin: 0 auto 16px;
     display: block;
   }
@@ -84,11 +87,8 @@
     font-family: 'Space Grotesk', sans-serif;
     font-size: 28px;
     font-weight: 700;
-    letter-spacing: 2px;
-    background: linear-gradient(135deg, #A78BFA, #7C3AED, #6D28D9);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    letter-spacing: 1px;
+    color: var(--text);
   }
 
   .card p {
@@ -96,7 +96,7 @@
     font-size: 13px;
     letter-spacing: 2px;
     margin-bottom: 28px;
-    margin-top: 4px;
+    margin-top: 2px;
     font-weight: 500;
   }
 
@@ -106,7 +106,7 @@
     margin: 6px 0;
     border-radius: 12px;
     border: 1px solid var(--border);
-    background: rgba(255, 255, 255, 0.04);
+    background: var(--bg);
     color: var(--text);
     font-size: 14px;
     outline: none;
@@ -115,8 +115,7 @@
   }
 
   .card input::placeholder {
-    color: var(--text-muted);
-    opacity: 0.6;
+    color: var(--text-light);
   }
 
   .card input:focus {
@@ -134,50 +133,51 @@
     font-weight: 600;
     font-size: 14px;
     transition: all 0.2s;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
     font-family: 'DM Sans', sans-serif;
   }
 
   .btn-primary {
-    background: linear-gradient(135deg, #7C3AED, #6D28D9);
+    background: var(--accent);
     color: #fff;
-    box-shadow: 0 4px 20px rgba(124, 58, 237, 0.4);
+    box-shadow: 0 4px 16px rgba(37, 99, 235, 0.25);
   }
 
   .btn-primary:hover {
+    background: var(--accent-hover);
     transform: translateY(-2px);
-    box-shadow: 0 6px 30px rgba(124, 58, 237, 0.6);
+    box-shadow: 0 6px 24px rgba(37, 99, 235, 0.35);
   }
 
   .btn-secondary {
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--bg);
     color: var(--text);
     border: 1px solid var(--border);
   }
 
   .btn-secondary:hover {
-    background: rgba(255, 255, 255, 0.08);
+    background: var(--accent-light);
+    border-color: var(--accent);
   }
 
   .btn-admin {
-    background: rgba(255, 255, 255, 0.02);
+    background: transparent;
     color: var(--text-muted);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border);
     margin-top: 6px;
     font-size: 12px;
   }
 
   .btn-admin:hover {
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--bg);
     color: var(--text);
   }
 
   .card-footer {
     margin-top: 20px;
-    color: var(--text-muted);
+    color: var(--text-light);
     font-size: 11px;
     letter-spacing: 1px;
-    opacity: 0.6;
   }
 
   /* TOAST */
@@ -190,14 +190,14 @@
     color: var(--text);
     border-radius: 12px;
     border: 1px solid var(--border);
+    box-shadow: var(--shadow-hover);
     opacity: 0;
     transform: translateY(20px);
     transition: all 0.4s ease;
     z-index: 9999;
     font-size: 14px;
     font-weight: 500;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(12px);
+    max-width: 420px;
   }
 
   #toast.show {
@@ -211,8 +211,8 @@
     width: 100%;
     max-width: 1200px;
     margin: 0 auto;
-    padding: 24px;
-    animation: fadeInUp 0.6s ease forwards;
+    padding: 32px 24px;
+    animation: fadeInUp 0.5s ease forwards;
   }
 
   .admin-panel.show {
@@ -224,8 +224,8 @@
     align-items: center;
     justify-content: space-between;
     margin-bottom: 32px;
-    padding-bottom: 16px;
-    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+    gap: 16px;
   }
 
   .admin-header h2 {
@@ -235,29 +235,19 @@
     color: var(--text);
   }
 
-  .admin-header .btn-logout {
-    padding: 10px 24px;
-    border-radius: 10px;
-    background: rgba(239, 68, 68, 0.1);
-    color: var(--danger);
-    border: 1px solid rgba(239, 68, 68, 0.2);
-    cursor: pointer;
-    font-size: 13px;
-    font-weight: 600;
-    transition: all 0.2s;
-  }
-
-  .admin-header .btn-logout:hover {
-    background: rgba(239, 68, 68, 0.2);
+  .admin-header-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
   }
 
   .admin-search {
-    width: 100%;
-    max-width: 300px;
+    min-width: 240px;
     padding: 12px 16px;
     border-radius: 12px;
     border: 1px solid var(--border);
-    background: rgba(255, 255, 255, 0.04);
+    background: var(--bg);
     color: var(--text);
     font-size: 13px;
     outline: none;
@@ -271,8 +261,23 @@
   }
 
   .admin-search::placeholder {
-    color: var(--text-muted);
-    opacity: 0.6;
+    color: var(--text-light);
+  }
+
+  .btn-logout-admin {
+    padding: 10px 20px;
+    border-radius: 10px;
+    background: var(--danger-light);
+    color: var(--danger);
+    border: 1px solid #FECACA;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+
+  .btn-logout-admin:hover {
+    background: #FEE2E2;
   }
 
   .counters {
@@ -288,7 +293,7 @@
     border-radius: 14px;
     border: 1px solid var(--border);
     text-align: center;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    box-shadow: var(--shadow);
   }
 
   .counter h3 {
@@ -317,11 +322,12 @@
     align-items: center;
     border: 1px solid var(--border);
     transition: all 0.2s;
+    box-shadow: var(--shadow);
   }
 
   .user-card:hover {
     border-color: var(--accent);
-    box-shadow: 0 0 20px rgba(124, 58, 237, 0.05);
+    box-shadow: var(--shadow-hover);
   }
 
   .user-card .email {
@@ -334,15 +340,16 @@
     font-weight: 600;
     padding: 4px 12px;
     border-radius: 20px;
+    display: inline-block;
   }
 
   .status-pendente {
-    background: rgba(245, 158, 11, 0.15);
+    background: var(--warning-light);
     color: var(--warning);
   }
 
   .status-aprovado {
-    background: rgba(16, 185, 129, 0.15);
+    background: var(--success-light);
     color: var(--success);
   }
 
@@ -355,7 +362,7 @@
     padding: 8px 16px;
     border-radius: 8px;
     border: none;
-    background: rgba(16, 185, 129, 0.15);
+    background: var(--success-light);
     color: var(--success);
     font-weight: 600;
     font-size: 12px;
@@ -364,14 +371,14 @@
   }
 
   .btn-approve:hover {
-    background: rgba(16, 185, 129, 0.25);
+    background: #DCFCE7;
   }
 
   .btn-delete {
     padding: 8px 16px;
     border-radius: 8px;
     border: none;
-    background: rgba(239, 68, 68, 0.1);
+    background: var(--danger-light);
     color: var(--danger);
     font-weight: 600;
     font-size: 12px;
@@ -380,13 +387,32 @@
   }
 
   .btn-delete:hover {
-    background: rgba(239, 68, 68, 0.2);
+    background: #FEE2E2;
   }
 
   .no-data {
     text-align: center;
     padding: 48px 24px;
     color: var(--text-muted);
+  }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--bg);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #CBD5E1;
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #94A3B8;
   }
 
   /* RESPONSIVE */
@@ -402,11 +428,15 @@
     .admin-header {
       flex-direction: column;
       align-items: stretch;
-      gap: 16px;
+    }
+
+    .admin-header-actions {
+      flex-direction: column;
+      align-items: stretch;
     }
 
     .admin-search {
-      max-width: 100%;
+      min-width: unset;
     }
 
     .user-card {
@@ -429,25 +459,6 @@
       font-size: 24px;
     }
   }
-
-  /* SCROLLBAR */
-  ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-
-  ::-webkit-scrollbar-track {
-    background: var(--bg);
-  }
-
-  ::-webkit-scrollbar-thumb {
-    background: var(--accent);
-    border-radius: 3px;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    background: var(--accent-hover);
-  }
 </style>
 </head>
 <body>
@@ -456,20 +467,11 @@
 <div class="login" id="loginScreen">
   <div class="card">
     <svg class="logo" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="40" cy="40" r="12" fill="#7C3AED" opacity="0.3"/>
-      <circle cx="40" cy="40" r="8" fill="#7C3AED" filter="url(#glow)"/>
-      <ellipse cx="40" cy="40" rx="34" ry="12" fill="none" stroke="#7C3AED" stroke-width="1.5" opacity="0.6"/>
-      <ellipse cx="40" cy="40" rx="34" ry="12" fill="none" stroke="#8B5CF6" stroke-width="1.5" opacity="0.4" transform="rotate(60,40,40)"/>
-      <ellipse cx="40" cy="40" rx="34" ry="12" fill="none" stroke="#A78BFA" stroke-width="1.5" opacity="0.3" transform="rotate(120,40,40)"/>
-      <defs>
-        <filter id="glow">
-          <feGaussianBlur stdDeviation="2" result="blur"/>
-          <feMerge>
-            <feMergeNode in="blur"/>
-            <feMergeNode in="SourceGraphic"/>
-          </feMerge>
-        </filter>
-      </defs>
+      <circle cx="40" cy="40" r="12" fill="#2563EB" opacity="0.15"/>
+      <circle cx="40" cy="40" r="8" fill="#2563EB"/>
+      <ellipse cx="40" cy="40" rx="34" ry="12" fill="none" stroke="#2563EB" stroke-width="1.5" opacity="0.3"/>
+      <ellipse cx="40" cy="40" rx="34" ry="12" fill="none" stroke="#3B82F6" stroke-width="1.5" opacity="0.2" transform="rotate(60,40,40)"/>
+      <ellipse cx="40" cy="40" rx="34" ry="12" fill="none" stroke="#60A5FA" stroke-width="1.5" opacity="0.15" transform="rotate(120,40,40)"/>
     </svg>
     <h1>Átomo</h1>
     <p>Feito de estrelas.</p>
@@ -544,20 +546,11 @@ document.getElementById("adminBtn").onclick = function() {
   document.getElementById("loginScreen").innerHTML = `
     <div class="card">
       <svg class="logo" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="40" cy="40" r="12" fill="#7C3AED" opacity="0.3"/>
-        <circle cx="40" cy="40" r="8" fill="#7C3AED" filter="url(#glow)"/>
-        <ellipse cx="40" cy="40" rx="34" ry="12" fill="none" stroke="#7C3AED" stroke-width="1.5" opacity="0.6"/>
-        <ellipse cx="40" cy="40" rx="34" ry="12" fill="none" stroke="#8B5CF6" stroke-width="1.5" opacity="0.4" transform="rotate(60,40,40)"/>
-        <ellipse cx="40" cy="40" rx="34" ry="12" fill="none" stroke="#A78BFA" stroke-width="1.5" opacity="0.3" transform="rotate(120,40,40)"/>
-        <defs>
-          <filter id="glow">
-            <feGaussianBlur stdDeviation="2" result="blur"/>
-            <feMerge>
-              <feMergeNode in="blur"/>
-              <feMergeNode in="SourceGraphic"/>
-            </feMerge>
-          </filter>
-        </defs>
+        <circle cx="40" cy="40" r="12" fill="#2563EB" opacity="0.15"/>
+        <circle cx="40" cy="40" r="8" fill="#2563EB"/>
+        <ellipse cx="40" cy="40" rx="34" ry="12" fill="none" stroke="#2563EB" stroke-width="1.5" opacity="0.3"/>
+        <ellipse cx="40" cy="40" rx="34" ry="12" fill="none" stroke="#3B82F6" stroke-width="1.5" opacity="0.2" transform="rotate(60,40,40)"/>
+        <ellipse cx="40" cy="40" rx="34" ry="12" fill="none" stroke="#60A5FA" stroke-width="1.5" opacity="0.15" transform="rotate(120,40,40)"/>
       </svg>
       <h1>Átomo</h1>
       <p>PAINEL ADMINISTRATIVO</p>
@@ -583,9 +576,9 @@ function abrirPainel() {
     <div class="admin-panel show">
       <div class="admin-header">
         <h2>👥 Gerenciamento de Usuários</h2>
-        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+        <div class="admin-header-actions">
           <input type="text" id="search" class="admin-search" placeholder="🔍 Buscar usuário...">
-          <button class="btn-logout" onclick="window.location.href='index.html'">⏻ Sair</button>
+          <button class="btn-logout-admin" onclick="window.location.href='index.html'">⏻ Sair</button>
         </div>
       </div>
 
