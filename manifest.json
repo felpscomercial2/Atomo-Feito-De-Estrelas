@@ -1,0 +1,22 @@
+{
+  "name": "Átomo",
+  "short_name": "Átomo",
+  "description": "Sistema de inteligência de negócios",
+  "start_url": "/home.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#0A1628",
+  "background_color": "#0A1628",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
