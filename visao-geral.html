@@ -14,17 +14,17 @@
 
 <style>
 /* =========================================================
-   ÁTOMO LIGHT — Tema Refinado com Transições Elegantes
+   ÁTOMO LIGHT — Contraste Aprimorado para Legibilidade
    ========================================================= */
 
 :root {
   --bg-body: #F2F4F8;
   --bg-card: #FFFFFF;
   --bg-sidebar: #FFFFFF;
-  --text-primary: #0F172A;
-  --text-secondary: #334155;
-  --text-muted: #94A3B8;
-  --border-light: #E8ECF2;
+  --text-primary: #0F172A;        /* MUITO ESCURO — legível */
+  --text-secondary: #1E293B;      /* ESCURO — bom contraste */
+  --text-muted: #475569;          /* MÉDIO — ainda legível */
+  --border-light: #E2E8F0;
   --shadow-card: 0 2px 16px rgba(0, 0, 0, 0.04), 0 1px 4px rgba(0, 0, 0, 0.02);
   --shadow-hover: 0 8px 32px rgba(0, 0, 0, 0.07), 0 2px 8px rgba(0, 0, 0, 0.03);
   --shadow-dropdown: 0 16px 48px rgba(0, 0, 0, 0.08);
@@ -267,17 +267,13 @@ html, body {
   font-weight: 700 !important;
   color: var(--text-primary) !important;
   letter-spacing: -0.03em !important;
-  background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
 }
 
 .header-left p {
   font-size: 14px;
   color: var(--text-secondary) !important;
   margin-top: 4px;
-  font-weight: 450;
+  font-weight: 500;
 }
 
 /* =========================================================
@@ -349,14 +345,20 @@ html, body {
    NOTA
    ========================================================= */
 .nota {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-secondary) !important;
-  padding: 10px 16px;
+  padding: 12px 18px;
   background: #FFFBEB !important;
   border: 1px solid #FDE68A !important;
   border-radius: var(--radius-sm);
   margin-bottom: 20px;
   animation: fadeSlideDown 0.5s var(--transition-ease);
+  font-weight: 450;
+}
+
+.nota strong {
+  color: var(--text-primary);
+  font-weight: 600;
 }
 
 /* =========================================================
@@ -429,7 +431,7 @@ html, body {
 .comp-wrap label {
   font-size: 12px;
   color: var(--text-secondary) !important;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .comp-wrap select {
@@ -453,7 +455,7 @@ html, body {
 .comp-wrap .vs-label {
   font-size: 11px;
   font-weight: 700;
-  color: var(--text-muted) !important;
+  color: var(--text-secondary) !important;
   padding: 4px 12px;
   border-radius: 20px;
   background: var(--bg-body) !important;
@@ -591,17 +593,17 @@ html, body {
 }
 
 .c-ne {
-  color: var(--text-muted) !important;
+  color: var(--text-secondary) !important;
   background: var(--bg-body) !important;
   border: 1px solid var(--border-light) !important;
 }
 
 /* =========================================================
-   KPI GRID
+   KPI GRID — CONTRASTE APRIMORADO
    ========================================================= */
 .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 14px;
   margin-bottom: 24px;
   animation: fadeSlideUp 0.7s var(--transition-ease);
@@ -647,7 +649,7 @@ html, body {
 
 .kpi-label {
   font-size: 10px;
-  color: var(--text-muted) !important;
+  color: var(--text-secondary) !important;
   text-transform: uppercase;
   letter-spacing: 0.8px;
   font-weight: 600;
@@ -656,7 +658,7 @@ html, body {
 }
 
 .kpi-value {
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 700;
   color: var(--text-primary) !important;
   line-height: 1.2;
@@ -667,7 +669,7 @@ html, body {
   font-size: 11px;
   color: var(--text-secondary) !important;
   margin-top: 4px;
-  font-weight: 450;
+  font-weight: 500;
 }
 
 .kpi-icon {
@@ -675,7 +677,7 @@ html, body {
   top: 14px;
   right: 14px;
   font-size: 18px;
-  opacity: 0.1;
+  opacity: 0.12;
   transition: all 0.4s var(--transition-smooth);
 }
 
@@ -787,7 +789,7 @@ th {
 
 td {
   padding: 10px 14px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.03);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
   color: var(--text-primary) !important;
   font-weight: 450;
 }
@@ -830,13 +832,44 @@ tr:hover td {
   gap: 10px;
 }
 
-.spinner {
+.loading-spinner {
   width: 18px;
   height: 18px;
   border: 2px solid var(--border-light);
   border-top-color: var(--accent-primary);
   border-radius: 50%;
   animation: spin 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
+}
+
+.loading-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(242, 244, 248, 0.92) !important;
+  z-index: 9999;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 20px;
+  backdrop-filter: blur(8px);
+  transition: opacity 0.5s ease;
+}
+
+.loading-overlay.show {
+  display: flex;
+  animation: fadeIn 0.4s ease;
+}
+
+.loading-overlay .loading-spinner {
+  width: 44px;
+  height: 44px;
+}
+
+.loading-overlay span {
+  color: var(--text-secondary) !important;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
 }
 
 /* =========================================================
@@ -851,6 +884,7 @@ tr:hover td {
   border-top: 1px solid var(--border-light);
   letter-spacing: 0.5px;
   animation: fadeIn 1s ease;
+  font-weight: 450;
 }
 
 /* =========================================================
@@ -1590,7 +1624,7 @@ tr:hover td {
       <div class="chart-title">🏆 Top 10 Vendedores</div>
       <div class="chart-subtitle">Um vendedor pode atuar em múltiplas unidades</div>
       <div class="table-wrap" id="tblVendedores">
-        <div class="loading"><div class="spinner"></div> Carregando...</div>
+        <div class="loading"><div class="loading-spinner"></div> Carregando...</div>
       </div>
     </div>
     <div class="chart-card">
@@ -1717,7 +1751,7 @@ function mostrarTags(filtros) {
   if (filtros.marca)    tags.push('Marca: ' + filtros.marca);
   if (filtros.vendedor) tags.push('Vendedor: ' + filtros.vendedor);
   if (!tags.length) {
-    container.innerHTML = '<span style="color:var(--text-muted);font-size:12px;">Nenhum filtro — exibindo todos os dados</span>';
+    container.innerHTML = '<span style="color:var(--text-secondary);font-size:12px;font-weight:500;">Nenhum filtro — exibindo todos os dados</span>';
   } else {
     container.innerHTML = tags.map(t => '<div class="filtro-tag">' + t + '</div>').join('');
   }
@@ -1796,7 +1830,6 @@ async function recarregar() {
   const params = montarParamsDrill(base);
 
   try {
-    // Tenta carregar via /api/dashboard (uma única chamada)
     const resD = await fetch(API + '/api/dashboard?' + params);
     let d = null;
     if (resD.ok) d = await resD.json();
@@ -1811,7 +1844,6 @@ async function recarregar() {
         carregarResumoCarteira(params),
       ]);
     } else {
-      // Fallback: carrega individualmente
       await Promise.all([
         carregarKPIs(params),
         carregarMensal(params),
@@ -1880,7 +1912,7 @@ async function carregarMensal(params, pre) {
         {
           label: 'Faturamento',
           data: data.map(d => d.faturamento),
-          backgroundColor: 'rgba(29, 78, 216, 0.7)',
+          backgroundColor: 'rgba(29, 78, 216, 0.75)',
           borderColor: '#1D4ED8',
           borderWidth: 1,
           borderRadius: 4,
@@ -1891,7 +1923,7 @@ async function carregarMensal(params, pre) {
           data: data.map(d => Math.abs(d.devolucoes)),
           type: 'line',
           borderColor: '#DC2626',
-          backgroundColor: 'rgba(220, 38, 38, 0.1)',
+          backgroundColor: 'rgba(220, 38, 38, 0.08)',
           tension: 0.4,
           pointRadius: 4,
           pointBackgroundColor: '#DC2626',
@@ -1911,7 +1943,7 @@ async function carregarMensal(params, pre) {
       },
       plugins: {
         legend: {
-          labels: { color: '#334155', font: { size: 11 } }
+          labels: { color: '#1E293B', font: { size: 11, weight: '500' } }
         },
         tooltip: {
           callbacks: {
@@ -1921,12 +1953,12 @@ async function carregarMensal(params, pre) {
       },
       scales: {
         x: {
-          ticks: { color: '#94A3B8', font: { size: 10 } },
+          ticks: { color: '#475569', font: { size: 10 } },
           grid: { color: 'rgba(0,0,0,0.04)' }
         },
         y: {
           ticks: {
-            color: '#94A3B8',
+            color: '#475569',
             font: { size: 10 },
             callback: function(v) { return 'R$' + (v/1e6).toFixed(1) + 'M'; }
           },
@@ -1978,8 +2010,8 @@ async function carregarUnidade(params, pre) {
           legend: {
             position: 'bottom',
             labels: {
-              color: '#334155',
-              font: { size: 10 },
+              color: '#1E293B',
+              font: { size: 10, weight: '500' },
               padding: 8,
               boxWidth: 12
             }
@@ -2021,9 +2053,9 @@ async function carregarVendedores(params, pre) {
     const p = ((v.faturamento / maxF) * 100).toFixed(1);
     html += `<tr>
       <td class="rank">${i+1}°</td>
-      <td>${v.vendedor}<div class="progress-bar"><div class="progress-fill" style="width:${p}%"></div></div></td>
-      <td>${brl(v.faturamento, true)}</td>
-      <td>${num(v.clientes)}</td>
+      <td style="font-weight:500;color:var(--text-primary);">${v.vendedor}<div class="progress-bar"><div class="progress-fill" style="width:${p}%"></div></div></td>
+      <td style="font-weight:600;color:var(--text-primary);">${brl(v.faturamento, true)}</td>
+      <td style="color:var(--text-secondary);">${num(v.clientes)}</td>
     </tr>`;
   });
   html += '</tbody></table>';
@@ -2075,14 +2107,14 @@ async function carregarMarcas(params, pre) {
       scales: {
         x: {
           ticks: {
-            color: '#94A3B8',
+            color: '#475569',
             font: { size: 10 },
             callback: function(v) { return 'R$' + (v/1e6).toFixed(1) + 'M'; }
           },
           grid: { color: 'rgba(0,0,0,0.04)' }
         },
         y: {
-          ticks: { color: '#1E293B', font: { size: 11 } },
+          ticks: { color: '#1E293B', font: { size: 11, weight: '500' } },
           grid: { display: false }
         }
       }
@@ -2149,7 +2181,7 @@ async function compararPeriodos() {
 
   const grid = document.getElementById('compGrid');
   grid.style.display = 'grid';
-  grid.innerHTML = '<div style="grid-column:1/-1;padding:24px;text-align:center;color:var(--text-secondary);">⏳ Comparando períodos...</div>';
+  grid.innerHTML = '<div style="grid-column:1/-1;padding:24px;text-align:center;color:var(--text-secondary);font-weight:500;">⏳ Comparando períodos...</div>';
 
   try {
     const filtros = getFiltros();
@@ -2178,9 +2210,9 @@ async function compararPeriodos() {
       return `<div class="comp-card">
         <div class="comp-lbl">${lbl}</div>
         <div class="comp-periodos">
-          <div class="comp-periodo-row"><span class="comp-vA-label">${labelA}</span><span class="comp-vA">${fa}</span></div>
+          <div class="comp-periodo-row"><span class="comp-vA-label">${labelA}</span><span class="comp-vA" style="font-weight:700;color:var(--text-primary);">${fa}</span></div>
           <div class="comp-sep"></div>
-          <div class="comp-periodo-row"><span class="comp-vB-label">${labelB}</span><span class="comp-vB">${fb}</span></div>
+          <div class="comp-periodo-row"><span class="comp-vB-label">${labelB}</span><span class="comp-vB" style="font-weight:600;color:var(--text-secondary);">${fb}</span></div>
         </div>
         <span class="comp-pct ${cls}">${arrow} ${Math.abs(delta).toFixed(1).replace('.', ',')}%</span>
       </div>`;
@@ -2195,7 +2227,7 @@ async function compararPeriodos() {
       card('📦 Qtd. Vendas', qA, qB, 'num');
 
   } catch (e) {
-    grid.innerHTML = `<div style="grid-column:1/-1;padding:16px;color:var(--color-danger);">Erro: ${e.message}</div>`;
+    grid.innerHTML = `<div style="grid-column:1/-1;padding:16px;color:var(--color-danger);font-weight:500;">Erro: ${e.message}</div>`;
   }
 }
 
@@ -2241,7 +2273,7 @@ window.onload = function() {
 };
 
 // ============================================================
-// VALTER — Assistente (versão simplificada)
+// VALTER — Assistente (versão integrada)
 // ============================================================
 (function() {
   var API_BASE = 'https://horus-production.up.railway.app';
