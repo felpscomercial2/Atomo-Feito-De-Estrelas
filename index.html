@@ -2,499 +2,566 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Átomo — Feito de estrelas.</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Átomo — Login</title>
 
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
-<!-- Fontes -->
+<!-- Google Fonts - Inter -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+/* =========================================================
+   ÁTOMO LIGHT — Tema Refinado para Login
+   ========================================================= */
 
-  :root {
-    --bg: #F1F4F9;
-    --bg-card: #FFFFFF;
-    --bg-sidebar: #FFFFFF;
-    --accent: #2563EB;
-    --accent-hover: #1D4ED8;
-    --accent-light: #EFF6FF;
-    --accent-glow: rgba(37, 99, 235, 0.15);
-    --text: #1E293B;
-    --text-muted: #64748B;
-    --text-light: #94A3B8;
-    --border: #E2E8F0;
-    --shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
-    --shadow-hover: 0 8px 32px rgba(0, 0, 0, 0.10);
-    --success: #16A34A;
-    --success-light: #F0FDF4;
-    --danger: #DC2626;
-    --danger-light: #FEF2F2;
-    --warning: #F59E0B;
-    --warning-light: #FFFBEB;
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: #F4F6FA;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* =========================================================
+   LOGIN CARD
+   ========================================================= */
+.login {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 24px;
+}
+
+.login-card {
+  background: #FFFFFF;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03), 0 1px 3px rgba(0, 0, 0, 0.02);
+  border: 1px solid #E9EDF2;
+  padding: 40px 36px;
+  width: 100%;
+  max-width: 380px;
+  text-align: center;
+}
+
+/* Logo */
+.logo-icon {
+  margin-bottom: 8px;
+}
+
+.logo-icon svg {
+  width: 80px;
+  height: 80px;
+}
+
+.login-title {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #1E293B;
+  margin-bottom: 2px;
+}
+
+.login-subtitle {
+  font-size: 13px;
+  color: #94A3B8;
+  font-weight: 500;
+  letter-spacing: 1px;
+  margin-bottom: 28px;
+}
+
+/* Inputs */
+.input-group {
+  margin-bottom: 14px;
+  text-align: left;
+}
+
+.input-group label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 5px;
+  letter-spacing: 0.3px;
+}
+
+.input-group input {
+  width: 100%;
+  padding: 10px 14px;
+  background: #FFFFFF;
+  border: 1px solid #D1D5DB;
+  border-radius: 8px;
+  color: #1E293B;
+  font-size: 14px;
+  font-family: 'Inter', sans-serif;
+  outline: none;
+  transition: border 0.15s ease, box-shadow 0.15s ease;
+}
+
+.input-group input:focus {
+  border-color: #1D4ED8;
+  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.1);
+  outline: none;
+}
+
+.input-group input::placeholder {
+  color: #94A3B8;
+}
+
+/* Botões */
+.btn {
+  width: 100%;
+  padding: 11px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  font-family: 'Inter', sans-serif;
+  transition: all 0.15s ease;
+  letter-spacing: 0.3px;
+}
+
+.btn-primary {
+  background: #1D4ED8;
+  color: #FFFFFF;
+  margin-top: 4px;
+}
+
+.btn-primary:hover {
+  background: #2563EB;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(29, 78, 216, 0.25);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-secondary {
+  background: #FFFFFF;
+  color: #475569;
+  border: 1px solid #E9EDF2;
+  margin-top: 8px;
+}
+
+.btn-secondary:hover {
+  background: #F8FAFC;
+  border-color: #CBD5E1;
+}
+
+.btn-admin {
+  background: #F1F5F9;
+  color: #64748B;
+  border: 1px solid #E9EDF2;
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.btn-admin:hover {
+  background: #E9EDF2;
+  color: #1E293B;
+}
+
+/* Spinner dentro do botão */
+.btn-spinner {
+  display: none;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  margin-right: 8px;
+}
+
+.btn-primary.loading .btn-spinner {
+  display: inline-block;
+}
+
+.btn-primary.loading .btn-text {
+  display: inline;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Footer */
+.login-footer {
+  margin-top: 20px;
+  font-size: 11px;
+  color: #94A3B8;
+  letter-spacing: 0.5px;
+}
+
+.login-footer span {
+  color: #1D4ED8;
+  font-weight: 600;
+}
+
+/* Toast */
+#toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(50px);
+  padding: 12px 24px;
+  background: #1E293B;
+  color: #FFFFFF;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  opacity: 0;
+  transition: all 0.4s ease;
+  z-index: 9999;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  max-width: 90%;
+  text-align: center;
+}
+
+#toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* =========================================================
+   PAINEL ADMIN (quando logado como admin)
+   ========================================================= */
+.sidebar {
+  width: 220px;
+  background: #FFFFFF !important;
+  border-right: 1px solid #E9EDF2 !important;
+  box-shadow: 2px 0 12px rgba(0, 0, 0, 0.02) !important;
+  padding: 28px 14px !important;
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 100;
+}
+
+.sidebar-logo {
+  width: 100px;
+  margin-bottom: 4px;
+  filter: none !important;
+}
+
+.sidebar h2 {
+  color: #475569 !important;
+  font-size: 10px !important;
+  letter-spacing: 1.5px !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  background: none !important;
+  margin-bottom: 20px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 8px 12px;
+  background: #FFFFFF !important;
+  border: 1px solid #D1D5DB !important;
+  border-radius: 8px !important;
+  color: #1E293B !important;
+  font-size: 13px;
+  outline: none;
+  font-family: 'Inter', sans-serif;
+  margin-bottom: 12px;
+}
+
+.search-input:focus {
+  border-color: #1D4ED8 !important;
+  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.1) !important;
+}
+
+.search-input::placeholder {
+  color: #94A3B8 !important;
+}
+
+.btn-sidebar {
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 8px;
+  border: 1px solid #E9EDF2 !important;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  text-align: left;
+  transition: all 0.15s ease;
+  background: #FFFFFF !important;
+  color: #475569 !important;
+  font-family: 'Inter', sans-serif;
+}
+
+.btn-sidebar:hover {
+  background: #F8FAFC !important;
+  border-color: #CBD5E1 !important;
+  color: #1E293B !important;
+}
+
+.btn-inicio {
+  background: #EEF2FF !important;
+  color: #1D4ED8 !important;
+  border-color: #C7D2FE !important;
+}
+
+.btn-inicio:hover {
+  background: #E0E7FF !important;
+}
+
+.btn-logout-admin {
+  background: #FEF2F2 !important;
+  color: #DC2626 !important;
+  border-color: #FECACA !important;
+  margin-top: auto;
+}
+
+.btn-logout-admin:hover {
+  background: #FEE2E2 !important;
+}
+
+.main {
+  margin-left: 220px;
+  padding: 28px 32px;
+  background: #F4F6FA;
+  min-height: 100vh;
+}
+
+.main h2 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1E293B;
+  margin-bottom: 20px;
+}
+
+.counters {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.counter {
+  background: #FFFFFF;
+  border: 1px solid #E9EDF2;
+  border-radius: 12px;
+  padding: 18px 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+}
+
+.counter h3 {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1D4ED8;
+}
+
+.counter p {
+  font-size: 12px;
+  color: #94A3B8;
+  margin-top: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.user-card {
+  background: #FFFFFF;
+  border: 1px solid #E9EDF2;
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin: 6px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.15s ease;
+}
+
+.user-card:hover {
+  border-color: #CBD5E1;
+}
+
+.user-card p {
+  margin: 0;
+  font-size: 13px;
+  color: #1E293B;
+}
+
+.user-card .email {
+  font-weight: 600;
+}
+
+.status-aprovado {
+  color: #0B7C3C !important;
+  font-weight: 600;
+}
+.status-pendente {
+  color: #E98E0E !important;
+  font-weight: 600;
+}
+
+.btn-approve {
+  background: #F0FDF4 !important;
+  color: #0B7C3C !important;
+  border: 1px solid #86EFAC !important;
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  transition: all 0.15s ease;
+}
+
+.btn-approve:hover {
+  background: #DCFCE7 !important;
+}
+
+.btn-delete {
+  background: #FEF2F2 !important;
+  color: #DC2626 !important;
+  border: 1px solid #FECACA !important;
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  transition: all 0.15s ease;
+}
+
+.btn-delete:hover {
+  background: #FEE2E2 !important;
+}
+
+/* Scrollbar admin */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #F1F5F9;
+  border-radius: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 8px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+
+/* Responsivo */
+@media (max-width: 600px) {
+  .login-card {
+    padding: 28px 20px;
   }
-
-  body {
-    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  /* LOGIN */
-  .login {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    padding: 24px;
-  }
-
-  .card {
-    background: var(--bg-card);
-    padding: 48px 40px;
-    border-radius: 20px;
-    width: 100%;
-    max-width: 400px;
-    text-align: center;
-    border: 1px solid var(--border);
-    box-shadow: var(--shadow);
-    animation: fadeInUp 0.5s ease forwards;
-    opacity: 0;
-  }
-
-  @keyframes fadeInUp {
-    from { opacity: 0; transform: translateY(24px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  .logo {
-    width: 72px;
-    height: 72px;
-    margin: 0 auto 16px;
-    display: block;
-  }
-
-  .card h1 {
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 28px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    color: var(--text);
-  }
-
-  .card p {
-    color: var(--text-muted);
-    font-size: 13px;
-    letter-spacing: 2px;
-    margin-bottom: 28px;
-    margin-top: 2px;
-    font-weight: 500;
-  }
-
-  .card input {
-    width: 100%;
-    padding: 14px 16px;
-    margin: 6px 0;
-    border-radius: 12px;
-    border: 1px solid var(--border);
-    background: var(--bg);
-    color: var(--text);
-    font-size: 14px;
-    outline: none;
-    transition: all 0.2s;
-    font-family: 'DM Sans', sans-serif;
-  }
-
-  .card input::placeholder {
-    color: var(--text-light);
-  }
-
-  .card input:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px var(--accent-glow);
-  }
-
-  .btn {
-    width: 100%;
-    padding: 14px;
-    margin-top: 10px;
-    border-radius: 12px;
-    border: none;
-    cursor: pointer;
-    font-weight: 600;
-    font-size: 14px;
-    transition: all 0.2s;
-    letter-spacing: 0.3px;
-    font-family: 'DM Sans', sans-serif;
-  }
-
-  .btn-primary {
-    background: var(--accent);
-    color: #fff;
-    box-shadow: 0 4px 16px rgba(37, 99, 235, 0.25);
-  }
-
-  .btn-primary:hover {
-    background: var(--accent-hover);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 24px rgba(37, 99, 235, 0.35);
-  }
-
-  .btn-primary:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
-    transform: none !important;
-  }
-
-  .btn-secondary {
-    background: var(--bg);
-    color: var(--text);
-    border: 1px solid var(--border);
-  }
-
-  .btn-secondary:hover {
-    background: var(--accent-light);
-    border-color: var(--accent);
-  }
-
-  .btn-admin {
-    background: transparent;
-    color: var(--text-muted);
-    border: 1px solid var(--border);
-    margin-top: 6px;
-    font-size: 12px;
-  }
-
-  .btn-admin:hover {
-    background: var(--bg);
-    color: var(--text);
-  }
-
-  .card-footer {
-    margin-top: 20px;
-    color: var(--text-light);
-    font-size: 11px;
-    letter-spacing: 1px;
-  }
-
-  /* TOAST */
-  #toast {
-    position: fixed;
-    bottom: 24px;
-    right: 24px;
-    padding: 16px 24px;
-    background: var(--bg-card);
-    color: var(--text);
-    border-radius: 12px;
-    border: 1px solid var(--border);
-    box-shadow: var(--shadow-hover);
-    opacity: 0;
-    transform: translateY(20px);
-    transition: all 0.4s ease;
-    z-index: 9999;
-    font-size: 14px;
-    font-weight: 500;
-    max-width: 420px;
-  }
-
-  #toast.show {
-    opacity: 1;
-    transform: translateY(0);
-  }
-
-  /* ADMIN PANEL */
-  .admin-panel {
-    display: none;
-    width: 100%;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 32px 24px;
-    animation: fadeInUp 0.5s ease forwards;
-  }
-
-  .admin-panel.show {
-    display: block;
-  }
-
-  .admin-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 32px;
-    flex-wrap: wrap;
-    gap: 16px;
-  }
-
-  .admin-header h2 {
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 24px;
-    font-weight: 700;
-    color: var(--text);
-  }
-
-  .admin-header-actions {
-    display: flex;
-    gap: 12px;
-    align-items: center;
-    flex-wrap: wrap;
-  }
-
-  .admin-search {
-    min-width: 240px;
-    padding: 12px 16px;
-    border-radius: 12px;
-    border: 1px solid var(--border);
-    background: var(--bg);
-    color: var(--text);
-    font-size: 13px;
-    outline: none;
-    transition: all 0.2s;
-    font-family: 'DM Sans', sans-serif;
-  }
-
-  .admin-search:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px var(--accent-glow);
-  }
-
-  .admin-search::placeholder {
-    color: var(--text-light);
-  }
-
-  .btn-logout-admin {
-    padding: 10px 20px;
-    border-radius: 10px;
-    background: var(--danger-light);
-    color: var(--danger);
-    border: 1px solid #FECACA;
-    cursor: pointer;
-    font-size: 13px;
-    font-weight: 600;
-    transition: all 0.2s;
-  }
-
-  .btn-logout-admin:hover {
-    background: #FEE2E2;
-  }
-
   .counters {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
-    margin-bottom: 24px;
+    grid-template-columns: 1fr;
   }
-
-  .counter {
-    background: var(--bg-card);
-    padding: 20px 24px;
-    border-radius: 14px;
-    border: 1px solid var(--border);
-    text-align: center;
-    box-shadow: var(--shadow);
+  .main {
+    margin-left: 0 !important;
+    padding: 16px !important;
   }
-
-  .counter h3 {
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 32px;
-    font-weight: 700;
-    color: var(--accent);
-    line-height: 1.2;
+  .sidebar {
+    width: 100% !important;
+    position: relative !important;
+    height: auto !important;
   }
-
-  .counter p {
-    color: var(--text-muted);
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-top: 4px;
-  }
-
-  .user-card {
-    background: var(--bg-card);
-    padding: 16px 20px;
-    margin: 8px 0;
-    border-radius: 12px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border: 1px solid var(--border);
-    transition: all 0.2s;
-    box-shadow: var(--shadow);
-  }
-
-  .user-card:hover {
-    border-color: var(--accent);
-    box-shadow: var(--shadow-hover);
-  }
-
-  .user-card .email {
-    font-weight: 600;
-    color: var(--text);
-  }
-
-  .user-card .status {
-    font-size: 12px;
-    font-weight: 600;
-    padding: 4px 12px;
-    border-radius: 20px;
-    display: inline-block;
-  }
-
-  .status-pendente {
-    background: var(--warning-light);
-    color: var(--warning);
-  }
-
-  .status-aprovado {
-    background: var(--success-light);
-    color: var(--success);
-  }
-
-  .user-actions {
-    display: flex;
-    gap: 8px;
-  }
-
-  .btn-approve {
-    padding: 8px 16px;
-    border-radius: 8px;
-    border: none;
-    background: var(--success-light);
-    color: var(--success);
-    font-weight: 600;
-    font-size: 12px;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-
-  .btn-approve:hover {
-    background: #DCFCE7;
-  }
-
-  .btn-delete {
-    padding: 8px 16px;
-    border-radius: 8px;
-    border: none;
-    background: var(--danger-light);
-    color: var(--danger);
-    font-weight: 600;
-    font-size: 12px;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-
-  .btn-delete:hover {
-    background: #FEE2E2;
-  }
-
-  .no-data {
-    text-align: center;
-    padding: 48px 24px;
-    color: var(--text-muted);
-  }
-
-  /* SCROLLBAR */
-  ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-
-  ::-webkit-scrollbar-track {
-    background: var(--bg);
-  }
-
-  ::-webkit-scrollbar-thumb {
-    background: #CBD5E1;
-    border-radius: 3px;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    background: #94A3B8;
-  }
-
-  /* RESPONSIVE */
-  @media (max-width: 768px) {
-    .card {
-      padding: 32px 24px;
-    }
-
-    .counters {
-      grid-template-columns: 1fr;
-    }
-
-    .admin-header {
-      flex-direction: column;
-      align-items: stretch;
-    }
-
-    .admin-header-actions {
-      flex-direction: column;
-      align-items: stretch;
-    }
-
-    .admin-search {
-      min-width: unset;
-    }
-
-    .user-card {
-      flex-direction: column;
-      align-items: stretch;
-      gap: 12px;
-    }
-
-    .user-actions {
-      justify-content: flex-start;
-    }
-  }
-
-  @media (max-width: 480px) {
-    .card {
-      padding: 24px 16px;
-    }
-
-    .card h1 {
-      font-size: 24px;
-    }
-  }
+}
 </style>
 </head>
 <body>
 
-<!-- LOGIN -->
+<!-- =========================================================
+   TELA DE LOGIN
+   ========================================================= -->
 <div class="login" id="loginScreen">
-  <div class="card">
-    <svg class="logo" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="40" cy="40" r="12" fill="#2563EB" opacity="0.15"/>
-      <circle cx="40" cy="40" r="8" fill="#2563EB"/>
-      <ellipse cx="40" cy="40" rx="34" ry="12" fill="none" stroke="#2563EB" stroke-width="1.5" opacity="0.3"/>
-      <ellipse cx="40" cy="40" rx="34" ry="12" fill="none" stroke="#3B82F6" stroke-width="1.5" opacity="0.2" transform="rotate(60,40,40)"/>
-      <ellipse cx="40" cy="40" rx="34" ry="12" fill="none" stroke="#60A5FA" stroke-width="1.5" opacity="0.15" transform="rotate(120,40,40)"/>
-    </svg>
-    <h1>Átomo</h1>
-    <p>Feito de estrelas.</p>
-    <input id="email" placeholder="Email" type="email" autofocus>
-    <input id="password" type="password" placeholder="Senha">
-    <button class="btn btn-primary" id="loginBtn">Entrar</button>
+  <div class="login-card">
+    <!-- Logo -->
+    <div class="logo-icon">
+      <svg width="80" height="80" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="logoGrad" cx="35%" cy="35%">
+            <stop offset="0%" stop-color="#60A5FA"/>
+            <stop offset="50%" stop-color="#1D4ED8"/>
+            <stop offset="100%" stop-color="#1E3A8A"/>
+          </radialGradient>
+          <filter id="logof">
+            <feGaussianBlur stdDeviation="1.5" result="b"/>
+            <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+        <circle cx="40" cy="40" r="10" fill="url(#logoGrad)" filter="url(#logof)"/>
+        <ellipse cx="40" cy="40" rx="34" ry="12" fill="none" stroke="#60A5FA" stroke-width="1.5" opacity="0.85"/>
+        <ellipse cx="40" cy="40" rx="34" ry="12" fill="none" stroke="#3B82F6" stroke-width="1.5" opacity="0.75" transform="rotate(60,40,40)"/>
+        <ellipse cx="40" cy="40" rx="34" ry="12" fill="none" stroke="#1D4ED8" stroke-width="1.5" opacity="0.6" transform="rotate(120,40,40)"/>
+        <circle cx="74" cy="40" r="4" fill="#60A5FA"/>
+        <circle cx="26" cy="22" r="3" fill="#3B82F6"/>
+        <circle cx="58" cy="58" r="3" fill="#1D4ED8"/>
+      </svg>
+    </div>
+
+    <div class="login-title">Átomo</div>
+    <div class="login-subtitle">Feito de estrelas.</div>
+
+    <!-- Email -->
+    <div class="input-group">
+      <label>E-mail</label>
+      <input id="email" type="email" placeholder="seu@email.com">
+    </div>
+
+    <!-- Senha -->
+    <div class="input-group">
+      <label>Senha</label>
+      <input id="password" type="password" placeholder="••••••••">
+    </div>
+
+    <!-- Botão Entrar -->
+    <button class="btn btn-primary" id="loginBtn">
+      <span class="btn-spinner"></span>
+      <span class="btn-text">Entrar</span>
+    </button>
+
+    <!-- Botão Criar Conta -->
     <button class="btn btn-secondary" id="registerBtn">Criar conta</button>
+
+    <!-- Botão Admin -->
     <button class="btn btn-admin" id="adminBtn">⚙ Acesso Admin</button>
-    <div class="card-footer">Átomo — Feito de estrelas ✦</div>
+
+    <div class="login-footer">
+      Átomo — <span>Feito de estrelas</span> ✦
+    </div>
   </div>
 </div>
 
+<!-- Toast -->
 <div id="toast"></div>
 
 <script>
-const LOGO_B64 = "data:image/png;base64,";
-
+// ============================================================
+// FIREBASE CONFIG
+// ============================================================
 const firebaseConfig = {
   apiKey: "AIzaSyDs1wyLdmz4_2DSt8FXSw-apIeEi0kwzZ4",
   authDomain: "horus-bf93b.firebaseapp.com",
@@ -505,31 +572,41 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
-const db = firebase.firestore();
+const db   = firebase.firestore();
 
-function showToast(msg) {
+const LOGO_B64 = "data:image/png;base64,";
+
+// ============================================================
+// TOAST
+// ============================================================
+function showToast(msg, isError) {
   const toast = document.getElementById('toast');
-  toast.innerText = msg;
+  if (!toast) return;
+  toast.textContent = msg;
   toast.className = 'show';
+  if (isError) {
+    toast.style.background = '#991B1B';
+  } else {
+    toast.style.background = '#1E293B';
+  }
   clearTimeout(toast._timeout);
-  toast._timeout = setTimeout(() => { toast.className = ''; }, 3000);
+  toast._timeout = setTimeout(() => { toast.className = ''; }, 3500);
 }
 
 // ============================================================
-// FUNÇÃO DE LOGIN (reutilizada pelo clique e pelo Enter)
+// LOGIN NORMAL
 // ============================================================
-function realizarLogin() {
+document.getElementById('loginBtn').onclick = function() {
   const btn = document.getElementById('loginBtn');
-  const email = document.getElementById('email').value;
+  const email = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value;
 
-  // Validação básica
   if (!email || !password) {
-    showToast("❌ Preencha email e senha.");
+    showToast('❌ Preencha e-mail e senha.', true);
     return;
   }
 
-  btn.textContent = 'Entrando...';
+  btn.classList.add('loading');
   btn.disabled = true;
 
   auth.signInWithEmailAndPassword(email, password)
@@ -538,114 +615,139 @@ function realizarLogin() {
       window.location.href = 'home.html';
     })
     .catch(err => {
-      btn.textContent = 'Entrar';
+      btn.classList.remove('loading');
       btn.disabled = false;
-      showToast("❌ Erro no login: " + err.message);
+      let msg = err.message;
+      if (err.code === 'auth/user-not-found') msg = 'Usuário não encontrado.';
+      if (err.code === 'auth/wrong-password') msg = 'Senha incorreta.';
+      if (err.code === 'auth/invalid-email') msg = 'E-mail inválido.';
+      showToast('❌ ' + msg, true);
     });
-}
-
-// ============================================================
-// EVENTO DE CLIQUE NO BOTÃO "ENTRAR"
-// ============================================================
-document.getElementById("loginBtn").onclick = realizarLogin;
-
-// ============================================================
-// EVENTO DE TECLA "ENTER" NOS CAMPOS EMAIL E SENHA
-// ============================================================
-document.getElementById("email").addEventListener("keydown", function(e) {
-  if (e.key === "Enter") {
-    e.preventDefault();
-    document.getElementById("password").focus();
-  }
-});
-
-document.getElementById("password").addEventListener("keydown", function(e) {
-  if (e.key === "Enter") {
-    e.preventDefault();
-    realizarLogin();
-  }
-});
-
-// ============================================================
-// REGISTER
-// ============================================================
-document.getElementById("registerBtn").onclick = function() {
-  const email = document.getElementById('email').value;
-  const password = document.getElementById('password').value;
-  if (!email || !password) {
-    showToast("❌ Preencha email e senha.");
-    return;
-  }
-  db.collection("pedidos").add({ email, password, status: "pendente" })
-    .then(() => showToast("✅ Pedido enviado! Aguarde aprovação."))
-    .catch(err => showToast("❌ Erro: " + err.message));
 };
 
 // ============================================================
-// ADMIN LOGIN
+// CRIAR CONTA
 // ============================================================
-document.getElementById("adminBtn").onclick = function() {
-  document.getElementById("loginScreen").innerHTML = `
-    <div class="card">
-      <svg class="logo" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="40" cy="40" r="12" fill="#2563EB" opacity="0.15"/>
-        <circle cx="40" cy="40" r="8" fill="#2563EB"/>
-        <ellipse cx="40" cy="40" rx="34" ry="12" fill="none" stroke="#2563EB" stroke-width="1.5" opacity="0.3"/>
-        <ellipse cx="40" cy="40" rx="34" ry="12" fill="none" stroke="#3B82F6" stroke-width="1.5" opacity="0.2" transform="rotate(60,40,40)"/>
-        <ellipse cx="40" cy="40" rx="34" ry="12" fill="none" stroke="#60A5FA" stroke-width="1.5" opacity="0.15" transform="rotate(120,40,40)"/>
-      </svg>
-      <h1>Átomo</h1>
-      <p>PAINEL ADMINISTRATIVO</p>
-      <input id="adminEmail" placeholder="Email Admin" type="email">
-      <input id="adminPassword" type="password" placeholder="Senha Admin">
+document.getElementById('registerBtn').onclick = function() {
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+
+  if (!email || !password) {
+    showToast('❌ Preencha e-mail e senha.', true);
+    return;
+  }
+
+  db.collection("pedidos").add({
+    email: email,
+    password: password,
+    status: "pendente",
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  })
+  .then(() => {
+    showToast('✅ Pedido enviado! Aguarde aprovação do administrador.');
+    document.getElementById('email').value = '';
+    document.getElementById('password').value = '';
+  })
+  .catch(err => {
+    showToast('❌ Erro ao enviar pedido: ' + err.message, true);
+  });
+};
+
+// ============================================================
+// LOGIN ADMIN
+// ============================================================
+document.getElementById('adminBtn').onclick = function() {
+  document.getElementById('loginScreen').innerHTML = `
+    <div class="login-card">
+      <div class="logo-icon">
+        <svg width="80" height="80" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="logoGrad2" cx="35%" cy="35%">
+              <stop offset="0%" stop-color="#60A5FA"/>
+              <stop offset="50%" stop-color="#1D4ED8"/>
+              <stop offset="100%" stop-color="#1E3A8A"/>
+            </radialGradient>
+            <filter id="logof2">
+              <feGaussianBlur stdDeviation="1.5" result="b"/>
+              <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+          <circle cx="40" cy="40" r="10" fill="url(#logoGrad2)" filter="url(#logof2)"/>
+          <ellipse cx="40" cy="40" rx="34" ry="12" fill="none" stroke="#60A5FA" stroke-width="1.5" opacity="0.85"/>
+          <ellipse cx="40" cy="40" rx="34" ry="12" fill="none" stroke="#3B82F6" stroke-width="1.5" opacity="0.75" transform="rotate(60,40,40)"/>
+          <ellipse cx="40" cy="40" rx="34" ry="12" fill="none" stroke="#1D4ED8" stroke-width="1.5" opacity="0.6" transform="rotate(120,40,40)"/>
+          <circle cx="74" cy="40" r="4" fill="#60A5FA"/>
+          <circle cx="26" cy="22" r="3" fill="#3B82F6"/>
+          <circle cx="58" cy="58" r="3" fill="#1D4ED8"/>
+        </svg>
+      </div>
+      <div class="login-title">Átomo</div>
+      <div class="login-subtitle">PAINEL ADMINISTRATIVO</div>
+
+      <div class="input-group">
+        <label>E-mail Admin</label>
+        <input id="adminEmail" type="email" placeholder="admin@horus.com">
+      </div>
+      <div class="input-group">
+        <label>Senha Admin</label>
+        <input id="adminPassword" type="password" placeholder="••••••••">
+      </div>
+
       <button class="btn btn-primary" id="adminLoginBtn">Entrar</button>
-      <button class="btn btn-secondary" onclick="location.reload()">↩ Voltar</button>
+      <button class="btn btn-secondary" onclick="location.reload()">← Voltar</button>
     </div>
   `;
 
-  // Também adiciona Enter para o login admin
-  document.getElementById("adminEmail").addEventListener("keydown", function(e) {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      document.getElementById("adminPassword").focus();
-    }
-  });
-
-  document.getElementById("adminPassword").addEventListener("keydown", function(e) {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      document.getElementById("adminLoginBtn").click();
-    }
-  });
-
-  document.getElementById("adminLoginBtn").onclick = function() {
-    const email = document.getElementById('adminEmail').value;
+  document.getElementById('adminLoginBtn').onclick = function() {
+    const email = document.getElementById('adminEmail').value.trim();
     const password = document.getElementById('adminPassword').value;
+
     if (email === "admin@horus.com" && password === "Admin123!") {
       abrirPainel();
     } else {
-      showToast("❌ Credenciais incorretas!");
+      showToast('❌ Credenciais incorretas!', true);
     }
   };
 };
 
+// ============================================================
+// PAINEL ADMIN
+// ============================================================
 function abrirPainel() {
   document.body.innerHTML = `
-    <div class="admin-panel show">
-      <div class="admin-header">
-        <h2>👥 Gerenciamento de Usuários</h2>
-        <div class="admin-header-actions">
-          <input type="text" id="search" class="admin-search" placeholder="🔍 Buscar usuário...">
-          <button class="btn-logout-admin" onclick="window.location.href='index.html'">⏻ Sair</button>
-        </div>
-      </div>
-
+    <div class="sidebar">
+      <svg class="sidebar-logo" width="80" height="80" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="logoGrad3" cx="35%" cy="35%">
+            <stop offset="0%" stop-color="#60A5FA"/>
+            <stop offset="50%" stop-color="#1D4ED8"/>
+            <stop offset="100%" stop-color="#1E3A8A"/>
+          </radialGradient>
+          <filter id="logof3">
+            <feGaussianBlur stdDeviation="1.5" result="b"/>
+            <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+        <circle cx="40" cy="40" r="10" fill="url(#logoGrad3)" filter="url(#logof3)"/>
+        <ellipse cx="40" cy="40" rx="34" ry="12" fill="none" stroke="#60A5FA" stroke-width="1.5" opacity="0.85"/>
+        <ellipse cx="40" cy="40" rx="34" ry="12" fill="none" stroke="#3B82F6" stroke-width="1.5" opacity="0.75" transform="rotate(60,40,40)"/>
+        <ellipse cx="40" cy="40" rx="34" ry="12" fill="none" stroke="#1D4ED8" stroke-width="1.5" opacity="0.6" transform="rotate(120,40,40)"/>
+        <circle cx="74" cy="40" r="4" fill="#60A5FA"/>
+        <circle cx="26" cy="22" r="3" fill="#3B82F6"/>
+        <circle cx="58" cy="58" r="3" fill="#1D4ED8"/>
+      </svg>
+      <h2>ADMIN PANEL</h2>
+      <input type="text" id="search" class="search-input" placeholder="🔍 Buscar usuário...">
+      <button class="btn-sidebar btn-inicio" onclick="location.href='index.html'">🏠 Página Inicial</button>
+      <button class="btn-sidebar btn-logout-admin" onclick="location.href='index.html'">⏻ Sair</button>
+    </div>
+    <div class="main" id="mainContent">
+      <h2>👥 Gerenciamento de Usuários</h2>
       <div class="counters">
         <div class="counter" id="totalUsers"><h3>0</h3><p>Total</p></div>
         <div class="counter" id="approvedUsers"><h3>0</h3><p>Aprovados</p></div>
         <div class="counter" id="pendingUsers"><h3>0</h3><p>Pendentes</p></div>
       </div>
-
       <div id="usersList"></div>
     </div>
     <div id="toast"></div>
@@ -656,58 +758,70 @@ function abrirPainel() {
   loadUsers();
 }
 
+// ============================================================
+// LOAD USERS
+// ============================================================
 function loadUsers() {
-  const searchTerm = document.getElementById('search')?.value.toLowerCase() || '';
-  const usersList = document.getElementById('usersList');
+  const searchTerm = document.getElementById('search').value.toLowerCase();
+  const usersList  = document.getElementById('usersList');
   if (!usersList) return;
-
-  usersList.innerHTML = '';
+  usersList.innerHTML = "";
   let total = 0, aprovados = 0, pendentes = 0;
 
   db.collection("pedidos").get().then(snapshot => {
     snapshot.forEach(doc => {
       const data = doc.data();
-      if (!data.email.toLowerCase().includes(searchTerm)) return;
+      if (!data.email || !data.email.toLowerCase().includes(searchTerm)) return;
       total++;
       data.status === "aprovado" ? aprovados++ : pendentes++;
-
+      const statusClass = data.status === "aprovado" ? "status-aprovado" : "status-pendente";
       const div = document.createElement('div');
       div.className = "user-card";
       div.innerHTML = `
         <div>
-          <div class="email">${data.email}</div>
-          <span class="status ${data.status === 'aprovado' ? 'status-aprovado' : 'status-pendente'}">
-            ● ${data.status.charAt(0).toUpperCase() + data.status.slice(1)}
-          </span>
+          <p class="email">${data.email}</p>
+          <p class="${statusClass}">● ${data.status.charAt(0).toUpperCase() + data.status.slice(1)}</p>
         </div>
-        <div class="user-actions">
+        <div>
           ${data.status === "pendente" ? `<button class="btn-approve" onclick="aprovar('${doc.id}','${data.email}','${data.password}')">✓ Aprovar</button>` : ""}
           <button class="btn-delete" onclick="excluir('${doc.id}')">✕ Excluir</button>
         </div>
       `;
       usersList.appendChild(div);
     });
-
     document.getElementById('totalUsers').querySelector('h3').innerText = total;
     document.getElementById('approvedUsers').querySelector('h3').innerText = aprovados;
     document.getElementById('pendingUsers').querySelector('h3').innerText = pendentes;
   });
 }
 
+// ============================================================
+// APROVAR / EXCLUIR
+// ============================================================
 function aprovar(id, email, password) {
   auth.createUserWithEmailAndPassword(email, password)
     .then(() => db.collection("pedidos").doc(id).update({ status: "aprovado" }))
     .then(() => showToast("✅ " + email + " aprovado!"))
-    .catch(err => showToast("❌ Erro: " + err.message));
+    .catch(err => showToast("❌ Erro: " + err.message, true));
 }
 
 function excluir(id) {
   if (confirm("Deseja realmente excluir este usuário?")) {
     db.collection("pedidos").doc(id).delete()
-      .then(() => showToast("🗑 Usuário excluído!"));
+      .then(() => showToast("🗑 Usuário excluído!"))
+      .catch(err => showToast("❌ Erro: " + err.message, true));
   }
 }
-</script>
 
+// ============================================================
+// ENTER PARA LOGIN
+// ============================================================
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') {
+    const btn = document.getElementById('loginBtn');
+    if (btn) btn.click();
+  }
+});
+</script>
 </body>
 </html>
