@@ -4,111 +4,104 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Átomo — Portal</title>
+
+<!-- Google Fonts - Inter -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
+/* =========================================================
+   ÁTOMO LIGHT — Tema Refinado e de Alta Classe
+   ========================================================= */
 
 :root {
-  --bg: #F1F4F9;
+  --bg-body: #F4F6FA;
   --bg-card: #FFFFFF;
   --bg-sidebar: #FFFFFF;
-  --accent: #2563EB;
-  --accent-hover: #1D4ED8;
-  --accent-light: #EFF6FF;
-  --accent-glow: rgba(37, 99, 235, 0.15);
-  --text: #1E293B;
-  --text-muted: #64748B;
-  --text-light: #94A3B8;
-  --border: #E2E8F0;
-  --shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
-  --shadow-hover: 0 8px 32px rgba(0, 0, 0, 0.10);
-  --success: #16A34A;
-  --success-light: #F0FDF4;
-  --danger: #DC2626;
-  --danger-light: #FEF2F2;
-  --warning: #F59E0B;
-  --warning-light: #FFFBEB;
+  --text-primary: #1E293B;
+  --text-secondary: #475569;
+  --text-muted: #94A3B8;
+  --border-light: #E9EDF2;
+  --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.03), 0 1px 3px rgba(0, 0, 0, 0.02);
+  --shadow-dropdown: 0 10px 40px rgba(0, 0, 0, 0.08);
+  --accent-primary: #1D4ED8;
+  --accent-primary-hover: #2563EB;
+  --accent-secondary: #3B82F6;
+  --color-success: #0B7C3C;
+  --color-danger: #DC2626;
+  --color-warning: #E98E0E;
+  --color-sl: #4F46E5;
+  --radius-default: 12px;
+  --radius-sm: 8px;
+  --radius-lg: 16px;
 }
 
-body {
-  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  display: flex;
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  text-shadow: none !important;
+  box-shadow: none !important;
+}
+
+html, body {
+  background: var(--bg-body) !important;
+  color: var(--text-primary) !important;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.6 !important;
   min-height: 100vh;
 }
 
-/* ============================================================
-   SIDEBAR — COM SCROLL
-   ============================================================ */
+/* =========================================================
+   SIDEBAR
+   ========================================================= */
 .sidebar {
   width: 220px;
-  background: var(--bg-sidebar);
+  background: var(--bg-card) !important;
+  border-right: 1px solid var(--border-light) !important;
+  box-shadow: 2px 0 12px rgba(0, 0, 0, 0.02) !important;
+  padding: 28px 14px !important;
   position: fixed;
   top: 0;
   left: 0;
   height: 100vh;
   display: flex;
   flex-direction: column;
-  padding: 24px 12px 16px;
-  border-right: 1px solid var(--border);
+  align-items: center;
   z-index: 100;
-  transition: transform 0.3s ease;
-  box-shadow: 2px 0 16px rgba(0, 0, 0, 0.04);
-}
-
-/* ÁREA DE SCROLL DA SIDEBAR */
-.sidebar-scroll {
-  flex: 1;
+  transition: transform 0.3s ease !important;
   overflow-y: auto;
-  overflow-x: hidden;
-  padding-right: 4px;
-  margin-right: -4px;
-}
-
-.sidebar-scroll::-webkit-scrollbar {
-  width: 4px;
-}
-
-.sidebar-scroll::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.sidebar-scroll::-webkit-scrollbar-thumb {
-  background: #CBD5E1;
-  border-radius: 4px;
-}
-
-.sidebar-scroll::-webkit-scrollbar-thumb:hover {
-  background: #94A3B8;
 }
 
 .sidebar-logo {
-  width: 90px;
-  margin: 0 auto 4px;
-  display: block;
-  flex-shrink: 0;
+  width: 100px;
+  margin-bottom: 4px;
+  filter: none !important;
+  animation: none !important;
 }
 
 .sidebar-title {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 11px;
-  letter-spacing: 4px;
-  color: var(--text-muted);
-  margin-bottom: 24px;
-  text-align: center;
-  font-weight: 600;
-  flex-shrink: 0;
+  color: var(--text-secondary) !important;
+  font-size: 11px !important;
+  letter-spacing: 1.5px !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  background: none !important;
+  -webkit-text-fill-color: var(--text-secondary) !important;
+  margin-bottom: 28px;
 }
 
 .nav-section {
   width: 100%;
   font-size: 10px;
   letter-spacing: 1px;
-  color: var(--text-light);
+  color: var(--text-muted) !important;
   text-transform: uppercase;
   padding: 0 8px;
-  margin: 8px 0 4px 0;
-  font-weight: 600;
+  margin-bottom: 6px;
 }
 
 .nav-item {
@@ -116,111 +109,115 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  cursor: pointer;
-  font-size: 13px;
-  color: var(--text-muted);
-  transition: all 0.2s;
-  border: 1px solid transparent;
+  padding: 10px 14px !important;
+  border-radius: var(--radius-sm) !important;
+  margin-bottom: 3px !important;
+  font-weight: 500 !important;
+  font-size: 14px !important;
+  color: var(--text-secondary) !important;
   text-decoration: none;
-  margin-bottom: 2px;
+  transition: all 0.15s ease !important;
+  border: 1px solid transparent !important;
 }
 
 .nav-item:hover {
-  background: var(--accent-light);
-  color: var(--text);
-  border-color: var(--border);
+  background: #F1F5F9 !important;
+  color: var(--text-primary) !important;
+  border-color: transparent !important;
 }
 
 .nav-item.active {
-  background: var(--accent-light);
-  color: var(--accent);
-  border-color: var(--accent);
-  font-weight: 600;
+  background: #EEF2FF !important;
+  color: var(--accent-primary) !important;
+  border-left: 3px solid var(--accent-primary) !important;
+  border-color: transparent !important;
+  font-weight: 600 !important;
 }
 
 .nav-item .icon {
   font-size: 16px;
   width: 20px;
   text-align: center;
-  flex-shrink: 0;
 }
 
 .sidebar-divider {
   width: 100%;
   height: 1px;
-  background: var(--border);
-  margin: 12px 0;
-  flex-shrink: 0;
+  background: var(--border-light) !important;
+  margin: 16px 0;
 }
 
 .btn-logout {
+  margin-top: auto;
   width: 100%;
   padding: 10px;
-  border-radius: 10px;
-  background: var(--danger-light);
-  color: var(--danger);
-  border: 1px solid #FECACA;
+  border-radius: var(--radius-sm);
+  background: #FEF2F2 !important;
+  color: var(--color-danger) !important;
+  border: 1px solid #FECACA !important;
   cursor: pointer;
   font-size: 13px;
   font-weight: 600;
-  transition: all 0.2s;
-  margin-top: 8px;
-  flex-shrink: 0;
+  transition: all 0.15s ease;
+  font-family: 'Inter', sans-serif;
 }
 
 .btn-logout:hover {
-  background: #FEE2E2;
+  background: #FEE2E2 !important;
 }
 
-/* ============================================================
-   MAIN
-   ============================================================ */
+/* =========================================================
+   ÁREA PRINCIPAL
+   ========================================================= */
 .main {
   margin-left: 220px;
   flex: 1;
-  padding: 32px;
+  padding: 32px 36px !important;
+  background: var(--bg-body) !important;
+  color: var(--text-primary) !important;
   min-height: 100vh;
 }
 
-/* HEADER */
+/* =========================================================
+   HEADER
+   ========================================================= */
 .header {
   margin-bottom: 32px;
 }
 
 .header h1 {
-  font-family: 'Space Grotesk', sans-serif;
   font-size: 24px;
-  font-weight: 700;
-  color: var(--text);
+  font-weight: 600 !important;
+  color: var(--text-primary) !important;
+  letter-spacing: -0.02em !important;
 }
 
 .header p {
   font-size: 14px;
-  color: var(--text-muted);
+  color: var(--text-secondary) !important;
   margin-top: 4px;
 }
 
-/* FILTROS CARD */
+/* =========================================================
+   FILTROS CARD
+   ========================================================= */
 .filtros-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 28px 32px;
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-light) !important;
+  border-radius: var(--radius-default) !important;
+  box-shadow: var(--shadow-card) !important;
+  padding: 28px;
   margin-bottom: 32px;
-  box-shadow: var(--shadow);
 }
 
 .filtros-titulo {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
+  color: var(--text-primary);
   margin-bottom: 20px;
   display: flex;
   align-items: center;
   gap: 8px;
-  color: var(--text);
 }
 
 .filtros-grid {
@@ -234,38 +231,39 @@ body {
   display: block;
   font-size: 11px;
   text-transform: uppercase;
-  letter-spacing: 1px;
-  color: var(--text-muted);
-  margin-bottom: 6px;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary) !important;
   font-weight: 600;
+  margin-bottom: 6px;
 }
 
 .filtro-select {
   width: 100%;
-  padding: 10px 14px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  color: var(--text);
-  font-size: 13px;
+  padding: 9px 14px;
+  background: #FFFFFF !important;
+  border: 1px solid #D1D5DB !important;
+  border-radius: var(--radius-sm) !important;
+  color: var(--text-primary) !important;
+  font-size: 14px;
   outline: none;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: border 0.15s ease, box-shadow 0.15s ease !important;
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748B' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23475569' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 12px center;
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
 }
 
 .filtro-select:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-glow);
+  border-color: var(--accent-primary) !important;
+  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.1) !important;
+  outline: none !important;
 }
 
 .filtro-select option {
-  background: var(--bg-card);
-  color: var(--text);
+  background: #FFFFFF !important;
+  color: var(--text-primary) !important;
 }
 
 .filtros-actions {
@@ -273,76 +271,57 @@ body {
   gap: 12px;
   justify-content: flex-end;
   padding-top: 16px;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--border-light);
 }
 
 .btn-limpar {
   padding: 10px 20px;
-  border-radius: 10px;
-  background: transparent;
-  color: var(--text-muted);
-  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: #FFFFFF !important;
+  color: var(--text-secondary) !important;
+  border: 1px solid var(--border-light) !important;
   cursor: pointer;
   font-size: 13px;
   font-weight: 500;
-  transition: all 0.2s;
-  font-family: 'DM Sans', sans-serif;
+  transition: all 0.15s ease !important;
+  font-family: 'Inter', sans-serif;
 }
 
 .btn-limpar:hover {
-  border-color: var(--text-muted);
-  color: var(--text);
+  background: #F8FAFC !important;
+  color: var(--text-primary) !important;
+  border-color: #CBD5E1 !important;
 }
 
 .btn-aplicar {
   padding: 10px 28px;
-  border-radius: 10px;
-  background: var(--accent);
-  color: #fff;
-  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--accent-primary) !important;
+  border: 1px solid var(--accent-primary) !important;
+  color: #FFFFFF !important;
   cursor: pointer;
   font-size: 13px;
   font-weight: 600;
-  transition: all 0.2s;
-  font-family: 'DM Sans', sans-serif;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.25);
+  transition: all 0.15s ease !important;
+  font-family: 'Inter', sans-serif;
 }
 
 .btn-aplicar:hover {
-  background: var(--accent-hover);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 24px rgba(37, 99, 235, 0.35);
+  background: var(--accent-primary-hover) !important;
+  border-color: var(--accent-primary-hover) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(29, 78, 216, 0.25) !important;
 }
 
-.btn-aplicar.loading {
-  opacity: 0.7;
+.btn-aplicar:disabled {
+  opacity: 0.6;
   cursor: not-allowed;
-  pointer-events: none;
+  transform: none !important;
 }
 
-.btn-spinner {
-  display: none;
-  width: 14px;
-  height: 14px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top-color: #fff;
-  border-radius: 50%;
-  animation: spin 0.7s linear infinite;
-  flex-shrink: 0;
-}
-
-.btn-aplicar.loading .btn-spinner {
-  display: block;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-/* FILTROS ATIVOS */
+/* =========================================================
+   TAGS ATIVAS
+   ========================================================= */
 .filtros-ativos {
   display: flex;
   flex-wrap: wrap;
@@ -355,76 +334,33 @@ body {
   display: flex;
   align-items: center;
   gap: 6px;
-  background: var(--accent-light);
-  border: 1px solid var(--border);
+  background: #EEF2FF !important;
+  border: 1px solid #C7D2FE !important;
   border-radius: 20px;
   padding: 4px 12px;
   font-size: 12px;
-  color: var(--accent);
+  color: var(--accent-primary) !important;
   font-weight: 500;
 }
 
 .filtro-tag button {
   background: none;
   border: none;
-  color: var(--text-muted);
+  color: var(--accent-primary) !important;
   cursor: pointer;
   font-size: 14px;
   line-height: 1;
   padding: 0;
   opacity: 0.6;
-  transition: opacity 0.2s;
 }
 
 .filtro-tag button:hover {
   opacity: 1;
 }
 
-/* ALERTS */
-.alerts-section {
-  margin-bottom: 24px;
-}
-
-.alert-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 18px;
-  border-radius: 12px;
-  margin-bottom: 8px;
-  font-size: 13px;
-  border-left: 4px solid;
-  background: var(--bg-card);
-  box-shadow: var(--shadow);
-}
-
-.alert-item.warning {
-  border-color: var(--warning);
-  background: var(--warning-light);
-}
-
-.alert-item.danger {
-  border-color: var(--danger);
-  background: var(--danger-light);
-}
-
-.alert-item.info {
-  border-color: var(--accent);
-  background: var(--accent-light);
-}
-
-.alert-icon {
-  font-size: 16px;
-  flex-shrink: 0;
-}
-
-.alert-text {
-  flex: 1;
-  line-height: 1.5;
-  color: var(--text);
-}
-
-/* NAV CARDS */
+/* =========================================================
+   NAV CARDS
+   ========================================================= */
 .nav-cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -432,26 +368,26 @@ body {
 }
 
 .nav-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 14px;
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-light) !important;
+  border-radius: var(--radius-default) !important;
+  box-shadow: var(--shadow-card) !important;
   padding: 24px;
   text-align: center;
   cursor: pointer;
   text-decoration: none;
-  color: var(--text);
-  transition: all 0.25s;
+  color: var(--text-primary) !important;
+  transition: all 0.15s ease !important;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 12px;
-  box-shadow: var(--shadow);
 }
 
 .nav-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-hover);
-  border-color: var(--accent);
+  transform: translateY(-3px) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06) !important;
+  border-color: var(--accent-secondary) !important;
 }
 
 .nav-card .nav-icon {
@@ -465,33 +401,130 @@ body {
 
 .nav-card .nav-desc {
   font-size: 12px;
-  color: var(--text-muted);
+  color: var(--text-secondary) !important;
 }
 
-/* NAV-CARD ACCENT COLORS */
-.nav-card[href="visao-geral.html"] { border-top: 3px solid var(--accent); }
-.nav-card[href="visao-geral.html"]:hover { border-color: var(--accent); }
-.nav-card[href="vendedor.html"] { border-top: 3px solid #0D9488; }
-.nav-card[href="vendedor.html"]:hover { border-color: #0D9488; }
-.nav-card[href="regiao.html"] { border-top: 3px solid #EA580C; }
-.nav-card[href="regiao.html"]:hover { border-color: #EA580C; }
-.nav-card[href="marcas.html"] { border-top: 3px solid #D97706; }
-.nav-card[href="marcas.html"]:hover { border-color: #D97706; }
-.nav-card[href="produtos.html"] { border-top: 3px solid #DB2777; }
-.nav-card[href="produtos.html"]:hover { border-color: #DB2777; }
+/* Accent borders */
+.nav-card[href="visao-geral.html"] { border-top: 3px solid var(--accent-primary); }
+.nav-card[href="vendedor.html"] { border-top: 3px solid var(--color-success); }
+.nav-card[href="regiao.html"] { border-top: 3px solid var(--color-warning); }
+.nav-card[href="marcas.html"] { border-top: 3px solid #B45309; }
+.nav-card[href="produtos.html"] { border-top: 3px solid #BE185D; }
 
-/* FOOTER */
+/* =========================================================
+   FOOTER
+   ========================================================= */
 .dashboard-footer {
   margin-top: 48px;
   padding: 20px 0 8px;
   text-align: center;
   font-size: 12px;
-  color: var(--text-muted);
-  border-top: 1px solid var(--border);
+  color: var(--text-muted) !important;
+  border-top: 1px solid var(--border-light);
   letter-spacing: 0.5px;
 }
 
-/* HAMBURGER + MOBILE */
+/* =========================================================
+   LOADING
+   ========================================================= */
+.loading-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(244, 246, 250, 0.92) !important;
+  z-index: 9999;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 16px;
+  backdrop-filter: blur(4px);
+}
+
+.loading-overlay.show {
+  display: flex;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #E9EDF2;
+  border-top-color: var(--accent-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.loading-overlay span {
+  color: var(--text-secondary) !important;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* =========================================================
+   ALERTS
+   ========================================================= */
+.alerts-section {
+  margin-bottom: 24px;
+}
+
+.alert-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 8px;
+  font-size: 13px;
+  border-left: 3px solid;
+}
+
+.alert-item.warning {
+  background: #FFFBEB !important;
+  border-color: var(--color-warning);
+  color: #78350F;
+}
+
+.alert-item.danger {
+  background: #FEF2F2 !important;
+  border-color: var(--color-danger);
+  color: #991B1B;
+}
+
+.alert-item.info {
+  background: #EEF2FF !important;
+  border-color: var(--accent-primary);
+  color: #1E3A8A;
+}
+
+.alert-icon { font-size: 16px; flex-shrink: 0; }
+.alert-text { flex: 1; line-height: 1.4; }
+
+/* =========================================================
+   SCROLLBAR
+   ========================================================= */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #F1F5F9;
+  border-radius: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 8px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+
+/* =========================================================
+   HAMBURGER + MOBILE
+   ========================================================= */
 .hamburger {
   display: none;
   position: fixed;
@@ -499,8 +532,8 @@ body {
   left: 14px;
   z-index: 200;
   background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 10px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
   width: 40px;
   height: 40px;
   align-items: center;
@@ -509,13 +542,13 @@ body {
   flex-direction: column;
   gap: 5px;
   padding: 8px;
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow-card);
 }
 
 .hamburger span {
   width: 100%;
   height: 2px;
-  background: var(--text);
+  background: var(--text-secondary);
   border-radius: 2px;
   transition: all 0.3s;
 }
@@ -526,131 +559,452 @@ body {
   inset: 0;
   background: rgba(0, 0, 0, 0.3);
   z-index: 99;
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(2px);
 }
-
 .sidebar-overlay.show {
   display: block;
 }
 
-/* RESPONSIVE */
 @media (max-width: 768px) {
   .sidebar {
-    transform: translateX(-100%);
-    transition: transform 0.3s ease;
-    z-index: 150;
+    transform: translateX(-100%) !important;
+    transition: transform 0.3s ease !important;
   }
-
   .sidebar.open {
-    transform: translateX(0);
+    transform: translateX(0) !important;
   }
-
+  .hamburger {
+    display: flex;
+  }
   .main {
     margin-left: 0 !important;
     padding: 20px 16px 16px !important;
   }
-
-  .hamburger {
-    display: flex;
-  }
-
   .header {
-    margin-top: 56px;
+    margin-top: 52px;
   }
-
   .filtros-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
   }
-
-  .filtros-actions {
-    flex-direction: column;
-  }
-
-  .filtros-actions button {
-    width: 100%;
-  }
-
   .nav-cards {
     grid-template-columns: 1fr 1fr;
   }
 }
 
 @media (max-width: 480px) {
-  .filtros-card {
-    padding: 20px 16px;
+  .filtros-grid {
+    grid-template-columns: 1fr;
   }
-
   .nav-cards {
     grid-template-columns: 1fr;
   }
-
   .main {
     padding: 16px 12px !important;
   }
-
-  .header {
-    margin-top: 60px;
-  }
 }
 
-/* SCROLLBAR GLOBAL */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+/* =========================================================
+   VALTER — Tema Claro
+   ========================================================= */
+.ia-fab {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--accent-primary) !important;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(29, 78, 216, 0.3) !important;
+  z-index: 900;
+  transition: all 0.2s ease;
 }
 
-::-webkit-scrollbar-track {
-  background: var(--bg);
+.ia-fab:hover {
+  transform: scale(1.08);
+  box-shadow: 0 8px 24px rgba(29, 78, 216, 0.4) !important;
 }
 
-::-webkit-scrollbar-thumb {
-  background: #CBD5E1;
-  border-radius: 3px;
+.ia-fab.ia-pulsing {
+  animation: ia-pulse 2s infinite;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: #94A3B8;
+@keyframes ia-pulse {
+  0%, 100% { box-shadow: 0 4px 16px rgba(29, 78, 216, 0.3); }
+  50% { box-shadow: 0 4px 24px rgba(245, 168, 0, 0.4); }
 }
 
-/* LOADING OVERLAY */
-.loading-global {
+.ia-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: var(--color-danger);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 10px;
+  min-width: 18px;
+  text-align: center;
+  display: none;
+  z-index: 1;
+}
+
+.ia-overlay {
   display: none;
   position: fixed;
   inset: 0;
-  background: rgba(241, 244, 249, 0.92);
-  z-index: 9999;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 950;
   align-items: center;
   justify-content: center;
+  backdrop-filter: blur(4px);
+}
+.ia-overlay.open { display: flex; }
+
+.ia-panel {
+  position: relative;
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-light) !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow-dropdown) !important;
+  width: 560px;
+  max-width: 96vw;
+  height: 720px;
+  max-height: 93vh;
+  display: flex;
   flex-direction: column;
+  transform: scale(0.92) translateY(20px);
+  opacity: 0;
+  transition: transform 0.3s cubic-bezier(0.34, 1.4, 0.64, 1), opacity 0.25s ease;
+  overflow: hidden;
+}
+
+.ia-overlay.open .ia-panel {
+  transform: scale(1) translateY(0);
+  opacity: 1;
+}
+
+.ia-header {
+  padding: 18px 22px;
+  background: #F8FAFC !important;
+  border-bottom: 1px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+}
+
+.ia-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--accent-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ia-avatar svg circle:first-child { fill: var(--accent-primary) !important; }
+
+.ia-header-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary) !important;
+}
+
+.ia-header-status {
+  font-size: 12px;
+  color: var(--text-secondary) !important;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.ia-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-success);
+  flex-shrink: 0;
+}
+
+.ia-header-btn {
+  background: transparent !important;
+  border: 1px solid var(--border-light) !important;
+  color: var(--text-secondary) !important;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.ia-header-btn:hover {
+  background: #F1F5F9 !important;
+}
+
+.ia-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: var(--bg-body) !important;
+}
+
+.ia-msg {
+  max-width: 92%;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.ia-msg.bot { align-self: flex-start; }
+.ia-msg.user { align-self: flex-end; }
+
+.ia-msg-bubble {
+  padding: 12px 16px;
+  border-radius: var(--radius-default);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.ia-msg.bot .ia-msg-bubble {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-light) !important;
+  color: var(--text-primary) !important;
+  border-radius: 4px var(--radius-default) var(--radius-default) var(--radius-default);
+}
+
+.ia-msg.user .ia-msg-bubble {
+  background: var(--accent-primary) !important;
+  color: #FFFFFF !important;
+  border-radius: var(--radius-default) 4px var(--radius-default) var(--radius-default);
+}
+
+.ia-msg.bot .ia-msg-bubble strong { color: var(--accent-primary); }
+
+.ia-input-area {
+  padding: 12px 16px;
+  border-top: 1px solid var(--border-light);
+  display: flex;
+  gap: 10px;
+  flex-shrink: 0;
+  background: var(--bg-card) !important;
+}
+
+.ia-input {
+  flex: 1;
+  background: var(--bg-body) !important;
+  border: 1px solid var(--border-light) !important;
+  border-radius: 24px;
+  padding: 10px 18px;
+  color: var(--text-primary) !important;
+  font-size: 13px;
+  outline: none;
+  transition: all 0.15s ease;
+  font-family: 'Inter', sans-serif;
+}
+
+.ia-input:focus {
+  border-color: var(--accent-primary) !important;
+  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.1) !important;
+}
+
+.ia-send-btn {
+  background: var(--accent-primary) !important;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  color: #fff;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.ia-send-btn:hover {
+  background: var(--accent-primary-hover) !important;
+  transform: scale(1.05);
+}
+.ia-send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.ia-mode-menu {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--bg-body) !important;
+  border-top: 1px solid var(--border-light);
+}
+
+.ia-mode-btn {
+  padding: 16px 18px;
+  border-radius: var(--radius-default);
+  border: 1px solid var(--border-light) !important;
+  background: var(--bg-card) !important;
+  color: var(--text-primary) !important;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
   gap: 16px;
 }
 
-.loading-global.show {
+.ia-mode-btn:hover {
+  background: #F8FAFC !important;
+  border-color: var(--accent-secondary) !important;
+  transform: translateX(4px);
+}
+
+.ia-mode-icon {
+  font-size: 24px;
+  width: 44px;
+  height: 44px;
   display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
 }
 
-.loading-global .spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid var(--border);
-  border-top-color: var(--accent);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+.ia-mode-label {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+.ia-mode-desc {
+  font-size: 12px;
+  color: var(--text-secondary);
 }
 
-.loading-global span {
-  color: var(--text-muted);
-  font-size: 13px;
+.ia-quick-bar {
+  padding: 10px 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  border-top: 1px solid var(--border-light);
+  flex-shrink: 0;
+  background: var(--bg-card) !important;
+}
+
+.ia-quick {
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border-light) !important;
+  background: var(--bg-body) !important;
+  color: var(--text-secondary) !important;
+  font-size: 12px;
   font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.ia-quick:hover {
+  background: #EEF2FF !important;
+  border-color: var(--accent-secondary) !important;
+  color: var(--accent-primary) !important;
+}
+
+.ia-back-btn {
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid transparent !important;
+  background: transparent !important;
+  color: var(--text-muted) !important;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ia-back-btn:hover {
+  color: var(--text-secondary) !important;
+}
+
+.ia-typing {
+  align-self: flex-start;
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-light) !important;
+  border-radius: 4px var(--radius-default) var(--radius-default) var(--radius-default);
+  padding: 12px 16px;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.ia-typing span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  animation: ia-bounce 1.4s infinite;
+}
+
+.ia-typing span:nth-child(2) { animation-delay: 0.2s; }
+.ia-typing span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes ia-bounce {
+  0%, 60%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-6px); }
+}
+
+.ia-alert {
+  margin: 8px 16px;
+  padding: 10px 14px;
+  background: #FFFBEB !important;
+  border: 1px solid #FDE68A !important;
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--color-warning);
+  font-size: 13px;
+  color: #78350F;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  flex-shrink: 0;
+}
+
+.ia-alert:hover { background: #FEF3C7 !important; }
+
+.ia-mode-tag {
+  align-self: center;
+  padding: 3px 14px;
+  border-radius: 20px;
+  background: #EEF2FF !important;
+  border: 1px solid #C7D2FE !important;
+  color: var(--accent-primary) !important;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
 }
 </style>
+
 </head>
 <body>
 
-<!-- LOADING ÁTOMO -->
-<div class="loading-global" id="loadingOverlay">
-  <div class="spinner"></div>
-  <span>Carregando...</span>
+<!-- LOADING -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-spinner"></div>
+  <span>Carregando Átomo...</span>
 </div>
 
 <!-- HAMBURGER (mobile) -->
@@ -659,42 +1013,31 @@ body {
 </button>
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 
-<!-- ============================================================
-     SIDEBAR — COM SCROLL
-     ============================================================ -->
+<!-- SIDEBAR -->
 <div class="sidebar" id="mainSidebar">
   <img class="sidebar-logo" src="logo.png" alt="Átomo" onerror="this.style.display='none'">
   <div class="sidebar-title">ÁTOMO</div>
-
-  <!-- ÁREA ROLÁVEL DA SIDEBAR -->
-  <div class="sidebar-scroll">
-    <a class="nav-item active" href="home.html"><span class="icon">🏠</span> Página Inicial</a>
-    <div class="sidebar-divider"></div>
-
-    <div class="nav-section">Dashboards</div>
-    <a class="nav-item" href="visao-geral.html"><span class="icon">📊</span> Visão Geral</a>
-    <a class="nav-item" href="vendedor.html"><span class="icon">👤</span> Vendedor</a>
-    <a class="nav-item" href="regiao.html"><span class="icon">🗺️</span> Região</a>
-    <a class="nav-item" href="marcas.html"><span class="icon">🏷️</span> Marcas</a>
-    <a class="nav-item" href="produtos.html"><span class="icon">📦</span> Produtos</a>
-    <a class="nav-item" href="produtos-cliente.html"><span class="icon">🛍️</span> Produtos por Cliente</a>
-
-    <div class="sidebar-divider"></div>
-    <div class="nav-section">Gestão</div>
-    <a class="nav-item" href="carteira.html"><span class="icon">👥</span> Carteira</a>
-    <a class="nav-item" href="positivacao.html"><span class="icon">👥</span> Positivação</a>
-    <a class="nav-item" href="shelflife.html"><span class="icon">🕒</span> Shelf Life</a>
-    <a class="nav-item" href="risco.html"><span class="icon">⚠️</span> Clientes em Risco</a>
-    <a class="nav-item" href="compras.html"><span class="icon">🛒</span> Compras</a>
-  </div>
-
-  <!-- BOTÃO SAIR FIXO NO RODAPÉ -->
+  <a class="nav-item active" href="home.html"><span class="icon">🏠</span> Página Inicial</a>
+  <div class="sidebar-divider"></div>
+  <div class="nav-section">Dashboards</div>
+  <a class="nav-item" href="visao-geral.html"><span class="icon">📊</span> Visão Geral</a>
+  <a class="nav-item" href="vendedor.html"><span class="icon">👤</span> Vendedor</a>
+  <a class="nav-item" href="regiao.html"><span class="icon">🗺️</span> Região</a>
+  <a class="nav-item" href="marcas.html"><span class="icon">🏷️</span> Marcas</a>
+  <a class="nav-item" href="produtos.html"><span class="icon">📦</span> Produtos</a>
+  <a class="nav-item" href="produtos-cliente.html"><span class="icon">🛍️</span> Produtos por Cliente</a>
+  <div class="sidebar-divider"></div>
+  <div class="nav-section">Gestão</div>
+  <a class="nav-item" href="carteira.html"><span class="icon">👥</span> Carteira</a>
+  <a class="nav-item" href="positivacao.html"><span class="icon">👥</span> Positivação</a>
+  <a class="nav-item" href="shelflife.html"><span class="icon">🕒</span> Shelf Life</a>
+  <a class="nav-item" href="risco.html"><span class="icon">⚠️</span> Clientes em Risco</a>
+  <a class="nav-item" href="compras.html"><span class="icon">🛒</span> Compras</a>
+  <div class="sidebar-divider"></div>
   <button class="btn-logout" onclick="location.href='index.html'">🚪 Sair</button>
 </div>
 
-<!-- ============================================================
-     MAIN
-     ============================================================ -->
+<!-- MAIN -->
 <div class="main">
   <div class="header">
     <h1>👁 Portal Átomo</h1>
@@ -753,10 +1096,7 @@ body {
     </div>
     <div class="filtros-actions">
       <button class="btn-limpar" onclick="limparFiltros()">✕ Limpar tudo</button>
-      <button class="btn-aplicar" id="btnAplicar" onclick="aplicarFiltros()">
-        <span class="btn-spinner"></span>
-        ✓ Aplicar filtros
-      </button>
+      <button class="btn-aplicar" id="btnAplicar" onclick="aplicarFiltros()">✓ Aplicar filtros</button>
     </div>
   </div>
 
@@ -796,79 +1136,123 @@ body {
   <div class="dashboard-footer" id="dashboardFooter">Selecione os filtros e clique em Aplicar.</div>
 </div>
 
+<!-- ══ VALTER FAB ══ -->
+<button class="ia-fab" id="iaFab" title="Valter — Assistente Átomo">
+  <svg width="26" height="26" viewBox="0 0 38 38" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="19" cy="19" r="19" fill="#1D4ED8"/>
+    <ellipse cx="19" cy="19" rx="15" ry="5.5" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.2" transform="rotate(-40 19 19)"/>
+    <ellipse cx="19" cy="19" rx="15" ry="5.5" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.2" transform="rotate(40 19 19)"/>
+    <ellipse cx="19" cy="19" rx="15" ry="5.5" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.2" transform="rotate(90 19 19)"/>
+    <circle cx="19" cy="19" r="5" fill="#fff"/>
+    <circle cx="19" cy="19" r="3" fill="#3B82F6"/>
+    <circle cx="34" cy="19" r="2.2" fill="#F5A800"/>
+    <circle cx="11.5" cy="6.5" r="2.2" fill="#F5A800"/>
+    <circle cx="11.5" cy="31.5" r="2.2" fill="#F5A800"/>
+  </svg>
+  <span class="ia-badge" id="iaBadge"></span>
+</button>
+
+<!-- ══ VALTER OVERLAY + PAINEL CENTRAL ══ -->
+<div class="ia-overlay" id="iaOverlay">
+<div class="ia-panel" id="iaPanel">
+  <div class="ia-header">
+    <div class="ia-avatar">
+      <svg width="28" height="28" viewBox="0 0 38 38" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="19" cy="19" r="19" fill="#1D4ED8"/>
+        <ellipse cx="19" cy="19" rx="15" ry="5.5" fill="none" stroke="rgba(255,255,255,0.8)" stroke-width="1.2" transform="rotate(-40 19 19)"/>
+        <ellipse cx="19" cy="19" rx="15" ry="5.5" fill="none" stroke="rgba(255,255,255,0.8)" stroke-width="1.2" transform="rotate(40 19 19)"/>
+        <ellipse cx="19" cy="19" rx="15" ry="5.5" fill="none" stroke="rgba(255,255,255,0.8)" stroke-width="1.2" transform="rotate(90 19 19)"/>
+        <circle cx="19" cy="19" r="5" fill="#fff"/>
+        <circle cx="19" cy="19" r="3" fill="#3B82F6"/>
+        <circle cx="34" cy="19" r="2.2" fill="#F5A800"/>
+        <circle cx="11.5" cy="6.5" r="2.2" fill="#F5A800"/>
+        <circle cx="11.5" cy="31.5" r="2.2" fill="#F5A800"/>
+      </svg>
+    </div>
+    <div class="ia-header-info">
+      <div class="ia-header-name">Valter</div>
+      <div class="ia-header-status"><span class="ia-status-dot"></span><span id="iaStatus">Assistente Átomo</span></div>
+    </div>
+    <div class="ia-header-actions">
+      <button class="ia-header-btn" id="iaResetBtn" title="Reiniciar">↺</button>
+      <button class="ia-header-btn" id="iaCloseBtn" title="Fechar">✕</button>
+    </div>
+  </div>
+  <div id="iaAlertArea"></div>
+  <div class="ia-messages" id="iaMessages"></div>
+  <div id="iaModeMenu" style="display:none"></div>
+  <div class="ia-quick-bar" id="iaQuickBar" style="display:none"></div>
+  <div class="ia-input-area" id="iaInputArea" style="display:none">
+    <input class="ia-input" id="iaInput" placeholder="Digite sua pergunta...">
+    <button class="ia-send-btn" id="iaSendBtn">➤</button>
+  </div>
+</div>
+</div>
+
 <script>
+// ============================================================
+// API
+// ============================================================
 const API = 'https://horus-production.up.railway.app';
 const MESES_EXT = ['','Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 
+// ============================================================
+// SIDEBAR TOGGLE
+// ============================================================
 function toggleSidebar() {
   const sidebar = document.getElementById('mainSidebar');
   const overlay = document.getElementById('sidebarOverlay');
+  if (!sidebar) return;
   const isOpen = sidebar.classList.toggle('open');
-  overlay.classList.toggle('show', isOpen);
+  if (overlay) overlay.classList.toggle('show', isOpen);
 }
 
-async function carregarOpcoes() {
-  const loader = document.getElementById('loadingOverlay');
-  if (loader) loader.classList.add('show');
+// ============================================================
+// FILTROS
+// ============================================================
+function getFiltros() {
   try {
-    const res = await fetch(`${API}/api/filtros`);
-    const data = await res.json();
-
-    const selAno = document.getElementById('filtroAno');
-    const selUnidade = document.getElementById('filtroUnidade');
-    const selMarca = document.getElementById('filtroMarca');
-    const selVendedor = document.getElementById('filtroVendedor');
-
-    (data.anos || []).forEach(a => {
-      const o = document.createElement('option');
-      o.value = a; o.text = a;
-      selAno.appendChild(o);
-    });
-
-    (data.unidades || []).forEach(u => {
-      const o = document.createElement('option');
-      o.value = u; o.text = u;
-      selUnidade.appendChild(o);
-    });
-
-    (data.marcas || []).forEach(m => {
-      const o = document.createElement('option');
-      o.value = m; o.text = m;
-      selMarca.appendChild(o);
-    });
-
-    (data.vendedores || []).forEach(v => {
-      const o = document.createElement('option');
-      o.value = v; o.text = v;
-      selVendedor.appendChild(o);
-    });
-
-    restaurarFiltros();
-  } catch(e) {
-    console.error('Erro ao carregar filtros:', e);
-  } finally {
-    if (loader) loader.classList.remove('show');
-  }
+    return JSON.parse(localStorage.getItem('horus_filtros')) || {};
+  } catch { return {}; }
 }
 
-function valido(v) {
-  return v && v !== 'undefined' && v !== 'null';
+function salvarFiltros(f) {
+  localStorage.setItem('horus_filtros', JSON.stringify(f));
+}
+
+function limparFiltros() {
+  ['filtroAno','filtroMes','filtroUnidade','filtroMarca','filtroVendedor']
+    .forEach(id => document.getElementById(id).value = '');
+  localStorage.removeItem('horus_filtros');
+  document.getElementById('filtrosAtivos').style.display = 'none';
+  document.getElementById('filtrosAtivos').innerHTML = '';
+  atualizarFooter();
+}
+
+function aplicarFiltros() {
+  const btn = document.getElementById('btnAplicar');
+  if (btn) btn.disabled = true;
+  const filtros = {
+    ano:      document.getElementById('filtroAno').value,
+    mes:      document.getElementById('filtroMes').value,
+    unidade:  document.getElementById('filtroUnidade').value,
+    marca:    document.getElementById('filtroMarca').value,
+    vendedor: document.getElementById('filtroVendedor').value,
+  };
+  salvarFiltros(filtros);
+  mostrarTags(filtros);
+  atualizarFooter();
+  if (btn) setTimeout(() => { btn.disabled = false; }, 600);
 }
 
 function mostrarTags(filtros) {
   const container = document.getElementById('filtrosAtivos');
   const tags = [];
-
-  if (filtros.ano) tags.push({ key: 'ano', label: `Ano: ${filtros.ano}` });
-  if (filtros.mes) tags.push({ key: 'mes', label: `Mês: ${MESES_EXT[filtros.mes]}` });
-  if (filtros.unidade) tags.push({ key: 'unidade', label: `Unidade: ${filtros.unidade}` });
-  if (filtros.marca) tags.push({ key: 'marca', label: `Marca: ${filtros.marca}` });
-  if (filtros.vendedor) {
-    const sel = document.getElementById('filtroVendedor');
-    const opt = sel.querySelector(`option[value="${filtros.vendedor}"]`);
-    const nome = opt ? opt.text : filtros.vendedor;
-    tags.push({ key: 'vendedor', label: `Vendedor: ${nome}` });
-  }
+  if (filtros.ano)      tags.push({ key:'ano',      label:`Ano: ${filtros.ano}` });
+  if (filtros.mes)      tags.push({ key:'mes',      label:`Mês: ${MESES_EXT[filtros.mes]}` });
+  if (filtros.unidade)  tags.push({ key:'unidade',  label:`Unidade: ${filtros.unidade}` });
+  if (filtros.marca)    tags.push({ key:'marca',    label:`Marca: ${filtros.marca}` });
+  if (filtros.vendedor) tags.push({ key:'vendedor', label:`Vendedor: ${filtros.vendedor}` });
 
   if (!tags.length) {
     container.style.display = 'none';
@@ -877,110 +1261,90 @@ function mostrarTags(filtros) {
   }
 
   container.style.display = 'flex';
-  container.innerHTML = `
-    <span style="font-size:12px;color:var(--text-muted);align-self:center">Filtros ativos:</span>
-    ${tags.map(t => `
+  container.innerHTML =
+    '<span style="font-size:12px;color:var(--text-secondary);align-self:center">Filtros ativos:</span>' +
+    tags.map(t => `
       <div class="filtro-tag">
         ${t.label}
         <button onclick="removerFiltro('${t.key}')" title="Remover">×</button>
       </div>
-    `).join('')}
-  `;
+    `).join('');
 }
 
 function removerFiltro(key) {
-  const map = {
-    ano: 'filtroAno',
-    mes: 'filtroMes',
-    unidade: 'filtroUnidade',
-    marca: 'filtroMarca',
-    vendedor: 'filtroVendedor'
-  };
-  document.getElementById(map[key]).value = '';
+  document.getElementById('filtro' + key.charAt(0).toUpperCase() + key.slice(1)).value = '';
   aplicarFiltros();
-}
-
-function restaurarFiltros() {
-  const saved = localStorage.getItem('horus_filtros');
-  if (!saved) return;
-  try {
-    const f = JSON.parse(saved);
-    if (valido(f.ano)) document.getElementById('filtroAno').value = f.ano;
-    if (valido(f.mes)) document.getElementById('filtroMes').value = f.mes;
-    if (valido(f.unidade)) document.getElementById('filtroUnidade').value = f.unidade;
-    if (valido(f.marca)) document.getElementById('filtroMarca').value = f.marca;
-    if (valido(f.vendedor)) document.getElementById('filtroVendedor').value = f.vendedor;
-    mostrarTags(f);
-  } catch(e) {}
-}
-
-function aplicarFiltros() {
-  const btn = document.getElementById('btnAplicar');
-  btn.classList.add('loading');
-
-  const filtros = {
-    ano: document.getElementById('filtroAno').value,
-    mes: document.getElementById('filtroMes').value,
-    unidade: document.getElementById('filtroUnidade').value,
-    marca: document.getElementById('filtroMarca').value,
-    vendedor: document.getElementById('filtroVendedor').value,
-  };
-
-  localStorage.setItem('horus_filtros', JSON.stringify(filtros));
-  mostrarTags(filtros);
-  atualizarFooter();
-
-  setTimeout(() => {
-    btn.classList.remove('loading');
-  }, 600);
-}
-
-function limparFiltros() {
-  ['filtroAno', 'filtroMes', 'filtroUnidade', 'filtroMarca', 'filtroVendedor']
-    .forEach(id => document.getElementById(id).value = '');
-  localStorage.removeItem('horus_filtros');
-  document.getElementById('filtrosAtivos').style.display = 'none';
-  document.getElementById('filtrosAtivos').innerHTML = '';
-  atualizarFooter();
 }
 
 function atualizarFooter() {
   const el = document.getElementById('dashboardFooter');
   if (!el) return;
-  const agora = new Date().toLocaleString('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
-  const saved = localStorage.getItem('horus_filtros');
-  let label = '';
-  if (saved) {
-    try {
-      const f = JSON.parse(saved);
-      const partes = [];
-      if (f.ano) partes.push(f.ano);
-      if (f.mes) partes.push(MESES_EXT[f.mes]);
-      if (f.unidade) partes.push(f.unidade);
-      if (f.marca) partes.push(f.marca);
-      if (f.vendedor) {
-        const sel = document.getElementById('filtroVendedor');
-        const opt = sel.querySelector(`option[value="${f.vendedor}"]`);
-        partes.push(opt ? opt.text : f.vendedor);
-      }
-      if (partes.length) label = ' · Filtros: ' + partes.join(' | ');
-    } catch(e) {}
+  const agora = new Date().toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+  const f = getFiltros();
+  const partes = [];
+  if (f.ano) partes.push('Ano: ' + f.ano);
+  if (f.mes) partes.push('Mês: ' + MESES_EXT[f.mes]);
+  if (f.unidade) partes.push('Unidade: ' + f.unidade);
+  if (f.marca) partes.push('Marca: ' + f.marca);
+  if (f.vendedor) partes.push('Vendedor: ' + f.vendedor);
+  el.textContent = '📅 Filtros aplicados em: ' + agora + (partes.length ? ' · ' + partes.join(', ') : ' · Sem filtros ativos');
+}
+
+// ============================================================
+// CARREGAR OPÇÕES DOS FILTROS
+// ============================================================
+async function carregarOpcoes() {
+  const overlay = document.getElementById('loadingOverlay');
+  overlay.classList.add('show');
+  try {
+    const res  = await fetch(`${API}/api/filtros`);
+    const data = await res.json();
+
+    const selAno      = document.getElementById('filtroAno');
+    const selUnidade  = document.getElementById('filtroUnidade');
+    const selMarca    = document.getElementById('filtroMarca');
+    const selVendedor = document.getElementById('filtroVendedor');
+
+    data.anos.forEach(a => {
+      const o = document.createElement('option');
+      o.value = a; o.text = a; selAno.appendChild(o);
+    });
+    data.unidades.forEach(u => {
+      const o = document.createElement('option');
+      o.value = u; o.text = u; selUnidade.appendChild(o);
+    });
+    data.marcas.forEach(m => {
+      const o = document.createElement('option');
+      o.value = m; o.text = m; selMarca.appendChild(o);
+    });
+    data.vendedores.forEach(v => {
+      const o = document.createElement('option');
+      o.value = v; o.text = v; selVendedor.appendChild(o);
+    });
+
+    restaurarFiltros();
+  } catch(e) {
+    console.error('Erro ao carregar filtros:', e);
+  } finally {
+    overlay.classList.remove('show');
   }
-  el.textContent = '📅 Dados carregados em: ' + agora + label;
+}
+
+function restaurarFiltros() {
+  const saved = localStorage.getItem('horus_filtros');
+  if (!saved) return;
+  const f = JSON.parse(saved);
+  if (f.ano)      document.getElementById('filtroAno').value      = f.ano;
+  if (f.mes)      document.getElementById('filtroMes').value      = f.mes;
+  if (f.unidade)  document.getElementById('filtroUnidade').value  = f.unidade;
+  if (f.marca)    document.getElementById('filtroMarca').value    = f.marca;
+  if (f.vendedor) document.getElementById('filtroVendedor').value = f.vendedor;
+  mostrarTags(f);
 }
 
 function exibirAlertas(alertas) {
   const sec = document.getElementById('alertsSection');
-  if (!sec || !alertas || !alertas.length) {
-    sec.style.display = 'none';
-    return;
-  }
+  if (!sec || !alertas || !alertas.length) return;
   sec.style.display = 'block';
   sec.innerHTML = alertas.map(a => `
     <div class="alert-item ${a.tipo || 'info'}">
@@ -990,82 +1354,22 @@ function exibirAlertas(alertas) {
   `).join('');
 }
 
+// ============================================================
+// INIT
+// ============================================================
 window.onload = function() {
   carregarOpcoes();
   exibirAlertas([
-    {
-      tipo: 'info',
-      icone: '🔍',
-      texto: 'Use os filtros abaixo para segmentar os dados por período, unidade, marca ou vendedor em todas as páginas.'
-    },
-    {
-      tipo: 'warning',
-      icone: '⏳',
-      texto: 'Verifique a página <strong>Shelf Life</strong> — produtos próximos ao vencimento podem precisar de atenção.'
-    }
+    { tipo:'warning', icone:'⏳', texto:'Verifique a página <b>Shelf Life</b> — produtos próximos ao vencimento podem precisar de atenção.' },
+    { tipo:'info',    icone:'🔍', texto:'Use os filtros abaixo para segmentar os dados por período, unidade, marca ou vendedor em todas as páginas.' }
   ]);
 };
-</script>
 
-<!-- ══ VALTER FAB ══ -->
-<button class="ia-fab" id="iaFab" title="Valter — Assistente Átomo" style="position:fixed;bottom:28px;right:28px;width:56px;height:56px;border-radius:50%;background:var(--accent);color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(37,99,235,0.35);z-index:900;transition:all 0.25s;">
-  <svg width="28" height="28" viewBox="0 0 38 38" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="19" cy="19" r="19" fill="#0A1628"/>
-    <ellipse cx="19" cy="19" rx="15" ry="5.5" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.2" transform="rotate(-40 19 19)"/>
-    <ellipse cx="19" cy="19" rx="15" ry="5.5" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.2" transform="rotate(40 19 19)"/>
-    <ellipse cx="19" cy="19" rx="15" ry="5.5" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.2" transform="rotate(90 19 19)"/>
-    <circle cx="19" cy="19" r="5" fill="#fff"/>
-    <circle cx="19" cy="19" r="3" fill="#0096FF"/>
-    <circle cx="34" cy="19" r="2.2" fill="#F5A800"/>
-    <circle cx="11.5" cy="6.5" r="2.2" fill="#F5A800"/>
-    <circle cx="11.5" cy="31.5" r="2.2" fill="#F5A800"/>
-  </svg>
-  <span class="ia-badge" id="iaBadge" style="position:absolute;top:-4px;right:-4px;background:#F59E0B;color:#000;font-size:10px;font-weight:800;padding:2px 6px;border-radius:10px;min-width:18px;text-align:center;display:none;z-index:1;"></span>
-</button>
-
-<!-- ══ VALTER OVERLAY + PAINEL CENTRAL ══ -->
-<div class="ia-overlay" id="iaOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:950;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
-  <div class="ia-panel" id="iaPanel" style="position:relative;background:var(--bg-card);border:1px solid var(--border);border-radius:20px;width:560px;max-width:96vw;height:720px;max-height:93vh;display:flex;flex-direction:column;box-shadow:var(--shadow-hover);transform:scale(0.92) translateY(20px);opacity:0;transition:transform 0.3s ease,opacity 0.3s ease;overflow:hidden;">
-    <div class="ia-header" style="padding:20px 24px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:14px;flex-shrink:0;">
-      <div class="ia-avatar" id="iaAvatar" style="width:42px;height:42px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-        <svg width="28" height="28" viewBox="0 0 38 38" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="19" cy="19" r="19" fill="#060f22"/>
-          <ellipse cx="19" cy="19" rx="15" ry="5.5" fill="none" stroke="rgba(0,200,255,0.8)" stroke-width="1.2" transform="rotate(-40 19 19)"/>
-          <ellipse cx="19" cy="19" rx="15" ry="5.5" fill="none" stroke="rgba(0,200,255,0.8)" stroke-width="1.2" transform="rotate(40 19 19)"/>
-          <ellipse cx="19" cy="19" rx="15" ry="5.5" fill="none" stroke="rgba(0,200,255,0.8)" stroke-width="1.2" transform="rotate(90 19 19)"/>
-          <circle cx="19" cy="19" r="5" fill="#fff"/>
-          <circle cx="19" cy="19" r="3" fill="#0096FF"/>
-          <circle cx="34" cy="19" r="2.2" fill="#F5A800"/>
-          <circle cx="11.5" cy="6.5" r="2.2" fill="#F5A800"/>
-          <circle cx="11.5" cy="31.5" r="2.2" fill="#F5A800"/>
-        </svg>
-      </div>
-      <div class="ia-header-info" style="flex:1;">
-        <div class="ia-header-name" style="font-size:15px;font-weight:700;color:var(--text);">Valter</div>
-        <div class="ia-header-status" style="font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:5px;">
-          <span class="ia-status-dot" style="width:6px;height:6px;border-radius:50%;background:var(--success);flex-shrink:0;"></span>
-          <span id="iaStatus">Assistente Átomo</span>
-        </div>
-      </div>
-      <div class="ia-header-actions" style="display:flex;gap:6px;">
-        <button class="ia-header-btn" id="iaResetBtn" style="background:transparent;border:1px solid var(--border);color:var(--text-muted);cursor:pointer;width:32px;height:32px;border-radius:8px;font-size:14px;transition:all 0.2s;">↺</button>
-        <button class="ia-header-btn" id="iaCloseBtn" style="background:transparent;border:1px solid var(--border);color:var(--text-muted);cursor:pointer;width:32px;height:32px;border-radius:8px;font-size:14px;transition:all 0.2s;">✕</button>
-      </div>
-    </div>
-    <div id="iaAlertArea"></div>
-    <div class="ia-messages" id="iaMessages" style="flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:12px;"></div>
-    <div id="iaModeMenu" style="display:none;"></div>
-    <div class="ia-quick-bar" id="iaQuickBar" style="display:none;padding:12px 20px;border-top:1px solid var(--border);display:flex;flex-wrap:wrap;gap:8px;flex-shrink:0;"></div>
-    <div class="ia-input-area" id="iaInputArea" style="display:none;padding:14px 20px;border-top:1px solid var(--border);display:flex;gap:10px;flex-shrink:0;">
-      <input class="ia-input" id="iaInput" placeholder="Digite sua pergunta..." style="flex:1;padding:12px 16px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:13px;outline:none;font-family:inherit;transition:all 0.2s;">
-      <button class="ia-send-btn" id="iaSendBtn" style="width:44px;height:44px;border-radius:50%;background:var(--accent);color:#fff;border:none;cursor:pointer;font-size:16px;transition:all 0.2s;flex-shrink:0;box-shadow:0 4px 16px rgba(37,99,235,0.3);">➤</button>
-    </div>
-  </div>
-</div>
-
-<script>
+// ============================================================
+// VALTER — Assistente (versão simplificada e integrada)
+// ============================================================
 (function() {
-  var API_BASE = (typeof API !== 'undefined') ? API : 'https://horus-production.up.railway.app';
+  var API_BASE = 'https://horus-production.up.railway.app';
   var STORAGE_KEY = 'valter_session_v2';
 
   var state = {
@@ -1074,100 +1378,60 @@ window.onload = function() {
     mode: null,
     historico: [],
     contexto: '',
-    pagina: document.title.replace('Átomo — ', '').replace('Atomo — ', '').trim(),
+    pagina: document.title.replace('Átomo — ','').replace('Atomo — ','').trim(),
   };
-
-  function salvarSessao() {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({
-        mode: state.mode,
-        historico: state.historico.slice(-10),
-        contexto: state.contexto,
-        ts: Date.now(),
-      }));
-    } catch(e) {}
-  }
-
-  function carregarSessao() {
-    try {
-      var s = localStorage.getItem(STORAGE_KEY);
-      if (!s) return null;
-      var d = JSON.parse(s);
-      if (Date.now() - d.ts > 4 * 60 * 60 * 1000) return null;
-      return d;
-    } catch(e) { return null; }
-  }
 
   function el(id) { return document.getElementById(id); }
 
   function setStatus(txt) {
-    el('iaStatus').textContent = txt;
+    var s = el('iaStatus');
+    if (s) s.textContent = txt;
   }
 
   function setThinking(on) {
-    el('iaAvatar').classList.toggle('thinking', on);
-    el('iaSendBtn').disabled = on;
+    var a = el('iaAvatar');
+    var b = el('iaSendBtn');
+    var f = el('iaFab');
+    if (a) a.classList.toggle('thinking', on);
+    if (b) b.disabled = on;
+    if (f) f.classList.toggle('ia-thinking', on && !state.open);
   }
 
   function showBadge(n) {
     var b = el('iaBadge');
+    var f = el('iaFab');
     if (n > 0) {
       b.textContent = n;
       b.style.display = 'block';
+      if (f) f.classList.add('ia-pulsing');
     } else {
       b.style.display = 'none';
+      if (f) f.classList.remove('ia-pulsing');
     }
   }
 
   function iaAddMsg(texto, tipo) {
     var wrap = document.createElement('div');
     wrap.className = 'ia-msg ' + tipo;
-    wrap.style.maxWidth = '92%';
-    wrap.style.display = 'flex';
-    wrap.style.flexDirection = 'column';
-    wrap.style.gap = '5px';
-    if (tipo === 'bot') wrap.style.alignSelf = 'flex-start';
-    else wrap.style.alignSelf = 'flex-end';
-
     var bubble = document.createElement('div');
     bubble.className = 'ia-msg-bubble';
-    bubble.style.padding = '13px 17px';
-    bubble.style.borderRadius = '18px';
-    bubble.style.fontSize = '14px';
-    bubble.style.lineHeight = '1.7';
-    if (tipo === 'bot') {
-      bubble.style.background = 'var(--bg)';
-      bubble.style.border = '1px solid var(--border)';
-      bubble.style.color = 'var(--text)';
-      bubble.style.borderRadius = '4px 18px 18px 18px';
-    } else {
-      bubble.style.background = 'var(--accent)';
-      bubble.style.color = '#fff';
-      bubble.style.borderRadius = '18px 4px 18px 18px';
-    }
     bubble.innerHTML = texto
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/^- (.+)$/gm, '<li>$1</li>')
       .replace(/(<li>[\s\S]*?<\/li>)/g, '<ul style="margin:6px 0 6px 16px">$1</ul>')
       .replace(/\n/g, '<br>');
-
     wrap.appendChild(bubble);
-    el('iaMessages').appendChild(wrap);
-    el('iaMessages').scrollTop = el('iaMessages').scrollHeight;
-    return bubble;
+    var msgs = el('iaMessages');
+    if (msgs) { msgs.appendChild(wrap); msgs.scrollTop = msgs.scrollHeight; }
   }
 
   function iaAddTyping() {
     var div = document.createElement('div');
+    div.className = 'ia-typing';
     div.id = 'iaTyping';
-    div.style.alignSelf = 'flex-start';
-    div.style.padding = '14px 18px';
-    div.style.display = 'flex';
-    div.style.gap = '6px';
-    div.style.alignItems = 'center';
-    div.innerHTML = '<span style="width:7px;height:7px;border-radius:50%;background:var(--border);animation:bounce 1.4s infinite;"></span><span style="width:7px;height:7px;border-radius:50%;background:var(--border);animation:bounce 1.4s infinite;animation-delay:0.2s;"></span><span style="width:7px;height:7px;border-radius:50%;background:var(--border);animation:bounce 1.4s infinite;animation-delay:0.4s;"></span>';
-    el('iaMessages').appendChild(div);
-    el('iaMessages').scrollTop = el('iaMessages').scrollHeight;
+    div.innerHTML = '<span></span><span></span><span></span>';
+    var msgs = el('iaMessages');
+    if (msgs) { msgs.appendChild(div); msgs.scrollTop = msgs.scrollHeight; }
   }
 
   function iaRemoveTyping() {
@@ -1183,11 +1447,12 @@ window.onload = function() {
       if (data.alertas && data.alertas.length) {
         showBadge(data.alertas.length);
         var area = el('iaAlertArea');
+        if (!area) return;
         area.innerHTML = '';
-        data.alertas.slice(0, 2).forEach(function(a) {
+        data.alertas.slice(0,2).forEach(function(a) {
           var div = document.createElement('div');
-          div.style.cssText = 'margin:8px 16px;padding:11px 15px;background:var(--warning-light);border:1px solid #FDE68A;border-radius:10px;border-left:4px solid var(--warning);font-size:13px;color:var(--text);display:flex;align-items:center;gap:10px;cursor:pointer;transition:background 0.15s;flex-shrink:0;line-height:1.5;';
-          div.innerHTML = '<span style="font-size:17px;flex-shrink:0;">' + (a.icone || '⚠️') + '</span><span>' + a.texto + '</span>';
+          div.className = 'ia-alert';
+          div.innerHTML = '<span class="ia-alert-icon">' + (a.icone||'⚠️') + '</span><span>' + a.texto + '</span>';
           div.addEventListener('click', function() {
             if (!state.open) iaToggle();
             setTimeout(function() { iaSendMensagem(a.pergunta || a.texto); }, 400);
@@ -1200,278 +1465,176 @@ window.onload = function() {
 
   function iaToggle() {
     state.open = !state.open;
-    document.getElementById('iaOverlay').style.display = state.open ? 'flex' : 'none';
+    var ov = el('iaOverlay');
+    if (ov) ov.classList.toggle('open', state.open);
     if (state.open) {
-      var panel = document.getElementById('iaPanel');
-      panel.style.transform = 'scale(1) translateY(0)';
-      panel.style.opacity = '1';
       showBadge(0);
-      if (!state.iniciado) {
-        state.iniciado = true;
-        setTimeout(iaIniciar, 300);
-      }
-    } else {
-      var panel = document.getElementById('iaPanel');
-      panel.style.transform = 'scale(0.92) translateY(20px)';
-      panel.style.opacity = '0';
+      if (!state.iniciado) { state.iniciado = true; setTimeout(iaIniciar, 300); }
     }
   }
 
-  document.getElementById('iaOverlay').addEventListener('click', function(e) {
-    if (e.target === document.getElementById('iaOverlay')) iaToggle();
-  });
+  if (el('iaOverlay')) {
+    el('iaOverlay').addEventListener('click', function(e) {
+      if (e.target === el('iaOverlay')) iaToggle();
+    });
+  }
   window.iaToggle = iaToggle;
 
   async function iaIniciar() {
     setStatus('Carregando dados...');
     setThinking(true);
-
     try {
       var r = await fetch(API_BASE + '/api/valter/contexto');
       var d = await r.json();
       if (d.contexto) state.contexto = d.contexto;
     } catch(e) {}
-
     state.contexto += '\n\nPÁGINA ATUAL: ' + state.pagina;
     setThinking(false);
 
-    var sessao = carregarSessao();
-    if (sessao && sessao.mode && sessao.historico.length) {
-      state.mode = sessao.mode;
-      state.historico = sessao.historico;
-      state.contexto = sessao.contexto || state.contexto;
-      setStatus(state.mode === 'sl' ? '📦 Shelf Life' : '💬 Dúvidas Gerais');
-      iaAddMsg('Bem-vindo de volta! Continuando nossa conversa sobre **' + (state.mode === 'sl' ? 'Shelf Life' : 'Dúvidas Gerais') + '**.', 'bot');
-      var ultimas = state.historico.slice(-4);
-      ultimas.forEach(function(m) {
-        iaAddMsg(m.content, m.role === 'user' ? 'user' : 'bot');
-      });
-      iaShowInput(state.mode);
-    } else {
-      iaApresentar();
-    }
+    try {
+      var sessao = JSON.parse(localStorage.getItem(STORAGE_KEY));
+      if (sessao && sessao.mode && sessao.historico && sessao.historico.length) {
+        state.mode = sessao.mode;
+        state.historico = sessao.historico;
+        state.contexto = sessao.contexto || state.contexto;
+        setStatus(state.mode === 'sl' ? '📦 Shelf Life' : '💬 Dúvidas Gerais');
+        iaAddMsg('Bem-vindo de volta! Continuando nossa conversa sobre **' +
+          (state.mode === 'sl' ? 'Shelf Life' : 'Dúvidas Gerais') + '**.', 'bot');
+        iaShowInput(state.mode);
+        return;
+      }
+    } catch(e) {}
+
+    iaApresentar();
   }
 
-  async function iaApresentar() {
+  function iaApresentar() {
     setStatus('Pronto');
     iaAddMsg('Olá! Sou o **Valter**, assistente inteligente do sistema Átomo. Estou aqui para te ajudar com análises, dúvidas e insights da Alimentare.\n\nO que você precisa hoje?', 'bot');
-    iaEscolherModo('geral');
+    iaShowMenu();
   }
 
   function iaShowMenu() {
     var menu = el('iaModeMenu');
-    el('iaQuickBar').style.display = 'none';
-    el('iaInputArea').style.display = 'none';
+    if (!menu) return;
+    var qb = el('iaQuickBar');
+    var ia = el('iaInputArea');
+    if (qb) qb.style.display = 'none';
+    if (ia) ia.style.display = 'none';
 
+    menu.innerHTML =
+      '<div class="ia-mode-menu">' +
+        '<button class="ia-mode-btn" id="iaBtnSL">' +
+          '<div class="ia-mode-icon">📦</div>' +
+          '<div><div class="ia-mode-label">Shelf Life</div>' +
+          '<div class="ia-mode-desc">Validade, produtos críticos e ações SL</div></div>' +
+          '<span class="ia-mode-arrow">›</span>' +
+        '</button>' +
+        '<button class="ia-mode-btn" id="iaBtnGeral">' +
+          '<div class="ia-mode-icon">💬</div>' +
+          '<div><div class="ia-mode-label">Dúvidas Gerais</div>' +
+          '<div class="ia-mode-desc">Faturamento, vendedores, marcas, carteira</div></div>' +
+          '<span class="ia-mode-arrow">›</span>' +
+        '</button>' +
+      '</div>';
     menu.style.display = 'block';
-    menu.style.padding = '16px';
-    menu.style.borderTop = '1px solid var(--border)';
-    menu.style.flexShrink = '0';
 
-    menu.innerHTML = `
-      <div style="display:flex;flex-direction:column;gap:10px;">
-        <button class="ia-mode-btn" id="iaBtnSL" style="padding:16px 18px;border-radius:14px;border:1px solid var(--border);background:var(--bg);color:var(--text);cursor:pointer;text-align:left;transition:all 0.2s;display:flex;align-items:center;gap:16px;width:100%;font-family:inherit;">
-          <div style="font-size:24px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;border-radius:12px;flex-shrink:0;">📦</div>
-          <div>
-            <div style="font-weight:700;font-size:14px;color:var(--text);margin-bottom:3px;">Shelf Life</div>
-            <div style="font-size:12px;color:var(--text-muted);">Validade, produtos críticos e ações SL</div>
-          </div>
-          <span style="margin-left:auto;color:var(--text-light);font-size:18px;">›</span>
-        </button>
-        <button class="ia-mode-btn" id="iaBtnGeral" style="padding:16px 18px;border-radius:14px;border:1px solid var(--border);background:var(--bg);color:var(--text);cursor:pointer;text-align:left;transition:all 0.2s;display:flex;align-items:center;gap:16px;width:100%;font-family:inherit;">
-          <div style="font-size:24px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;border-radius:12px;flex-shrink:0;">💬</div>
-          <div>
-            <div style="font-weight:700;font-size:14px;color:var(--text);margin-bottom:3px;">Dúvidas Gerais</div>
-            <div style="font-size:12px;color:var(--text-muted);">Faturamento, vendedores, marcas, carteira</div>
-          </div>
-          <span style="margin-left:auto;color:var(--text-light);font-size:18px;">›</span>
-        </button>
-      </div>
-    `;
-
-    el('iaBtnSL').addEventListener('click', function() { iaEscolherModo('sl'); });
-    el('iaBtnGeral').addEventListener('click', function() { iaEscolherModo('geral'); });
+    var btnSL = document.getElementById('iaBtnSL');
+    var btnGeral = document.getElementById('iaBtnGeral');
+    if (btnSL) btnSL.addEventListener('click', function() { iaEscolherModo('sl'); });
+    if (btnGeral) btnGeral.addEventListener('click', function() { iaEscolherModo('geral'); });
   }
 
   function iaHideMenu() {
-    el('iaModeMenu').style.display = 'none';
-  }
-
-  async function iaEscolherModo(modo) {
-    state.mode = modo;
-    state.historico = [];
-    iaHideMenu();
-    el('iaMessages').innerHTML = '';
-
-    var label = modo === 'sl' ? '📦 Shelf Life' : '💬 Dúvidas Gerais';
-    setStatus(label);
-
-    var tag = document.createElement('div');
-    tag.textContent = label;
-    tag.style.cssText = 'align-self:center;padding:4px 14px;border-radius:20px;background:var(--accent-light);border:1px solid var(--border);color:var(--accent);font-size:12px;font-weight:600;letter-spacing:0.5px;';
-    el('iaMessages').appendChild(tag);
-
-    iaAddTyping();
-    setThinking(true);
-
-    var ctx = state.contexto;
-    var prompt = '';
-
-    if (modo === 'sl') {
-      if (typeof dadosCompletos !== 'undefined' && dadosCompletos.length) {
-        ctx += iaContextoSL();
-      }
-      prompt = 'Apresente-se rapidamente como Valter e faça uma análise focada do shelf life. Destaque os pontos mais urgentes e os produtos que recomenda para código SL com justificativa.';
-    } else {
-      prompt = 'Apresente-se brevemente como Valter e diga que pode ajudar com faturamento, vendedores, marcas, carteira de clientes, produtos e shelf life da Alimentare. Mencione 2-3 insights interessantes do contexto fornecido.';
-    }
-
-    var resp = await iaChamarAPI(prompt, ctx, modo);
-    iaRemoveTyping();
-    setThinking(false);
-    iaAddMsg(resp, 'bot');
-    salvarSessao();
-    iaShowInput(modo);
-  }
-
-  function iaContextoSL() {
-    var dados = dadosCompletos || [];
-    var criticos = dados.filter(function(d){ return d.dias_vencimento <= 30; });
-    var sl = dados.filter(function(d){ return d.is_sl; });
-    var semSaida = dados.filter(function(d){ return (!d.venda_mes || d.venda_mes == 0) && d.quantidade_log > 0; });
-    var linhas = dados.slice(0, 60).map(function(d){
-      var med = d.venda_3meses ? (parseFloat(d.venda_3meses) / 3).toFixed(1) : '0';
-      var qtd = parseFloat(d.quantidade_log || 0);
-      var est = parseFloat(med) > 0 ? Math.round(qtd / (parseFloat(med) / 30)) : 999;
-      return [d.cod_produto || '', d.produto || '', d.marca || '', qtd,
-              d.dias_vencimento || '?', d.status_logistica || '',
-              d.venda_mes ? parseFloat(d.venda_mes).toFixed(0) : '0',
-              d.venda_3meses ? parseFloat(d.venda_3meses).toFixed(0) : '0',
-              med, est < 999 ? est + 'd' : 'sem_giro',
-              d.is_sl ? 'SIM' : 'NAO', d.acao || ''].join('|');
-    }).join('\n');
-    return '\n\nDADOS SHELF LIFE ATUAL:\n' +
-      'Total:' + dados.length + ' | Criticos:' + criticos.length + ' | SL:' + sl.length + ' | SemSaida:' + semSaida.length + '\n' +
-      'COLUNAS:cod|produto|marca|qtd|dias_venc|status|venda_mes|venda_3m|media_3m|dias_est|is_sl|acao\n' + linhas;
+    var menu = el('iaModeMenu');
+    if (menu) menu.style.display = 'none';
   }
 
   function iaShowInput(modo) {
-    var qb = el('iaQuickBar');
     var ia = el('iaInputArea');
-    ia.style.display = 'flex';
-    qb.style.display = 'flex';
-    qb.innerHTML = '';
+    var qb = el('iaQuickBar');
+    if (ia) ia.style.display = 'flex';
+    if (qb) {
+      qb.style.display = 'flex';
+      qb.innerHTML = '';
+    }
 
     var btns = modo === 'sl' ? [
-      { l: '🏷️ Reclassificar SL', m: 'Quais produtos devo reclassificar para código SL agora?' },
-      { l: '🚨 Críticos', m: 'Quais produtos estão críticos e precisam de ação imediata?' },
-      { l: '📊 Resumo', m: 'Faça um resumo geral do shelf life desta semana.' },
-      { l: '⚠️ Risco de vencer', m: 'Quais produtos têm maior risco de vencer sem saída?' },
+      {l:'🏷️ Reclassificar SL', m:'Quais produtos devo reclassificar para código SL agora?'},
+      {l:'🚨 Críticos',          m:'Quais produtos estão críticos e precisam de ação imediata?'},
+      {l:'📊 Resumo',            m:'Faça um resumo geral do shelf life desta semana.'},
+      {l:'⚠️ Risco de vencer',   m:'Quais produtos têm maior risco de vencer sem saída?'},
     ] : [
-      { l: '📈 Faturamento', m: 'Como está o faturamento do ano atual?' },
-      { l: '🏆 Top vendedores', m: 'Quais são os top vendedores do ano?' },
-      { l: '🏷️ Top marcas', m: 'Quais marcas têm maior faturamento?' },
-      { l: '👥 Carteira', m: 'Me dê insights sobre a carteira de clientes.' },
+      {l:'📈 Faturamento',    m:'Como está o faturamento do ano atual?'},
+      {l:'🏆 Top vendedores', m:'Quais são os top vendedores do ano?'},
+      {l:'🏷️ Top marcas',     m:'Quais marcas têm maior faturamento?'},
+      {l:'👥 Carteira',       m:'Me dê insights sobre a carteira de clientes.'},
     ];
-
-    if (modo === 'sl' && typeof dadosCompletos !== 'undefined') {
-      var criticos = dadosCompletos.filter(function(d){ return d.dias_vencimento <= 15; }).length;
-      if (criticos > 0) {
-        btns.unshift({ l: '🚨 ' + criticos + ' vencem em 15d', m: 'Liste os ' + criticos + ' produtos que vencem em 15 dias e sugira ações urgentes.' });
-      }
-    }
 
     btns.forEach(function(b) {
       var btn = document.createElement('button');
+      btn.className = 'ia-quick';
       btn.textContent = b.l;
-      btn.style.cssText = 'padding:7px 15px;border-radius:20px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;white-space:nowrap;';
-      btn.addEventListener('click', function() { iaSendMensagem(b.m); });
-      qb.appendChild(btn);
+      btn.addEventListener('click', function(){ iaSendMensagem(b.m); });
+      if (qb) qb.appendChild(btn);
     });
 
     var back = document.createElement('button');
+    back.className = 'ia-back-btn';
     back.textContent = '← Menu';
-    back.style.cssText = 'padding:7px 15px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text-muted);font-size:12px;cursor:pointer;transition:all 0.15s;white-space:nowrap;';
     back.addEventListener('click', iaReset);
-    qb.appendChild(back);
+    if (qb) qb.appendChild(back);
 
-    el('iaInput').focus();
+    var inp = el('iaInput');
+    if (inp) inp.focus();
   }
 
   function iaReset() {
     state.mode = null;
     state.historico = [];
     try { localStorage.removeItem(STORAGE_KEY); } catch(e) {}
-    el('iaMessages').innerHTML = '';
-    el('iaQuickBar').style.display = 'none';
-    el('iaInputArea').style.display = 'none';
+    var msgs = el('iaMessages');
+    var qb = el('iaQuickBar');
+    var ia = el('iaInputArea');
+    if (msgs) msgs.innerHTML = '';
+    if (qb) qb.style.display = 'none';
+    if (ia) ia.style.display = 'none';
     setStatus('Assistente Átomo');
     iaApresentar();
   }
 
-  async function iaPesquisarProduto(nome) {
-    try {
-      var r = await fetch(API_BASE + '/api/valter/pesquisar?produto=' + encodeURIComponent(nome));
-      if (!r.ok) return '';
-      var data = await r.json();
-      if (!data.resultados || !data.resultados.length) return '';
-      var txt = 'INFORMACOES DO PRODUTO "' + nome + '":\n';
-      data.resultados.forEach(function(res) {
-        txt += '[' + res.fonte + '] ' + res.titulo + '\n';
-        if (res.descricao) txt += res.descricao.substring(0, 300) + '\n\n';
-      });
-      return txt;
-    } catch(e) { return ''; }
-  }
-
-  function iaDetectarProduto(pergunta) {
-    var stopwords = ['o', 'a', 'os', 'as', 'um', 'uma', 'do', 'da', 'de', 'dos', 'das',
-      'no', 'na', 'nos', 'nas', 'ao', 'com', 'por', 'para', 'que', 'se', 'em'];
-
-    var palavras = pergunta.split(/\s+/).filter(function(w) {
-      return w.length > 1 && stopwords.indexOf(w.toLowerCase()) < 0;
-    });
-
-    if (palavras.length >= 2) {
-      return palavras.slice(0, 5).join(' ');
-    }
-
-    return palavras.length > 0 ? palavras[0] : null;
-  }
-
   async function iaChamarAPI(pergunta, contexto, modo) {
-    var sys = 'Seu nome é Valter. Você é o assistente inteligente do sistema Átomo da Alimentare, distribuidora de alimentos. Responda sempre em português, de forma direta, prática e objetiva. Use **negrito** para destacar dados importantes. Use listas com - para sugestões. Seja conciso mas completo. Nunca invente dados — use apenas o contexto fornecido.';
+    var sys = 'Seu nome é Valter. Você é o assistente inteligente do sistema Átomo da Alimentare, ' +
+      'distribuidora de alimentos. Responda sempre em português, de forma direta, prática e objetiva. ' +
+      'Use **negrito** para destacar dados importantes. Use listas com - para sugestões. ' +
+      'Seja conciso mas completo. Nunca invente dados — use apenas o contexto fornecido.';
 
     if (modo === 'sl') {
-      sys += ' Você está no modo Shelf Life. Foque em: produtos críticos, sugestões de reclassificação SL, receitas e ideias para girar estoques próximos do vencimento.';
+      sys += ' Você está no modo Shelf Life. Foque em: produtos críticos, sugestões de reclassificação SL, ' +
+        'receitas e ideias para girar estoques próximos do vencimento.';
     } else {
-      sys += ' Você está no modo Dúvidas Gerais. Responda sobre qualquer tema do sistema: faturamento, vendedores, marcas, produtos, carteira. Quando perguntado sobre produtos específicos, use as informações dos sites da Alimentare que serão fornecidas.';
+      sys += ' Você está no modo Dúvidas Gerais. Responda sobre qualquer tema do sistema: faturamento, ' +
+        'vendedores, marcas, produtos, carteira.';
     }
 
-    var infoProduto = '';
-    var prod = iaDetectarProduto(pergunta);
-    if (prod) { setStatus('Pesquisando ' + prod + '...'); infoProduto = await iaPesquisarProduto(prod); }
-
     setStatus('Pensando...');
-    var userMsg = 'CONTEXTO:\n' + contexto;
-    if (infoProduto) userMsg += '\n\n' + infoProduto;
-    userMsg += '\n\nPERGUNTA: ' + pergunta;
+    var userMsg = 'CONTEXTO:\n' + contexto + '\n\nPERGUNTA: ' + pergunta;
 
     try {
       var resp = await fetch(API_BASE + '/api/valter/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {'Content-Type':'application/json'},
         body: JSON.stringify({
           model: 'claude-sonnet-4-20250514',
           max_tokens: 1000,
           system: sys,
-          messages: state.historico.concat([{ role: 'user', content: userMsg }])
+          messages: state.historico.concat([{role:'user',content:userMsg}])
         })
       });
       var data = await resp.json();
       var texto = data.content && data.content[0] ? data.content[0].text : 'Erro ao obter resposta.';
-      state.historico.push({ role: 'user', content: pergunta });
-      state.historico.push({ role: 'assistant', content: texto });
+      state.historico.push({role:'user',content:pergunta});
+      state.historico.push({role:'assistant',content:texto});
       if (state.historico.length > 12) state.historico = state.historico.slice(-12);
       setStatus(modo === 'sl' ? '📦 Shelf Life' : '💬 Dúvidas Gerais');
       return texto;
@@ -1481,39 +1644,82 @@ window.onload = function() {
     }
   }
 
+  async function iaEscolherModo(modo) {
+    state.mode = modo;
+    state.historico = [];
+    iaHideMenu();
+    var msgs = el('iaMessages');
+    if (msgs) msgs.innerHTML = '';
+
+    var label = modo === 'sl' ? '📦 Shelf Life' : '💬 Dúvidas Gerais';
+    setStatus(label);
+    iaAddTyping();
+    setThinking(true);
+
+    var ctx = state.contexto;
+    var prompt = '';
+
+    if (modo === 'sl') {
+      prompt = 'Apresente-se rapidamente como Valter e faça uma análise focada do shelf life. ' +
+        'Destaque os pontos mais urgentes e os produtos que recomenda para código SL com justificativa.';
+    } else {
+      prompt = 'Apresente-se brevemente como Valter e diga que pode ajudar com faturamento, ' +
+        'vendedores, marcas, carteira de clientes, produtos e shelf life da Alimentare. ' +
+        'Mencione 2-3 insights interessantes do contexto fornecido.';
+    }
+
+    var resp = await iaChamarAPI(prompt, ctx, modo);
+    iaRemoveTyping();
+    setThinking(false);
+    iaAddMsg(resp, 'bot');
+    iaShowInput(modo);
+  }
+
   async function iaSendMensagem(texto) {
     if (!texto.trim()) return;
     iaAddMsg(texto, 'user');
     iaAddTyping();
     setThinking(true);
     var ctx = state.contexto;
-    if (state.mode === 'sl' && typeof dadosCompletos !== 'undefined' && dadosCompletos.length) {
-      ctx += iaContextoSL();
-    }
     var r = await iaChamarAPI(texto, ctx, state.mode || 'geral');
     iaRemoveTyping();
     setThinking(false);
     iaAddMsg(r, 'bot');
-    salvarSessao();
   }
 
   // Event listeners
-  el('iaFab').addEventListener('click', iaToggle);
-  el('iaCloseBtn').addEventListener('click', iaToggle);
-  el('iaResetBtn').addEventListener('click', iaReset);
-  el('iaSendBtn').addEventListener('click', function() {
-    var v = el('iaInput').value.trim();
-    if (v) { el('iaInput').value = ''; iaSendMensagem(v); }
-  });
-  el('iaInput').addEventListener('keydown', function(e) {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      var v = el('iaInput').value.trim();
-      if (v) { el('iaInput').value = ''; iaSendMensagem(v); }
-    }
-  });
+  var fab = el('iaFab');
+  var close = el('iaCloseBtn');
+  var reset = el('iaResetBtn');
+  var send = el('iaSendBtn');
+  var input = el('iaInput');
 
-  setTimeout(iaVerificarAlertas, 3000);
+  if (fab) fab.addEventListener('click', iaToggle);
+  if (close) close.addEventListener('click', iaToggle);
+  if (reset) reset.addEventListener('click', iaReset);
+  if (send) {
+    send.addEventListener('click', function() {
+      var v = input ? input.value.trim() : '';
+      if (v) {
+        if (input) input.value = '';
+        iaSendMensagem(v);
+      }
+    });
+  }
+  if (input) {
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        var v = input.value.trim();
+        if (v) {
+          input.value = '';
+          iaSendMensagem(v);
+        }
+      }
+    });
+  }
+
+  setTimeout(iaVerificarAlertas, 2000);
 })();
 </script>
 
