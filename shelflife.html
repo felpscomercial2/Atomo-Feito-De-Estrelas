@@ -1162,11 +1162,6 @@ tr:hover td {
   color: #8B5CF6 !important;
   border: 1px solid rgba(168, 85, 247, 0.25) !important;
   margin-left: 4px;
-  cursor: pointer;
-}
-
-.tag-duplicado:hover {
-  background: rgba(168, 85, 247, 0.25) !important;
 }
 
 /* =========================================================
@@ -1195,7 +1190,7 @@ tr:hover td {
   border-radius: var(--radius-lg) !important;
   box-shadow: var(--shadow-dropdown) !important;
   width: 100%;
-  max-width: 950px;
+  max-width: 800px;
   max-height: 80vh;
   display: flex;
   flex-direction: column;
@@ -2191,12 +2186,7 @@ tr:hover td {
     </div>
     <div class="header-actions">
       <button class="btn-export" onclick="exportarExcel()">⬇ Exportar Excel</button>
-      <button class="btn-export" onclick="exportarCSV()" style="background:#F8FAFC;">📄 Exportar CSV</button>
       <button class="btn-manual" onclick="abrirModalInserirManual()">➕ Inserir Manualmente</button>
-      <button class="btn-export" onclick="abrirGerenciadorDuplicatas()" 
-              style="background:#F3E8FF;border-color:#D8B4FE;color:#7C3AED;">
-        🔄 Lotes Duplicados
-      </button>
       <button class="btn-excluir-semana" onclick="excluirSemana()">🗑 Excluir Planilha</button>
     </div>
   </div>
@@ -2501,22 +2491,25 @@ let filtroComparacaoAtual = 'todos';
 let mostrarExcluidos = false;
 let scrollAntesBusca = null;
 let debounceTimeout = null;
-let duplicatasDetectadas = {};
-let detalhesDuplicatas = {};
 
 // ============================================================
 // TOAST NOTIFICATIONS
 // ============================================================
 function showToast(message, type = 'info') {
-    var container = document.getElementById('toastContainer');
+    const container = document.getElementById('toastContainer');
     if (!container) return;
     
-    var toast = document.createElement('div');
-    toast.className = 'toast toast-' + type;
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
     
-    var icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
+    const icons = {
+        success: '✅',
+        error: '❌',
+        warning: '⚠️',
+        info: 'ℹ️'
+    };
     
-    toast.innerHTML = '<span>' + (icons[type] || 'ℹ️') + '</span> ' + message;
+    toast.innerHTML = `<span>${icons[type] || 'ℹ️'}</span> ${message}`;
     container.appendChild(toast);
     
     setTimeout(function() {
@@ -2529,10 +2522,10 @@ function showToast(message, type = 'info') {
 // SIDEBAR TOGGLE
 // ============================================================
 function toggleSidebar() {
-  var sidebar = document.getElementById('mainSidebar');
-  var overlay = document.getElementById('sidebarOverlay');
+  const sidebar = document.getElementById('mainSidebar');
+  const overlay = document.getElementById('sidebarOverlay');
   if (!sidebar) return;
-  var isOpen = sidebar.classList.toggle('open');
+  const isOpen = sidebar.classList.toggle('open');
   if (overlay) overlay.classList.toggle('show', isOpen);
 }
 
@@ -2591,6 +2584,7 @@ function formatarData(d) {
   return s;
 }
 
+// Animação de contador
 function animarContador(elemento, valorFinal) {
   if (!elemento) return;
   var destino = parseInt(valorFinal, 10) || 0;
@@ -2611,6 +2605,7 @@ function animarContador(elemento, valorFinal) {
 // KEYBOARD SHORTCUTS
 // ============================================================
 document.addEventListener('keydown', function(e) {
+    // Ctrl+F ou / para focar na busca
     if ((e.ctrlKey && e.key === 'f') || (e.key === '/' && !e.ctrlKey && !e.metaKey && 
         !e.target.closest('input') && !e.target.closest('textarea'))) {
         e.preventDefault();
@@ -2621,6 +2616,7 @@ document.addEventListener('keydown', function(e) {
         }
     }
     
+    // Escape para limpar busca
     if (e.key === 'Escape') {
         var input = document.getElementById('buscaProduto');
         if (input && document.activeElement === input) {
@@ -2773,6 +2769,11 @@ async function processarArquivo(file) {
 
       if (result.total || result.inseridos) {
         var _total = result.total || result.inseridos;
+        var msg = '✅ Importação concluída!\n';
+        msg += '  • ' + _total + ' produtos processados\n';
+        if (result.atualizados > 0) msg += '  • ' + result.atualizados + ' atualizados (dados preservados)\n';
+        if (result.inseridos > 0) msg += '  • ' + result.inseridos + ' novos\n';
+        msg += '\nSemana: ' + semana + ' | Unidade: ' + unidade;
         showToast('Importação concluída! ' + _total + ' produtos processados.', 'success');
         await carregarSemanas();
         var _sel = document.getElementById('semanaSel');
@@ -2818,480 +2819,7 @@ async function carregarSemanas() {
 }
 
 // ============================================================
-// DETECTAR DUPLICATAS
-// ============================================================
-function detectarDuplicatas(dados) {
-    var mapa = {};
-    var duplicados = {};
-    var detalhes = {};
-    
-    dados.forEach(function(d) {
-        var cod = (d.cod_produto || '').trim();
-        if (!cod) return;
-        
-        if (!mapa[cod]) {
-            mapa[cod] = [];
-        }
-        mapa[cod].push({
-            id: d.id,
-            validade: d.validade,
-            quantidade: d.quantidade_log || 0,
-            produto: d.produto || '',
-            marca: d.marca || '',
-            unidade: d.unidade || '',
-            status: d.status || '',
-            is_sl: d.is_sl || false,
-            dias_vencimento: d.dias_vencimento || 999,
-            acao: d.acao || '',
-            vendedor: d.vendedor || '',
-            obs_gerais: d.obs_gerais || ''
-        });
-    });
-    
-    Object.keys(mapa).forEach(function(cod) {
-        if (mapa[cod].length > 1) {
-            var validades = new Set(mapa[cod].map(function(i) { return i.validade; }));
-            if (validades.size > 1) {
-                duplicados[cod] = mapa[cod];
-                detalhes[cod] = {
-                    itens: mapa[cod],
-                    total: mapa[cod].length,
-                    produto: mapa[cod][0].produto || '',
-                    marca: mapa[cod][0].marca || '',
-                    validades: Array.from(validades)
-                };
-            }
-        }
-    });
-    
-    duplicatasDetectadas = duplicados;
-    detalhesDuplicatas = detalhes;
-    return duplicados;
-}
-
-function contarDuplicatas() {
-    var total = 0;
-    Object.keys(duplicatasDetectadas).forEach(function(cod) {
-        total += duplicatasDetectadas[cod].length;
-    });
-    return total;
-}
-
-function contarGruposDuplicatas() {
-    return Object.keys(duplicatasDetectadas).length;
-}
-
-// ============================================================
-// GERENCIADOR DE DUPLICATAS
-// ============================================================
-function abrirGerenciadorDuplicatas() {
-    var duplicados = detectarDuplicatas(dadosCompletos);
-    var totalGrupos = contarGruposDuplicatas();
-    var totalItens = contarDuplicatas();
-    
-    if (totalGrupos === 0) {
-        showToast('✅ Nenhum lote duplicado encontrado!', 'success');
-        return;
-    }
-    
-    var modal = document.getElementById('modalDuplicatas');
-    if (!modal) {
-        criarModalDuplicatas();
-        modal = document.getElementById('modalDuplicatas');
-    }
-    
-    var body = document.getElementById('modalDuplicatasBody');
-    if (!body) return;
-    
-    var html = `
-        <div style="margin-bottom:16px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
-            <span style="font-size:14px;font-weight:600;color:var(--text-primary);">
-                🗂️ ${totalGrupos} grupo(s) de duplicatas
-            </span>
-            <span style="font-size:13px;color:var(--text-secondary);">
-                (${totalItens} lotes no total)
-            </span>
-            <span style="font-size:12px;color:var(--text-muted);background:#F3E8FF;padding:4px 12px;border-radius:12px;">
-                ⚠️ Cada lote é individual - não somar quantidades
-            </span>
-            <button class="btn-export" onclick="excluirTodosLotesAntigos()" 
-                    style="background:#FEF2F2;border-color:#FECACA;color:var(--color-danger);">
-                🗑 Excluir Lotes Antigos
-            </button>
-        </div>
-        <div style="max-height:500px;overflow-y:auto;">
-    `;
-    
-    var gruposOrdenados = Object.keys(duplicados).sort(function(a, b) {
-        return duplicados[b].length - duplicados[a].length;
-    });
-    
-    gruposOrdenados.forEach(function(cod) {
-        var itens = duplicados[cod];
-        var detalhe = detalhesDuplicatas[cod] || {};
-        
-        itens.sort(function(a, b) {
-            return (a.dias_vencimento || 999) - (b.dias_vencimento || 999);
-        });
-        
-        var totalQtd = itens.reduce(function(s, i) { return s + (i.quantidade || 0); }, 0);
-        var validadesList = itens.map(function(i) { return formatarData(i.validade); }).join(', ');
-        
-        html += `
-            <div style="background:var(--bg-body);border:1px solid var(--border-light);border-radius:var(--radius-sm);padding:16px;margin-bottom:12px;">
-                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
-                    <div>
-                        <span style="font-weight:700;font-size:15px;color:var(--text-primary);">📦 ${cod}</span>
-                        <span style="font-size:12px;color:var(--text-muted);margin-left:8px;">
-                            ${detalhe.produto || 'Sem nome'}
-                        </span>
-                        <span style="font-size:11px;color:var(--text-muted);margin-left:8px;background:var(--bg-card);padding:2px 10px;border-radius:12px;">
-                            ${itens.length} lotes
-                        </span>
-                        <span style="font-size:11px;color:var(--text-muted);margin-left:8px;">
-                            Total: ${num(totalQtd)} un
-                        </span>
-                    </div>
-                    <div style="display:flex;gap:6px;">
-                        <button class="btn-export" onclick="copiarDuplicatas('${cod}')" 
-                                style="padding:4px 12px;font-size:11px;background:#EEF2FF;border-color:#C7D2FE;color:var(--accent-primary);">
-                            📋 Copiar
-                        </button>
-                        <button class="btn-export" onclick="excluirLotesAntigos('${cod}')" 
-                                style="padding:4px 12px;font-size:11px;background:#FEF2F2;border-color:#FECACA;color:var(--color-danger);">
-                            🗑 Excluir Antigos
-                        </button>
-                    </div>
-                </div>
-                
-                <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">
-                    Validades: ${validadesList}
-                </div>
-                
-                <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;">
-        `;
-        
-        itens.forEach(function(item, idx) {
-            var statusClass = item.is_sl ? 'badge-sl' : 
-                             (item.status === 'CRITICO' ? 'badge-critico' : 
-                             (item.status === 'ATENCAO' ? 'badge-atencao' : 'badge-ok'));
-            var statusText = item.is_sl ? 'SL' : (item.status || 'OK');
-            
-            var isCritico = item.dias_vencimento <= 30;
-            var isAtencao = item.dias_vencimento <= 60 && item.dias_vencimento > 30;
-            
-            html += `
-                <div style="background:var(--bg-card);border:1px solid ${isCritico ? 'var(--color-danger)' : isAtencao ? 'var(--color-warning)' : 'var(--border-light)'};border-radius:var(--radius-sm);padding:10px 12px;${isCritico ? 'border-left:4px solid var(--color-danger);' : isAtencao ? 'border-left:4px solid var(--color-warning);' : ''}">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-                        <span style="font-size:10px;color:var(--text-muted);">Lote #${idx + 1}</span>
-                        <span class="badge ${statusClass}" style="font-size:10px;padding:2px 8px;">${statusText}</span>
-                    </div>
-                    <div style="font-size:14px;font-weight:600;color:${isCritico ? 'var(--color-danger)' : isAtencao ? 'var(--color-warning)' : 'var(--text-primary)'};">
-                        ${formatarData(item.validade)}
-                    </div>
-                    <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-secondary);margin-top:2px;">
-                        <span>Qtde: <strong>${num(item.quantidade)}</strong></span>
-                        <span style="${isCritico ? 'color:var(--color-danger);font-weight:700;' : ''}">${item.dias_vencimento}d</span>
-                    </div>
-                    ${item.acao ? '<div style="font-size:10px;color:var(--text-muted);margin-top:2px;">⚡ ' + item.acao + '</div>' : ''}
-                    ${item.vendedor ? '<div style="font-size:10px;color:var(--text-muted);">👤 ' + item.vendedor + '</div>' : ''}
-                    <div style="margin-top:6px;display:flex;gap:4px;flex-wrap:wrap;">
-                        <button onclick="editarLoteDuplicado(${item.id})" 
-                                style="padding:2px 8px;border-radius:4px;border:1px solid var(--border-light);background:var(--bg-body);font-size:10px;cursor:pointer;color:var(--accent-primary);">
-                            ✏️ Editar
-                        </button>
-                        <button onclick="excluirLoteIndividual(${item.id}, '${cod}')" 
-                                style="padding:2px 8px;border-radius:4px;border:1px solid #FECACA;background:#FEF2F2;font-size:10px;cursor:pointer;color:var(--color-danger);">
-                            🗑 Excluir
-                        </button>
-                        <button onclick="marcarComoSL(${item.id})" 
-                                style="padding:2px 8px;border-radius:4px;border:1px solid #C7D2FE;background:#EEF2FF;font-size:10px;cursor:pointer;color:var(--color-sl);">
-                            🟣 SL
-                        </button>
-                    </div>
-                </div>
-            `;
-        });
-        
-        html += `
-                </div>
-            </div>
-        `;
-    });
-    
-    html += '</div>';
-    body.innerHTML = html;
-    
-    modal.classList.add('show');
-}
-
-function criarModalDuplicatas() {
-    var modal = document.createElement('div');
-    modal.className = 'modal-overlay';
-    modal.id = 'modalDuplicatas';
-    modal.innerHTML = `
-        <div class="modal-box" style="max-width:950px;">
-            <div class="modal-header">
-                <div>
-                    <div class="modal-title">🗂️ Gerenciador de Duplicatas</div>
-                    <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">
-                        Produtos com o mesmo código e validades diferentes - <strong>Cada lote é individual</strong>
-                    </div>
-                </div>
-                <button class="modal-close" onclick="document.getElementById('modalDuplicatas').classList.remove('show')">✕</button>
-            </div>
-            <div class="modal-body" id="modalDuplicatasBody" style="max-height:calc(80vh - 140px);overflow-y:auto;">
-                Carregando...
-            </div>
-            <div class="modal-actions">
-                <button class="btn-cancelar" onclick="document.getElementById('modalDuplicatas').classList.remove('show')">Fechar</button>
-            </div>
-        </div>
-    `;
-    document.body.appendChild(modal);
-    
-    modal.addEventListener('click', function(e) {
-        if (e.target === modal) modal.classList.remove('show');
-    });
-}
-
-function copiarDuplicatas(codProduto) {
-    var itens = duplicatasDetectadas[codProduto] || [];
-    if (!itens.length) {
-        showToast('Nenhum item para copiar.', 'warning');
-        return;
-    }
-    
-    var texto = 'PRODUTO: ' + codProduto + '\n';
-    texto += 'DESCRIÇÃO: ' + (itens[0].produto || '—') + '\n';
-    texto += 'MARCA: ' + (itens[0].marca || '—') + '\n';
-    texto += 'TOTAL DE LOTES: ' + itens.length + '\n';
-    texto += 'QUANTIDADE TOTAL: ' + itens.reduce(function(s, i) { return s + (i.quantidade || 0); }, 0) + ' unidades\n';
-    texto += '\n━━━ LOTES ━━━\n';
-    
-    itens.sort(function(a, b) {
-        return (a.dias_vencimento || 999) - (b.dias_vencimento || 999);
-    });
-    
-    itens.forEach(function(item, idx) {
-        texto += '\nLOTE ' + (idx + 1) + ':\n';
-        texto += '  Validade: ' + formatarData(item.validade) + '\n';
-        texto += '  Quantidade: ' + (item.quantidade || 0) + '\n';
-        texto += '  Dias para vencer: ' + item.dias_vencimento + 'd\n';
-        texto += '  Status: ' + (item.is_sl ? 'SL' : (item.status || 'OK')) + '\n';
-        if (item.acao) texto += '  Ação: ' + item.acao + '\n';
-        if (item.vendedor) texto += '  Vendedor: ' + item.vendedor + '\n';
-    });
-    
-    navigator.clipboard.writeText(texto).then(function() {
-        showToast('✅ Dados copiados para a área de transferência!', 'success');
-    }).catch(function() {
-        var textarea = document.createElement('textarea');
-        textarea.value = texto;
-        document.body.appendChild(textarea);
-        textarea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textarea);
-        showToast('✅ Dados copiados para a área de transferência!', 'success');
-    });
-}
-
-async function excluirLotesAntigos(codProduto) {
-    var itens = duplicatasDetectadas[codProduto] || [];
-    if (itens.length < 2) {
-        showToast('Apenas um lote encontrado. Nada para excluir.', 'warning');
-        return;
-    }
-    
-    itens.sort(function(a, b) {
-        var da = a.validade || '1900-01-01';
-        var db = b.validade || '1900-01-01';
-        return da < db ? 1 : (da > db ? -1 : 0);
-    });
-    
-    var idsParaExcluir = itens.slice(1).map(function(i) { return i.id; });
-    var qtdExcluir = itens.slice(1).reduce(function(s, i) { return s + (i.quantidade || 0); }, 0);
-    
-    if (!confirm(
-        'Deseja excluir ' + idsParaExcluir.length + ' lotes antigos do produto ' + codProduto + '?\n\n' +
-        '📦 Produto: ' + (itens[0].produto || '—') + '\n' +
-        '🗑️ Lotes a excluir: ' + idsParaExcluir.length + '\n' +
-        '📊 Quantidade total a remover: ' + num(qtdExcluir) + ' unidades\n\n' +
-        '⚠️ O lote mais recente (' + formatarData(itens[0].validade) + ') será mantido.'
-    )) {
-        return;
-    }
-    
-    try {
-        for (var i = 0; i < idsParaExcluir.length; i++) {
-            await fetch(API + '/api/shelflife/atualizar', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    id: idsParaExcluir[i],
-                    acao: 'Excluído',
-                    usuario: usuarioEmail
-                })
-            });
-        }
-        showToast('✅ ' + idsParaExcluir.length + ' lotes antigos removidos do produto ' + codProduto, 'success');
-        await carregarDados();
-        document.getElementById('modalDuplicatas').classList.remove('show');
-    } catch (e) {
-        showToast('Erro ao excluir: ' + e.message, 'error');
-    }
-}
-
-async function excluirTodosLotesAntigos() {
-    var totalGrupos = contarGruposDuplicatas();
-    if (totalGrupos === 0) {
-        showToast('Nenhum lote antigo para excluir.', 'warning');
-        return;
-    }
-    
-    var totalLotesExcluir = 0;
-    var totalQtdExcluir = 0;
-    var codigos = Object.keys(duplicatasDetectadas);
-    
-    codigos.forEach(function(cod) {
-        var itens = duplicatasDetectadas[cod] || [];
-        if (itens.length < 2) return;
-        itens.sort(function(a, b) {
-            var da = a.validade || '1900-01-01';
-            var db = b.validade || '1900-01-01';
-            return da < db ? 1 : (da > db ? -1 : 0);
-        });
-        var lotesExcluir = itens.slice(1);
-        totalLotesExcluir += lotesExcluir.length;
-        totalQtdExcluir += lotesExcluir.reduce(function(s, i) { return s + (i.quantidade || 0); }, 0);
-    });
-    
-    if (!confirm(
-        'Deseja excluir todos os lotes antigos de ' + totalGrupos + ' grupos?\n\n' +
-        '🗑️ Lotes a excluir: ' + totalLotesExcluir + '\n' +
-        '📊 Quantidade total a remover: ' + num(totalQtdExcluir) + ' unidades\n\n' +
-        '⚠️ Apenas o lote mais recente de cada produto será mantido.'
-    )) {
-        return;
-    }
-    
-    var totalExcluidos = 0;
-    
-    for (var i = 0; i < codigos.length; i++) {
-        var cod = codigos[i];
-        var itens = duplicatasDetectadas[cod] || [];
-        if (itens.length < 2) continue;
-        
-        itens.sort(function(a, b) {
-            var da = a.validade || '1900-01-01';
-            var db = b.validade || '1900-01-01';
-            return da < db ? 1 : (da > db ? -1 : 0);
-        });
-        
-        var idsParaExcluir = itens.slice(1).map(function(i) { return i.id; });
-        
-        try {
-            for (var j = 0; j < idsParaExcluir.length; j++) {
-                await fetch(API + '/api/shelflife/atualizar', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        id: idsParaExcluir[j],
-                        acao: 'Excluído',
-                        usuario: usuarioEmail
-                    })
-                });
-            }
-            totalExcluidos += idsParaExcluir.length;
-        } catch (e) {
-            console.error('Erro ao excluir ' + cod + ':', e);
-        }
-    }
-    
-    showToast('✅ ' + totalExcluidos + ' lotes antigos removidos com sucesso!', 'success');
-    await carregarDados();
-    document.getElementById('modalDuplicatas').classList.remove('show');
-}
-
-async function excluirLoteIndividual(id, codProduto) {
-    if (!confirm('Deseja excluir este lote do produto ' + codProduto + '?')) {
-        return;
-    }
-    
-    try {
-        await fetch(API + '/api/shelflife/atualizar', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                id: id,
-                acao: 'Excluído',
-                usuario: usuarioEmail
-            })
-        });
-        showToast('✅ Lote excluído com sucesso!', 'success');
-        await carregarDados();
-        abrirGerenciadorDuplicatas();
-    } catch (e) {
-        showToast('Erro ao excluir: ' + e.message, 'error');
-    }
-}
-
-async function marcarComoSL(id) {
-    var d = dadosCompletos.find(function(item) { return item.id === id; });
-    if (!d) {
-        showToast('Produto não encontrado.', 'error');
-        return;
-    }
-    
-    var codSl = prompt('Digite o código SL para este lote:', d.cod_sl || 'SL-' + d.cod_produto);
-    if (codSl === null || codSl.trim() === '') return;
-    
-    try {
-        await fetch(API + '/api/shelflife/atualizar', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                id: id,
-                cod_sl: codSl.trim(),
-                quantidade_atual: d.quantidade_atual || null,
-                venda_3meses: d.venda_3meses || null,
-                venda_mes: d.venda_mes || null,
-                valor_sl: d.valor_sl || null,
-                data_inconsistencia: d.data_inconsistencia || null,
-                obs_logistica: d.obs_logistica || '',
-                obs_gerais: d.obs_gerais || '',
-                acao: d.acao || '',
-                vendedor: d.vendedor || '',
-                usuario: usuarioEmail
-            })
-        });
-        showToast('🟣 Produto marcado como SL com sucesso!', 'success');
-        await carregarDados();
-        abrirGerenciadorDuplicatas();
-    } catch (e) {
-        showToast('Erro ao marcar como SL: ' + e.message, 'error');
-    }
-}
-
-function editarLoteDuplicado(id) {
-    document.getElementById('modalDuplicatas').classList.remove('show');
-    
-    var tr = document.querySelector('#tbodySL tr[data-id="' + id + '"]');
-    if (tr) {
-        tr.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        tr.style.outline = '3px solid var(--accent-primary)';
-        tr.style.outlineOffset = '-3px';
-        setTimeout(function() {
-            tr.style.outline = '';
-        }, 5000);
-        showToast('📝 Lote encontrado! Edite os campos desejados.', 'info');
-    } else {
-        showToast('Lote não encontrado na tabela atual.', 'warning');
-    }
-}
-
-// ============================================================
-// CARREGAR DADOS
+// CARREGAR DADOS (OTIMIZADO COM PARALELISMO)
 // ============================================================
 async function carregarDados() {
   var val = document.getElementById('semanaSel').value;
@@ -3307,6 +2835,7 @@ async function carregarDados() {
   loader.classList.add('show');
 
   try {
+    // Paraleliza as requisições principais
     var [dadosRes, vendedoresRes] = await Promise.all([
       fetch(API + '/api/shelflife/listar?semana=' + encodeURIComponent(semana) + 
             (unidade ? '&unidade=' + encodeURIComponent(unidade) : '') + '&_=' + Date.now(), 
@@ -3320,6 +2849,7 @@ async function carregarDados() {
     var dv = await vendedoresRes.json();
     todosVendedores = dv.vendedores || [];
 
+    // Atualiza lista de vendedores no filtro
     var selVend = document.getElementById('filtroVendedor');
     var currentVal = selVend.value;
     selVend.innerHTML = '<option value="">Todos os vendedores</option>';
@@ -3331,8 +2861,10 @@ async function carregarDados() {
       selVend.appendChild(opt);
     });
 
+    // Carrega semana anterior
     await carregarSemanaAnterior(semana, unidade);
 
+    // Processa os dados
     dadosCompletos.forEach(function(d) {
       var _cs = String(d.cod_sl || '').trim();
       d.is_sl = !!_cs && _cs !== '-' && _cs !== '—' && _cs !== '--';
@@ -3357,6 +2889,7 @@ async function carregarDados() {
     atualizarKPIs();
     renderTabela();
     
+    // Atualiza footer
     var agora = new Date().toLocaleString('pt-BR', {
       day: '2-digit', month: '2-digit', year: 'numeric',
       hour: '2-digit', minute: '2-digit'
@@ -3429,36 +2962,6 @@ function atualizarKPIs() {
   var totalNovos = ativos.filter(function(d) { return d._isNovo; }).length;
   var elNovos = document.getElementById('kNovos');
   if (elNovos) animarContador(elNovos, totalNovos);
-  
-  // KPI de duplicatas
-  var duplicados = detectarDuplicatas(dadosCompletos);
-  var totalGrupos = contarGruposDuplicatas();
-  var totalItens = contarDuplicatas();
-  
-  var kpiExistente = document.querySelector('.kpi-card.duplicatas');
-  if (kpiExistente) {
-    kpiExistente.remove();
-  }
-  
-  if (totalGrupos > 0) {
-    var grid = document.querySelector('.kpi-grid');
-    var card = document.createElement('div');
-    card.className = 'kpi-card duplicatas';
-    card.style.border = '2px solid #8B5CF6';
-    card.style.cursor = 'pointer';
-    card.onclick = function() { abrirGerenciadorDuplicatas(); };
-    card.innerHTML = `
-      <div class="kpi-label">🔄 Lotes Duplicados</div>
-      <div class="kpi-value" style="color:#8B5CF6;">
-        ${totalGrupos}
-        <span style="font-size:14px;font-weight:400;color:var(--text-muted);">(${totalItens})</span>
-      </div>
-      <div style="font-size:10px;color:var(--text-muted);margin-top:2px;">
-        Clique para gerenciar
-      </div>
-    `;
-    grid.appendChild(card);
-  }
 }
 
 // ============================================================
@@ -3493,7 +2996,7 @@ function calcularPrevisao(d, qtdOverride, vmesOverride, v3mOverride) {
 }
 
 // ============================================================
-// RENDER TABELA
+// RENDER TABELA (OTIMIZADA COM DOCUMENT FRAGMENT)
 // ============================================================
 function renderTabela() {
   var tableWrap = document.querySelector('.table-wrap');
@@ -3512,9 +3015,12 @@ function renderTabela() {
     });
   }
 
+  // Filtro por vendedor
   var vendedorFiltro = document.getElementById('filtroVendedor').value;
   if (vendedorFiltro) {
-    dados = dados.filter(function(d) { return d.vendedor === vendedorFiltro; });
+    dados = dados.filter(function(d) {
+      return d.vendedor === vendedorFiltro;
+    });
   }
 
   if (mostrarExcluidos) {
@@ -3654,17 +3160,8 @@ function renderTabela() {
     if (isReduciu) tagsDiv.innerHTML += '<span class="tag-reduziu">▼ QUANTIDADE REDUZIU <span style="font-weight:400;opacity:0.85">' + num(qtdAnterior) + ' → ' + num(d.quantidade_log) + '</span></span>';
     if (isIgual) tagsDiv.innerHTML += '<span class="tag-reduziu">= QUANTIDADE IGUAL <span style="font-weight:400;opacity:0.85">' + num(qtdAnterior) + ' → ' + num(d.quantidade_log) + '</span></span>';
     if (isSLNovo) tagsDiv.innerHTML += '<span class="tag-sl-novo">🟣 VIROU SL</span>';
-    
     var isDuplicado = contadorCod[(d.cod_produto || '').trim()] > 1;
-    if (isDuplicado) {
-      var qtdDuplicados = contadorCod[(d.cod_produto || '').trim()];
-      tagsDiv.innerHTML += `
-        <span class="tag-duplicado" onclick="abrirGerenciadorDuplicatas()" title="Clique para gerenciar duplicatas - ${qtdDuplicados} lotes">
-          ◈ DUPLICADO (${qtdDuplicados})
-        </span>
-      `;
-    }
-    
+    if (isDuplicado) tagsDiv.innerHTML += '<span class="tag-duplicado" title="Este produto aparece mais de uma vez na planilha com datas diferentes. Some as quantidades para ter o total real.">◈ DUPLICADO</span>';
     inProduto.appendChild(inProdInput);
     inProduto.appendChild(tagsDiv);
     tr.cells[3].appendChild(inProduto);
@@ -3719,6 +3216,7 @@ function renderTabela() {
       if (!prev) {
         tdPrevCell.innerHTML = '<span style="color:var(--text-muted);">—</span>';
       } else {
+        var cls = 'prev-' + prev.situacao;
         var txt = prev.dias <= 60 ? prev.dias + 'd' : Math.round(prev.dias / 30) + ' meses';
         var tip = prev.situacao === 'ok' ?
           'Vai vender em ' + prev.dias + 'd (vence em ' + prev.diasVenc + 'd) ✔' :
@@ -3921,6 +3419,7 @@ function renderTabela() {
     });
     btnCell.appendChild(btn);
 
+    // Botão Excluir
     var btnDel = document.createElement('button');
     btnDel.className = 'btn-delete';
     btnDel.innerHTML = '🗑';
@@ -3960,6 +3459,7 @@ function renderTabela() {
     });
     btnCell.appendChild(btnDel);
 
+    // Botão Histórico
     var btnHist = document.createElement('button');
     btnHist.className = 'btn-hist';
     btnHist.textContent = 'Hist.';
@@ -4310,9 +3810,12 @@ function exportarExcel() {
     });
   }
 
+  // Filtro por vendedor
   var vendedorFiltro = document.getElementById('filtroVendedor').value;
   if (vendedorFiltro) {
-    dados = dados.filter(function(d) { return d.vendedor === vendedorFiltro; });
+    dados = dados.filter(function(d) {
+      return d.vendedor === vendedorFiltro;
+    });
   }
 
   if (mostrarExcluidos) {
@@ -4485,139 +3988,6 @@ function exportarExcel() {
 }
 
 // ============================================================
-// EXPORTAR CSV
-// ============================================================
-function exportarCSV() {
-    if (!dadosCompletos || !dadosCompletos.length) {
-        showToast('Nenhum dado para exportar!', 'warning');
-        return;
-    }
-
-    var dados = dadosCompletos.slice();
-
-    var busca = normalizarTexto(document.getElementById('buscaProduto').value);
-    if (busca) {
-        dados = dados.filter(function(d) {
-            return normalizarTexto(d.produto || '').indexOf(busca) >= 0 ||
-                normalizarTexto(d.cod_produto || '').indexOf(busca) >= 0 ||
-                normalizarTexto(d.cod_sl || '').indexOf(busca) >= 0;
-        });
-    }
-
-    var vendedorFiltro = document.getElementById('filtroVendedor').value;
-    if (vendedorFiltro) {
-        dados = dados.filter(function(d) { return d.vendedor === vendedorFiltro; });
-    }
-
-    if (mostrarExcluidos) {
-        dados = dados.filter(function(d) { return d.acao === 'Excluído'; });
-    } else {
-        dados = dados.filter(function(d) { return d.acao !== 'Excluído'; });
-    }
-
-    if (filtroAtual === 'SL') {
-        dados = dados.filter(function(d) { return d.is_sl; });
-    } else if (filtroAtual !== 'todos') {
-        dados = dados.filter(function(d) { return d.status === filtroAtual && !d.is_sl; });
-    }
-
-    if (acoesSelecionadas.length) {
-        dados = dados.filter(function(d) {
-            var acaoAtual = normalizarTexto(d.acao || '');
-            return acoesSelecionadas.some(function(a) { return normalizarTexto(a) === acaoAtual; });
-        });
-    }
-
-    if (filtroComparacaoAtual !== 'todos') {
-        dados = dados.filter(function(d) {
-            var key = d.cod_produto + '|' + String(d.validade || '').slice(0, 10);
-            var qtdAnterior = dadosSemanaAnterior.hasOwnProperty(key) ? dadosSemanaAnterior[key] : null;
-            var temComparacao = Object.keys(dadosSemanaAnterior).length > 0;
-            var isSLNovo = false;
-            if (d.is_sl && temComparacao) {
-                var nomeSemSL = d.produto.replace(/^sl\.?\s*/i, '').trim();
-                isSLNovo = !Object.keys(dadosSemanaAnterior).some(function(k) {
-                    return k.toLowerCase().indexOf(nomeSemSL.toLowerCase()) >= 0;
-                });
-            }
-            var tipo;
-            if (d.is_sl && isSLNovo) tipo = 'sl';
-            else if (!d.is_sl && temComparacao && qtdAnterior === null) tipo = 'novo';
-            else if (!d.is_sl && temComparacao && (parseFloat(d.quantidade_log) || 0) > qtdAnterior) tipo = 'aumentou';
-            else if (!d.is_sl && temComparacao && (parseFloat(d.quantidade_log) || 0) <= qtdAnterior) tipo = 'reduziu';
-            else if (d.is_sl && !isSLNovo && temComparacao) tipo = 'anterior';
-            else tipo = 'todos';
-            return tipo === filtroComparacaoAtual;
-        });
-    }
-
-    if (!dados.length) {
-        showToast('Nenhum produto visível para exportar com os filtros atuais!', 'warning');
-        return;
-    }
-
-    var cabecalho = [
-        'Status', 'Código', 'Código SL', 'Produto', 'Marca', 'Unidade',
-        'Qtde Logística', 'Qtde Anterior', 'Qtde Atual', 'Validade', 'Dias Vencimento',
-        'Venda 3 Meses', 'Venda Mensal', 'Valor SL', 'Prev. Saída',
-        'Data Inconsistência', 'Obs Logística', 'Obs Gerais', 'Ação', 'Vendedor'
-    ];
-
-    var linhas = [cabecalho];
-    
-    dados.forEach(function(d) {
-        var _isSl = d.is_sl;
-        var status = _isSl ? 'SL' : d.status;
-        var _keyAnt = d.cod_produto + '|' + String(d.validade || '').slice(0, 10);
-        var qtdAnt = dadosSemanaAnterior.hasOwnProperty(_keyAnt) ? dadosSemanaAnterior[_keyAnt] : '';
-        
-        var prev = calcularPrevisao(d, d.quantidade_atual, d.venda_mes, d.venda_3meses);
-        var prevText = prev ? (prev.dias <= 60 ? prev.dias + 'd' : Math.round(prev.dias / 30) + ' meses') : '';
-
-        linhas.push([
-            status,
-            d.cod_produto || '',
-            d.cod_sl || '',
-            d.produto || '',
-            d.marca || '',
-            d.unidade || '',
-            d.quantidade_log || 0,
-            qtdAnt,
-            d.quantidade_atual || '',
-            formatarData(d.validade),
-            d.dias_vencimento || '',
-            d.venda_3meses || '',
-            d.venda_mes || '',
-            d.valor_sl || '',
-            prevText,
-            d.data_inconsistencia ? formatarData(d.data_inconsistencia) : '',
-            d.obs_logistica || '',
-            d.obs_gerais || '',
-            d.acao || '',
-            d.vendedor || ''
-        ]);
-    });
-
-    var csv = linhas.map(function(row) {
-        return row.map(function(cell) {
-            if (typeof cell === 'string' && (cell.includes(',') || cell.includes('"') || cell.includes('\n'))) {
-                return '"' + cell.replace(/"/g, '""') + '"';
-            }
-            return cell;
-        }).join(',');
-    }).join('\n');
-
-    var blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-    var link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = 'Atomo-ShelfLife-' + new Date().toISOString().slice(0, 10) + '.csv';
-    link.click();
-    URL.revokeObjectURL(link.href);
-    
-    showToast('CSV exportado com sucesso!', 'success');
-}
-
-// ============================================================
 // VERIFICAR ACESSO
 // ============================================================
 async function verificarAcesso() {
@@ -4645,6 +4015,7 @@ async function verificarAcesso() {
 // INIT
 // ============================================================
 window.onload = async function() {
+  // Captura email do usuário logado
   try {
     if (typeof firebase !== 'undefined' && firebase.auth) {
       await new Promise(function(resolve) {
@@ -5014,6 +4385,7 @@ window.onload = async function() {
     iaAddMsg(r, 'bot');
   }
 
+  // Event listeners
   var fab = el('iaFab');
   var close = el('iaCloseBtn');
   var reset = el('iaResetBtn');
