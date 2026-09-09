@@ -2616,14 +2616,15 @@ function linhasCarteira() {
   cols.forEach(c => head.push(labelCol(c)));
   head.push('Total');
 
-  const rows = [head],
-    totCol = {},
-    totGeral = 0;
+  const rows = [head];
+  const totCol = {};
+  let totGeral = 0;
   cols.forEach(c => { totCol[c.ano + '-' + c.mes] = 0; });
 
+  // ✅ CORREÇÃO AQUI: const tot = 0 → let tot = 0
   clientesRender.forEach(cl => {
-    const ck = cl.key,
-      tot = 0;
+    const ck = cl.key;
+    let tot = 0;  // ← CORRIGIDO
     const r = [cl.cod || '', cl.nome || '', cl.vendedor || '', cl.cidade || '', cl.uf || '', cl.endereco || '', cl.bairro || ''];
     cols.forEach(c => {
       const v = (pivotValMap[ck] && pivotValMap[ck][c.ano + '-' + c.mes]) ? pivotValMap[ck][c.ano + '-' + c.mes] : 0;
