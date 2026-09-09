@@ -59,6 +59,79 @@ html, body {
 }
 
 /* =========================================================
+   TOAST NOTIFICATIONS
+   ========================================================= */
+.toast-container {
+  position: fixed;
+  bottom: 100px;
+  right: 20px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 420px;
+}
+
+.toast {
+  padding: 14px 20px;
+  border-radius: var(--radius-default);
+  box-shadow: var(--shadow-dropdown);
+  animation: toastIn 0.4s var(--transition-smooth);
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.toast-success {
+  background: #F0FDF4 !important;
+  border: 1px solid #86EFAC !important;
+  color: var(--color-success) !important;
+}
+
+.toast-error {
+  background: #FEF2F2 !important;
+  border: 1px solid #FECACA !important;
+  color: var(--color-danger) !important;
+}
+
+.toast-info {
+  background: #EEF2FF !important;
+  border: 1px solid #C7D2FE !important;
+  color: var(--accent-primary) !important;
+}
+
+.toast-warning {
+  background: #FFFBEB !important;
+  border: 1px solid #FDE68A !important;
+  color: var(--color-warning) !important;
+}
+
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translateX(40px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+.toast-out {
+  animation: toastOut 0.3s var(--transition-ease) forwards;
+}
+
+@keyframes toastOut {
+  to {
+    opacity: 0;
+    transform: translateX(40px) scale(0.95);
+  }
+}
+
+/* =========================================================
    SIDEBAR
    ========================================================= */
 .sidebar {
@@ -487,6 +560,7 @@ html, body {
   font-weight: 500;
   transition: all 0.25s var(--transition-ease);
   font-family: 'Inter', sans-serif;
+  white-space: nowrap;
 }
 
 .filtro-btn:hover {
@@ -715,7 +789,7 @@ html, body {
   border: 1px solid var(--border-light) !important;
   background: var(--bg-card) !important;
   box-shadow: var(--shadow-card) !important;
-  max-height: calc(100vh - 460px);
+  max-height: calc(100vh - 480px);
   animation: fadeSlideUp 0.7s var(--transition-ease);
 }
 
@@ -920,6 +994,11 @@ tr:hover td {
 
 .btn-save.saved {
   background: #DCFCE7 !important;
+}
+
+.btn-save.saving {
+  opacity: 0.7;
+  cursor: wait;
 }
 
 .btn-delete {
@@ -2053,6 +2132,9 @@ tr:hover td {
   </div>
 </div>
 
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toastContainer"></div>
+
 <!-- LOADING -->
 <div class="loading-overlay" id="loadingOverlay">
   <div class="loading-spinner"></div>
@@ -2169,8 +2251,15 @@ tr:hover td {
   <div class="filtros-bar">
     <div style="position:relative;flex:1;min-width:200px;">
       <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:14px;">🔍</span>
-      <input type="text" id="buscaProduto" placeholder="Buscar produto..." oninput="onBuscaInput()" style="width:100%;padding:8px 12px 8px 35px;border-radius:20px;border:1px solid var(--border-light);background:var(--bg-body);color:var(--text-primary);font-size:13px;outline:none;transition:all 0.25s var(--transition-ease);font-family:'Inter',sans-serif;">
+      <input type="text" id="buscaProduto" placeholder="Buscar produto... (Ctrl+F ou /)" oninput="onBuscaInput()" style="width:100%;padding:8px 12px 8px 35px;border-radius:20px;border:1px solid var(--border-light);background:var(--bg-body);color:var(--text-primary);font-size:13px;outline:none;transition:all 0.25s var(--transition-ease);font-family:'Inter',sans-serif;">
     </div>
+    
+    <div style="position:relative;flex:1;min-width:150px;">
+      <select id="filtroVendedor" onchange="renderTabela()" style="width:100%;padding:8px 12px;border-radius:20px;border:1px solid var(--border-light);background:var(--bg-body);color:var(--text-primary);font-size:13px;outline:none;transition:all 0.25s var(--transition-ease);font-family:'Inter',sans-serif;">
+        <option value="">Todos os vendedores</option>
+      </select>
+    </div>
+    
     <button class="filtro-btn ativo-todos" id="btnTodos" onclick="filtrar('todos',this)">Todos</button>
     <button class="filtro-btn" id="btnCritico" onclick="filtrar('CRITICO',this)">🔴 Crítico</button>
     <button class="filtro-btn" id="btnAtencao" onclick="filtrar('ATENCAO',this)">🟡 Atenção</button>
@@ -2401,6 +2490,33 @@ let filtroAtual = 'todos';
 let filtroComparacaoAtual = 'todos';
 let mostrarExcluidos = false;
 let scrollAntesBusca = null;
+let debounceTimeout = null;
+
+// ============================================================
+// TOAST NOTIFICATIONS
+// ============================================================
+function showToast(message, type = 'info') {
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
+    
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    
+    const icons = {
+        success: '✅',
+        error: '❌',
+        warning: '⚠️',
+        info: 'ℹ️'
+    };
+    
+    toast.innerHTML = `<span>${icons[type] || 'ℹ️'}</span> ${message}`;
+    container.appendChild(toast);
+    
+    setTimeout(function() {
+        toast.classList.add('toast-out');
+        setTimeout(function() { toast.remove(); }, 300);
+    }, 4000);
+}
 
 // ============================================================
 // SIDEBAR TOGGLE
@@ -2486,6 +2602,32 @@ function animarContador(elemento, valorFinal) {
 }
 
 // ============================================================
+// KEYBOARD SHORTCUTS
+// ============================================================
+document.addEventListener('keydown', function(e) {
+    // Ctrl+F ou / para focar na busca
+    if ((e.ctrlKey && e.key === 'f') || (e.key === '/' && !e.ctrlKey && !e.metaKey && 
+        !e.target.closest('input') && !e.target.closest('textarea'))) {
+        e.preventDefault();
+        var input = document.getElementById('buscaProduto');
+        if (input) {
+            input.focus();
+            input.select();
+        }
+    }
+    
+    // Escape para limpar busca
+    if (e.key === 'Escape') {
+        var input = document.getElementById('buscaProduto');
+        if (input && document.activeElement === input) {
+            input.value = '';
+            onBuscaInput();
+            input.blur();
+        }
+    }
+});
+
+// ============================================================
 // UPLOAD
 // ============================================================
 function detectarUnidade(nome) {
@@ -2531,7 +2673,7 @@ async function processarArquivo(file) {
         }
       }
       if (headerRow < 0) {
-        alert('Cabeçalho não encontrado! Verifique o arquivo.');
+        showToast('Cabeçalho não encontrado! Verifique o arquivo.', 'error');
         loader.classList.remove('show');
         return;
       }
@@ -2613,7 +2755,7 @@ async function processarArquivo(file) {
       }
 
       if (!produtos.length) {
-        alert('Nenhum produto encontrado!');
+        showToast('Nenhum produto encontrado!', 'error');
         loader.classList.remove('show');
         return;
       }
@@ -2627,12 +2769,12 @@ async function processarArquivo(file) {
 
       if (result.total || result.inseridos) {
         var _total = result.total || result.inseridos;
-        var _msg = 'Importação concluída!\n';
-        _msg += '  • ' + _total + ' produtos processados\n';
-        if (result.atualizados > 0) _msg += '  • ' + result.atualizados + ' atualizados (dados preservados)\n';
-        if (result.inseridos > 0) _msg += '  • ' + result.inseridos + ' novos\n';
-        _msg += '\nSemana: ' + semana + ' | Unidade: ' + unidade;
-        alert(_msg);
+        var msg = '✅ Importação concluída!\n';
+        msg += '  • ' + _total + ' produtos processados\n';
+        if (result.atualizados > 0) msg += '  • ' + result.atualizados + ' atualizados (dados preservados)\n';
+        if (result.inseridos > 0) msg += '  • ' + result.inseridos + ' novos\n';
+        msg += '\nSemana: ' + semana + ' | Unidade: ' + unidade;
+        showToast('Importação concluída! ' + _total + ' produtos processados.', 'success');
         await carregarSemanas();
         var _sel = document.getElementById('semanaSel');
         var _alvo = normalizarSemana(semana) + '|' + unidade;
@@ -2642,7 +2784,7 @@ async function processarArquivo(file) {
         await carregarDados();
       }
     } catch (err) {
-      alert('Erro: ' + err.message);
+      showToast('Erro: ' + err.message, 'error');
       console.error(err);
     }
     loader.classList.remove('show');
@@ -2677,11 +2819,14 @@ async function carregarSemanas() {
 }
 
 // ============================================================
-// CARREGAR DADOS
+// CARREGAR DADOS (OTIMIZADO COM PARALELISMO)
 // ============================================================
 async function carregarDados() {
   var val = document.getElementById('semanaSel').value;
-  if (!val) return;
+  if (!val) {
+    showToast('Selecione uma semana primeiro.', 'info');
+    return;
+  }
   var partes = val.split('|');
   var semana = normalizarSemana(partes[0]);
   var unidade = partes[1] || '';
@@ -2690,19 +2835,36 @@ async function carregarDados() {
   loader.classList.add('show');
 
   try {
-    var params = 'semana=' + encodeURIComponent(semana) + (unidade ? '&unidade=' + encodeURIComponent(unidade) : '');
-    var res = await fetch(API + '/api/shelflife/listar?' + params + '&_=' + Date.now(), { cache: 'no-store' });
-    var _json = await res.json();
+    // Paraleliza as requisições principais
+    var [dadosRes, vendedoresRes] = await Promise.all([
+      fetch(API + '/api/shelflife/listar?semana=' + encodeURIComponent(semana) + 
+            (unidade ? '&unidade=' + encodeURIComponent(unidade) : '') + '&_=' + Date.now(), 
+            { cache: 'no-store' }),
+      fetch(API + '/api/filtros', { cache: 'no-store' })
+    ]);
+
+    var _json = await dadosRes.json();
     dadosCompletos = Array.isArray(_json) ? _json : [];
 
-    if (!todosVendedores.length) {
-      var rv = await fetch(API + '/api/filtros');
-      var dv = await rv.json();
-      todosVendedores = dv.vendedores || [];
-    }
+    var dv = await vendedoresRes.json();
+    todosVendedores = dv.vendedores || [];
 
+    // Atualiza lista de vendedores no filtro
+    var selVend = document.getElementById('filtroVendedor');
+    var currentVal = selVend.value;
+    selVend.innerHTML = '<option value="">Todos os vendedores</option>';
+    todosVendedores.forEach(function(v) {
+      var opt = document.createElement('option');
+      opt.value = v;
+      opt.textContent = v;
+      if (v === currentVal) opt.selected = true;
+      selVend.appendChild(opt);
+    });
+
+    // Carrega semana anterior
     await carregarSemanaAnterior(semana, unidade);
 
+    // Processa os dados
     dadosCompletos.forEach(function(d) {
       var _cs = String(d.cod_sl || '').trim();
       d.is_sl = !!_cs && _cs !== '-' && _cs !== '—' && _cs !== '--';
@@ -2726,8 +2888,22 @@ async function carregarDados() {
 
     atualizarKPIs();
     renderTabela();
+    
+    // Atualiza footer
+    var agora = new Date().toLocaleString('pt-BR', {
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit'
+    });
+    document.getElementById('dashboardFooter').textContent = '📅 Dados carregados em: ' + agora;
+    
   } catch (e) {
     console.error(e);
+    showToast('Erro ao carregar dados: ' + e.message, 'error');
+    document.getElementById('tbodySL').innerHTML = `
+      <tr><td colspan="20" style="text-align:center;padding:40px;color:var(--color-danger);">
+        ❌ Erro ao carregar dados: ${e.message}
+      </td></tr>
+    `;
   }
   loader.classList.remove('show');
 }
@@ -2760,9 +2936,6 @@ async function carregarSemanaAnterior(semanaAtual, unidadeAtual) {
         dadosSemanaAnteriorNomes[key] = d.produto || '';
       });
     }
-
-    console.log('Semana anterior:', semanasUnidade.length ? semanasUnidade[0].semana : 'nenhuma',
-      '| itens:', Object.keys(dadosSemanaAnterior).length);
   } catch (e) {
     console.error('Erro ao carregar semana anterior:', e);
   }
@@ -2823,7 +2996,7 @@ function calcularPrevisao(d, qtdOverride, vmesOverride, v3mOverride) {
 }
 
 // ============================================================
-// RENDER TABELA
+// RENDER TABELA (OTIMIZADA COM DOCUMENT FRAGMENT)
 // ============================================================
 function renderTabela() {
   var tableWrap = document.querySelector('.table-wrap');
@@ -2839,6 +3012,14 @@ function renderTabela() {
       return normalizarTexto(d.produto || '').indexOf(busca) >= 0 ||
         normalizarTexto(d.cod_produto || '').indexOf(busca) >= 0 ||
         normalizarTexto(d.cod_sl || '').indexOf(busca) >= 0;
+    });
+  }
+
+  // Filtro por vendedor
+  var vendedorFiltro = document.getElementById('filtroVendedor').value;
+  if (vendedorFiltro) {
+    dados = dados.filter(function(d) {
+      return d.vendedor === vendedorFiltro;
     });
   }
 
@@ -2872,7 +3053,7 @@ function renderTabela() {
   }
 
   var tbody = document.getElementById('tbodySL');
-  tbody.innerHTML = '';
+  var fragment = document.createDocumentFragment();
 
   if (!dados.length) {
     var tr = document.createElement('tr');
@@ -2881,7 +3062,9 @@ function renderTabela() {
     td.style.cssText = 'text-align:center;padding:40px;color:var(--text-secondary);';
     td.innerHTML = '<span style="font-size:24px;opacity:0.5;display:block;margin-bottom:8px;">📭</span>Nenhum produto encontrado';
     tr.appendChild(td);
-    tbody.appendChild(tr);
+    fragment.appendChild(tr);
+    tbody.innerHTML = '';
+    tbody.appendChild(fragment);
     return;
   }
 
@@ -3129,11 +3312,18 @@ function renderTabela() {
 
     var salvarAuto = (function(id, ics, ipr, iq, iv3, ivm, inValorSL, id2, tl, tg, sa, sv, b, trEl, dataOrig) {
       var timeout = null;
+      var isSaving = false;
+      
       return function() {
+        if (isSaving) return;
         if (timeout) clearTimeout(timeout);
-        b.textContent = '...';
+        
+        b.textContent = '⏳';
+        b.className = 'btn-save saving';
         trEl.classList.add('row-unsaved');
+        
         timeout = setTimeout(async function() {
+          isSaving = true;
           try {
             var dataVal;
             if (id2.value) {
@@ -3202,12 +3392,19 @@ function renderTabela() {
             });
             trEl.classList.remove('row-unsaved');
             dataOrig = id2.value;
-            b.textContent = 'Salvo!';
-            b.classList.add('saved');
-            setTimeout(function() { b.textContent = 'Salvar'; b.classList.remove('saved'); }, 2000);
+            b.textContent = '✓ Salvo!';
+            b.className = 'btn-save saved';
+            showToast('Produto salvo com sucesso!', 'success');
+            setTimeout(function() { b.textContent = 'Salvar'; b.className = 'btn-save'; }, 2000);
           } catch (e) {
             trEl.classList.remove('row-unsaved');
-            b.textContent = 'Erro';
+            b.textContent = '⚠ Erro';
+            b.className = 'btn-save';
+            showToast('Erro ao salvar: ' + e.message, 'error');
+            console.error('Erro ao salvar:', e);
+          } finally {
+            isSaving = false;
+            timeout = null;
           }
         }, 800);
       };
@@ -3252,8 +3449,9 @@ function renderTabela() {
         });
         renderTabela();
         atualizarKPIs();
+        showToast('Produto excluído com sucesso!', 'success');
       } catch (e) {
-        alert('Erro ao excluir do banco de dados. O item foi removido apenas visualmente.');
+        showToast('Erro ao excluir: ' + e.message, 'error');
         dadosCompletos = dadosCompletos.filter(function(item) { return item.id !== d.id; });
         renderTabela();
         atualizarKPIs();
@@ -3271,8 +3469,11 @@ function renderTabela() {
     })(d.id, d.produto));
     btnCell.appendChild(btnHist);
 
-    tbody.appendChild(tr);
+    fragment.appendChild(tr);
   });
+
+  tbody.innerHTML = '';
+  tbody.appendChild(fragment);
 
   if (tableWrap) {
     if (buscaAtiva) {
@@ -3384,18 +3585,20 @@ document.addEventListener('click', function(e) {
 });
 
 // ============================================================
-// BUSCA
+// BUSCA COM DEBOUNCE
 // ============================================================
 function onBuscaInput() {
-  var inp = document.getElementById('buscaProduto');
-  var val = inp ? (inp.value || '').trim() : '';
-  var tableWrap = document.querySelector('.table-wrap');
-  if (val.length > 0) {
-    if (scrollAntesBusca === null && tableWrap) {
+  if (debounceTimeout) clearTimeout(debounceTimeout);
+  debounceTimeout = setTimeout(function() {
+    var inp = document.getElementById('buscaProduto');
+    var val = inp ? (inp.value || '').trim() : '';
+    var tableWrap = document.querySelector('.table-wrap');
+    if (val.length > 0 && scrollAntesBusca === null && tableWrap) {
       scrollAntesBusca = { top: tableWrap.scrollTop, left: tableWrap.scrollLeft };
     }
-  }
-  renderTabela();
+    renderTabela();
+    debounceTimeout = null;
+  }, 300);
 }
 
 // ============================================================
@@ -3499,7 +3702,7 @@ async function salvarProdutoManual() {
   var produto = document.getElementById('manualProduto').value.trim();
 
   if (!codProduto || !produto) {
-    alert('Preencha os campos obrigatórios: Cód. Produto e Produto');
+    showToast('Preencha os campos obrigatórios: Cód. Produto e Produto', 'error');
     return;
   }
 
@@ -3507,7 +3710,7 @@ async function salvarProdutoManual() {
   var valSel = semanaSel ? semanaSel.value : '';
 
   if (!valSel) {
-    alert('Selecione ou crie uma semana antes de inserir um produto manualmente.');
+    showToast('Selecione ou crie uma semana antes de inserir um produto manualmente.', 'error');
     return;
   }
 
@@ -3545,12 +3748,12 @@ async function salvarProdutoManual() {
       throw new Error('Erro ao salvar o produto no servidor.');
     }
 
-    alert('Produto inserido com sucesso!');
+    showToast('Produto inserido com sucesso!', 'success');
     fecharModalInserirManual();
     carregarDados();
   } catch (error) {
     console.error(error);
-    alert('Não foi possível salvar o produto manual. Verifique o console.');
+    showToast('Não foi possível salvar o produto manual: ' + error.message, 'error');
   }
 }
 
@@ -3560,7 +3763,7 @@ async function salvarProdutoManual() {
 async function excluirSemana() {
   var sel = document.getElementById('semanaSel');
   var val = sel.value;
-  if (!val) { alert('Selecione uma semana primeiro!'); return; }
+  if (!val) { showToast('Selecione uma semana primeiro!', 'warning'); return; }
   var partes = val.split('|');
   var semana = normalizarSemana(partes[0]);
   var unidade = partes[1] || '';
@@ -3576,12 +3779,14 @@ async function excluirSemana() {
       body: JSON.stringify({ semana: semana, unidade: unidade })
     });
     var r = await res.json();
-    alert('Excluído! ' + r.excluidos + ' registros removidos.');
+    showToast('Excluído! ' + r.excluidos + ' registros removidos.', 'success');
     await carregarSemanas();
     dadosCompletos = [];
     atualizarKPIs();
     renderTabela();
-  } catch (e) { alert('Erro ao excluir!'); }
+  } catch (e) { 
+    showToast('Erro ao excluir: ' + e.message, 'error');
+  }
   loader.classList.remove('show');
 }
 
@@ -3590,7 +3795,7 @@ async function excluirSemana() {
 // ============================================================
 function exportarExcel() {
   if (!dadosCompletos || !dadosCompletos.length) {
-    alert('Nenhum dado para exportar!');
+    showToast('Nenhum dado para exportar!', 'warning');
     return;
   }
 
@@ -3602,6 +3807,14 @@ function exportarExcel() {
       return normalizarTexto(d.produto || '').indexOf(busca) >= 0 ||
         normalizarTexto(d.cod_produto || '').indexOf(busca) >= 0 ||
         normalizarTexto(d.cod_sl || '').indexOf(busca) >= 0;
+    });
+  }
+
+  // Filtro por vendedor
+  var vendedorFiltro = document.getElementById('filtroVendedor').value;
+  if (vendedorFiltro) {
+    dados = dados.filter(function(d) {
+      return d.vendedor === vendedorFiltro;
     });
   }
 
@@ -3648,7 +3861,7 @@ function exportarExcel() {
   }
 
   if (!dados.length) {
-    alert('Nenhum produto visível para exportar com os filtros atuais!');
+    showToast('Nenhum produto visível para exportar com os filtros atuais!', 'warning');
     return;
   }
 
@@ -3763,9 +3976,10 @@ function exportarExcel() {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
+      showToast('Exportação concluída com sucesso!', 'success');
     })
     .catch(function(err) {
-      alert('Falha na exportação: ' + err.message);
+      showToast('Falha na exportação: ' + err.message, 'error');
     })
     .finally(function() {
       if (btn) { btn.disabled = false;
@@ -3834,6 +4048,8 @@ window.onload = async function() {
     var agora = new Date().toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
     el.textContent = '📅 Dados carregados em: ' + agora;
   }
+  
+  showToast('Shelf Life carregado com sucesso!', 'success');
 };
 
 // ============================================================
