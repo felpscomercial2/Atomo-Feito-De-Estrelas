@@ -1750,6 +1750,7 @@ def pivot_cliente_produto():
     except Exception as e:
         import traceback as tb
         return jsonify({'erro': str(e), 'trace': tb.format_exc()}), 500
+
 def shelflife_historico():
     shelflife_id = request.args.get('shelflife_id')
     cod_produto  = request.args.get('cod_produto')
@@ -2411,3 +2412,35 @@ def compras_exportar():
         )
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+# ============================================================
+# SERVE ARQUIVOS ESTÁTICOS
+# ============================================================
+@app.route('/carteira')
+def servir_carteira():
+    """Serve a página carteira.html"""
+    try:
+        return send_file('carteira.html')
+    except Exception as e:
+        return jsonify({'erro': f'Erro ao carregar carteira.html: {str(e)}'}), 404
+
+@app.route('/<path:filename>')
+def servir_estaticos(filename):
+    """Serve arquivos estáticos como logo.png, CSS, JS, etc."""
+    # Lista de extensões permitidas
+    extensoes = ('.html', '.png', '.jpg', '.jpeg', '.gif', '.css', '.js', '.ico', '.svg')
+    if not any(filename.endswith(ext) for ext in extensoes):
+        return jsonify({'erro': 'Arquivo não encontrado'}), 404
+    
+    try:
+        return send_file(filename)
+    except Exception:
+        return jsonify({'erro': 'Arquivo não encontrado'}), 404
+
+
+# ============================================================
+# INICIALIZAÇÃO
+# ============================================================
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)), debug=False)
