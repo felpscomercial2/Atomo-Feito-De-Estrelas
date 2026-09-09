@@ -310,7 +310,7 @@ html, body {
    ========================================================= */
 .filtros-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 16px;
   margin-bottom: 16px;
   animation: fadeSlideUp 0.5s var(--transition-ease);
@@ -419,6 +419,14 @@ html, body {
   font-size: 13px;
   color: var(--text-primary) !important;
   font-weight: 500;
+}
+
+.sug-marca {
+  font-size: 11px;
+  color: var(--text-muted) !important;
+  background: var(--bg-body) !important;
+  padding: 2px 8px;
+  border-radius: 4px;
 }
 
 .sug-check {
@@ -544,6 +552,41 @@ html, body {
 }
 
 /* =========================================================
+   BASES / UNIDADES
+   ========================================================= */
+.status-bar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.status-chip {
+  padding: 4px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border-light) !important;
+  background: var(--bg-body) !important;
+  color: var(--text-secondary) !important;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.25s var(--transition-ease);
+  font-family: 'Inter', sans-serif;
+}
+
+.status-chip:hover {
+  background: #F1F4F9 !important;
+  transform: translateY(-1px);
+}
+
+.status-chip.active {
+  background: #EEF2FF !important;
+  border-color: var(--accent-secondary) !important;
+  color: var(--accent-primary) !important;
+}
+
+/* =========================================================
    RESUME BAR
    ========================================================= */
 .resumo-bar {
@@ -613,9 +656,9 @@ html, body {
 }
 
 /* =========================================================
-   STATUS CHIPS
+   STATUS FILTER CHIPS
    ========================================================= */
-.status-bar {
+.status-filter-bar {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
@@ -623,7 +666,7 @@ html, body {
   margin-bottom: 12px;
 }
 
-.status-chip {
+.status-filter-chip {
   padding: 6px 16px;
   border-radius: 20px;
   border: 1px solid var(--border-light) !important;
@@ -636,12 +679,12 @@ html, body {
   font-family: 'Inter', sans-serif;
 }
 
-.status-chip:hover {
+.status-filter-chip:hover {
   background: #F1F4F9 !important;
   transform: translateY(-1px);
 }
 
-.status-chip.active {
+.status-filter-chip.active {
   background: #EEF2FF !important;
   border-color: var(--accent-secondary) !important;
   color: var(--accent-primary) !important;
@@ -890,7 +933,7 @@ tbody tr:hover td {
 
 .detalhe-row > td {
   background: rgba(0, 0, 0, 0.02) !important;
-  padding: 0 18px 18px 18px;
+  padding: 0 18px 18px 18px !important;
 }
 
 .detalhe-box {
@@ -1126,6 +1169,12 @@ tbody tr:hover td {
 }
 .sidebar-overlay.show {
   display: block;
+}
+
+@media (max-width: 992px) {
+  .filtros-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
 }
 
 @media (max-width: 768px) {
@@ -1671,7 +1720,7 @@ tbody tr:hover td {
   <div class="header">
     <div class="header-left">
       <h1>👥 Carteira de Clientes</h1>
-      <p id="subtitulo">Análise de clientes por período e vendedor</p>
+      <p id="subtitulo">Aguardando seleção...</p>
     </div>
     <div class="header-actions">
       <button class="btn-export" onclick="exportarCarteira()">📊 Exportar Carteira</button>
@@ -1679,7 +1728,7 @@ tbody tr:hover td {
     </div>
   </div>
 
-  <div class="nota">📋 Selecione um vendedor e os períodos desejados para visualizar os valores separados mês a mês.</div>
+  <div class="nota">📋 Selecione um vendedor, produto e os períodos desejados para visualizar os valores separados mês a mês.</div>
 
   <!-- FILTROS -->
   <div class="filtros-grid">
@@ -1693,6 +1742,18 @@ tbody tr:hover td {
         <span style="color:var(--text-muted);font-size:12px;">Selecione um vendedor</span>
       </div>
     </div>
+
+    <div class="filtro-card">
+      <div class="filtro-titulo">📦 Filtrar por Produto</div>
+      <div class="busca-wrap">
+        <input type="text" id="inputProd" class="busca-input" placeholder="Digite nome ou código do produto..." oninput="onBuscaProd()">
+        <div class="sug-lista" id="listaProd"></div>
+      </div>
+      <div class="tags-wrap" id="tagsProd">
+        <span style="color:var(--text-muted);font-size:12px;">Todos os produtos</span>
+      </div>
+    </div>
+
     <div class="filtro-card">
       <div class="filtro-titulo">🏢 Filtrar por Unidade</div>
       <div class="tags-wrap" id="basesWrap" style="margin-top:0;">
@@ -1720,11 +1781,11 @@ tbody tr:hover td {
     </div>
   </div>
 
-  <!-- STATUS CHIPS -->
-  <div class="status-bar">
-    <button class="status-chip active" id="chipTodos" onclick="setFiltroStatus('todos')"><span class="chip-dot dot-all"></span>Todos</button>
-    <button class="status-chip" id="chipPos" onclick="setFiltroStatus('comprantes')"><span class="chip-dot dot-pos"></span>Comprantes</button>
-    <button class="status-chip" id="chipNeg" onclick="setFiltroStatus('naocomprantes')"><span class="chip-dot dot-neg"></span>Não comprantes</button>
+  <!-- STATUS FILTER CHIPS -->
+  <div class="status-filter-bar">
+    <button class="status-filter-chip active" id="chipTodos" onclick="setFiltroStatus('todos')"><span class="chip-dot dot-all"></span>Todos</button>
+    <button class="status-filter-chip" id="chipPos" onclick="setFiltroStatus('comprantes')"><span class="chip-dot dot-pos"></span>Comprantes</button>
+    <button class="status-filter-chip" id="chipNeg" onclick="setFiltroStatus('naocomprantes')"><span class="chip-dot dot-neg"></span>Não comprantes</button>
     <span style="font-size:11px;color:var(--text-muted);margin-left:6px;">Clique no código ou no nome do cliente para ver os produtos comprados por período.</span>
   </div>
 
@@ -1809,6 +1870,7 @@ let basesSel = [];
 let todosVendedores = [];
 let todosProdutos = [];
 let todosClientes = [];
+let todasBases = [];
 let filtroStatus = 'todos';
 let clientesRender = [];
 let pivotCols = [];
@@ -1816,6 +1878,7 @@ let pivotValMap = {};
 let detalheAberto = {};
 let histCache = {};
 let carteiraCompleta = [];
+let pivotSort = { key: null, dir: 'desc' };
 
 // ============================================================
 // SIDEBAR TOGGLE
@@ -1906,6 +1969,65 @@ function renderTagsVend() {
     const tag = document.createElement('div');
     tag.className = 'tag-item';
     tag.innerHTML = `${v} <button onclick="remVendedor('${v.replace(/'/g, "\\'")}')">×</button>`;
+    container.appendChild(tag);
+  });
+}
+
+// ============================================================
+// BUSCA PRODUTO
+// ============================================================
+function onBuscaProd() {
+  const q = document.getElementById('inputProd').value.trim();
+  const lista = document.getElementById('listaProd');
+  if (q.length < 2) { lista.style.display = 'none'; return; }
+
+  const q_low = q.toLowerCase();
+  const resultados = todosProdutos.filter(d => {
+    return (d.produto || '').toLowerCase().indexOf(q_low) >= 0 ||
+           (d.cod_produto || '').toLowerCase().indexOf(q_low) >= 0;
+  }).slice(0, 20);
+
+  if (!resultados.length) { lista.style.display = 'none'; return; }
+
+  lista.innerHTML = '';
+  resultados.forEach(d => {
+    const ok = produtosSel.indexOf(d.produto) >= 0;
+    const el = document.createElement('div');
+    el.className = 'sug-item' + (ok ? ' sug-ok' : '');
+    el.innerHTML = `<span class="sug-nome">${d.produto}</span><span class="sug-marca">${d.marca}</span>${ok ? '<span class="sug-check">✓</span>' : ''}`;
+    el.addEventListener('click', (function(nome) {
+      return function() { addProduto(nome); };
+    })(d.produto));
+    lista.appendChild(el);
+  });
+  lista.style.display = 'block';
+}
+
+function addProduto(nome) {
+  if (produtosSel.indexOf(nome) < 0) produtosSel.push(nome);
+  document.getElementById('inputProd').value = '';
+  document.getElementById('listaProd').style.display = 'none';
+  renderTagsProd();
+  recarregar();
+}
+
+function remProduto(nome) {
+  produtosSel = produtosSel.filter(p => p !== nome);
+  renderTagsProd();
+  recarregar();
+}
+
+function renderTagsProd() {
+  const container = document.getElementById('tagsProd');
+  if (!produtosSel.length) {
+    container.innerHTML = '<span style="color:var(--text-muted);font-size:12px;">Todos os produtos</span>';
+    return;
+  }
+  container.innerHTML = '';
+  produtosSel.forEach(v => {
+    const tag = document.createElement('div');
+    tag.className = 'tag-item';
+    tag.innerHTML = `${v} <button onclick="remProduto('${v.replace(/'/g, "\\'")}')">×</button>`;
     container.appendChild(tag);
   });
 }
@@ -2115,8 +2237,6 @@ async function recarregar() {
 // ============================================================
 // RENDER PIVOT
 // ============================================================
-let pivotSort = { key: null, dir: 'desc' };
-
 function setaSort(key) {
   if (pivotSort.key !== key) return ' <span style="opacity:.35">⇅</span>';
   return pivotSort.dir === 'desc' ? ' ▼' : ' ▲';
@@ -2650,9 +2770,25 @@ async function exportarProduto() {
 function atualizarFooter() {
   const el = document.getElementById('dashboardFooter');
   if (!el) return;
-  const agora = new Date().toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  const agora = new Date().toLocaleString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
   el.textContent = '📅 Dados carregados em: ' + agora;
 }
+
+// ============================================================
+// FECHAR SUGESTÕES AO CLICAR FORA
+// ============================================================
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.busca-wrap')) {
+    document.getElementById('listaProd').style.display = 'none';
+    document.getElementById('listaVend').style.display = 'none';
+  }
+});
 
 // ============================================================
 // INIT
@@ -2671,6 +2807,7 @@ window.onload = async function() {
   await carregarFiltros();
   atualizarCalendario();
   renderTagsPeriodo();
+  renderTagsProd();
   await recarregar();
 
   loader.classList.remove('show');
