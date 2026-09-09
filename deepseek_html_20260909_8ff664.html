@@ -1,0 +1,2626 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Átomo — Análise Região</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Google Fonts - Inter -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+/* =========================================================
+   ÁTOMO LIGHT — Tema Refinado com Contraste Aprimorado
+   ========================================================= */
+
+:root {
+  --bg-body: #F2F4F8;
+  --bg-card: #FFFFFF;
+  --bg-sidebar: #FFFFFF;
+  --text-primary: #0F172A;
+  --text-secondary: #1E293B;
+  --text-muted: #475569;
+  --border-light: #E2E8F0;
+  --shadow-card: 0 2px 16px rgba(0, 0, 0, 0.04), 0 1px 4px rgba(0, 0, 0, 0.02);
+  --shadow-hover: 0 8px 32px rgba(0, 0, 0, 0.07), 0 2px 8px rgba(0, 0, 0, 0.03);
+  --shadow-dropdown: 0 16px 48px rgba(0, 0, 0, 0.08);
+  --accent-primary: #1D4ED8;
+  --accent-primary-hover: #2563EB;
+  --accent-secondary: #3B82F6;
+  --color-success: #0B7C3C;
+  --color-danger: #DC2626;
+  --color-warning: #E98E0E;
+  --color-roxo: #7C3AED;
+  --radius-default: 14px;
+  --radius-sm: 10px;
+  --radius-lg: 20px;
+  --transition-smooth: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --transition-ease: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  background: var(--bg-body) !important;
+  color: var(--text-primary) !important;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.6 !important;
+  min-height: 100vh;
+}
+
+/* =========================================================
+   SIDEBAR
+   ========================================================= */
+.sidebar {
+  width: 232px;
+  background: var(--bg-card) !important;
+  border-right: 1px solid var(--border-light) !important;
+  box-shadow: 2px 0 16px rgba(0, 0, 0, 0.02) !important;
+  padding: 28px 16px !important;
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 100;
+  transition: transform 0.4s var(--transition-smooth) !important;
+  overflow-y: auto;
+}
+
+.sidebar-logo {
+  width: 100px;
+  margin-bottom: 4px;
+  filter: none !important;
+  animation: none !important;
+  transition: transform 0.3s var(--transition-smooth);
+}
+
+.sidebar-logo:hover {
+  transform: scale(1.04);
+}
+
+.sidebar-title {
+  color: var(--text-secondary) !important;
+  font-size: 10px !important;
+  letter-spacing: 2px !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  background: none !important;
+  -webkit-text-fill-color: var(--text-secondary) !important;
+  margin-bottom: 28px;
+}
+
+.nav-section {
+  width: 100%;
+  font-size: 9px;
+  letter-spacing: 1.2px;
+  color: var(--text-muted) !important;
+  text-transform: uppercase;
+  padding: 0 8px;
+  margin-bottom: 8px;
+}
+
+.nav-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px !important;
+  border-radius: var(--radius-sm) !important;
+  margin-bottom: 2px !important;
+  font-weight: 500 !important;
+  font-size: 13px !important;
+  color: var(--text-secondary) !important;
+  text-decoration: none;
+  transition: all 0.25s var(--transition-ease) !important;
+  border: 1px solid transparent !important;
+  position: relative;
+}
+
+.nav-item::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%) scaleY(0);
+  width: 3px;
+  height: 60%;
+  background: var(--accent-primary);
+  border-radius: 0 4px 4px 0;
+  transition: transform 0.3s var(--transition-ease);
+}
+
+.nav-item:hover::after {
+  transform: translateY(-50%) scaleY(1);
+}
+
+.nav-item:hover {
+  background: #F1F4F9 !important;
+  color: var(--text-primary) !important;
+  border-color: transparent !important;
+  transform: translateX(4px);
+}
+
+.nav-item.active {
+  background: #EEF2FF !important;
+  color: var(--accent-primary) !important;
+  border-color: transparent !important;
+  font-weight: 600 !important;
+}
+
+.nav-item.active::after {
+  transform: translateY(-50%) scaleY(1);
+}
+
+.nav-item .icon {
+  font-size: 16px;
+  width: 20px;
+  text-align: center;
+  transition: transform 0.25s var(--transition-smooth);
+}
+
+.nav-item:hover .icon {
+  transform: scale(1.12);
+}
+
+.sidebar-divider {
+  width: 100%;
+  height: 1px;
+  background: var(--border-light) !important;
+  margin: 14px 0;
+}
+
+.btn-logout {
+  margin-top: auto;
+  width: 100%;
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  background: #FEF2F2 !important;
+  color: var(--color-danger) !important;
+  border: 1px solid #FECACA !important;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.25s var(--transition-ease);
+  font-family: 'Inter', sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-logout:hover {
+  background: #FEE2E2 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.12);
+}
+
+/* =========================================================
+   ÁREA PRINCIPAL
+   ========================================================= */
+.main {
+  margin-left: 232px;
+  flex: 1;
+  padding: 32px 40px !important;
+  background: var(--bg-body) !important;
+  color: var(--text-primary) !important;
+  min-height: 100vh;
+  transition: margin-left 0.4s var(--transition-smooth);
+}
+
+/* =========================================================
+   BREADCRUMB
+   ========================================================= */
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-muted) !important;
+  margin-bottom: 16px;
+  animation: fadeSlideDown 0.5s var(--transition-ease);
+}
+
+.breadcrumb a {
+  color: var(--text-muted) !important;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.breadcrumb a:hover {
+  color: var(--accent-primary) !important;
+}
+
+.breadcrumb .breadcrumb-sep {
+  opacity: 0.4;
+}
+
+.breadcrumb .breadcrumb-current {
+  color: var(--text-primary) !important;
+  font-weight: 600;
+}
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 28px;
+  animation: fadeSlideDown 0.6s var(--transition-ease);
+}
+
+.header-left h1 {
+  font-size: 26px;
+  font-weight: 700 !important;
+  color: var(--text-primary) !important;
+  letter-spacing: -0.03em !important;
+}
+
+.header-left p {
+  font-size: 14px;
+  color: var(--text-secondary) !important;
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+/* =========================================================
+   NOTA
+   ========================================================= */
+.nota {
+  font-size: 13px;
+  color: var(--text-secondary) !important;
+  padding: 12px 18px;
+  background: #FFFBEB !important;
+  border: 1px solid #FDE68A !important;
+  border-radius: var(--radius-sm);
+  margin-bottom: 20px;
+  animation: fadeSlideDown 0.5s var(--transition-ease);
+  font-weight: 450;
+}
+
+.nota strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* =========================================================
+   FILTROS BAR
+   ========================================================= */
+.filtros-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 12px 18px;
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-light) !important;
+  border-radius: var(--radius-sm) !important;
+  box-shadow: var(--shadow-card) !important;
+  animation: fadeSlideDown 0.5s var(--transition-ease);
+}
+
+.filtros-bar-label {
+  font-size: 11px;
+  color: var(--text-muted) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  font-weight: 600;
+  margin-right: 4px;
+}
+
+.filtro-tag {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #EEF2FF !important;
+  border: 1px solid #C7D2FE !important;
+  border-radius: 24px;
+  padding: 4px 12px 4px 16px;
+  font-size: 12px;
+  color: var(--accent-primary) !important;
+  font-weight: 500;
+  transition: all 0.25s var(--transition-ease);
+}
+
+.filtro-tag:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(29, 78, 216, 0.08);
+}
+
+.btn-alt-filtros {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--text-secondary) !important;
+  text-decoration: none;
+  background: var(--bg-body) !important;
+  border: 1px solid var(--border-light) !important;
+  border-radius: var(--radius-sm);
+  padding: 5px 14px;
+  transition: all 0.25s var(--transition-ease);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.btn-alt-filtros:hover {
+  background: #F1F4F9 !important;
+  color: var(--text-primary) !important;
+  transform: translateY(-2px);
+}
+
+/* =========================================================
+   DRILL BAR
+   ========================================================= */
+.drill-bar {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background: #EEF2FF !important;
+  border: 1px solid #C7D2FE !important;
+  border-radius: var(--radius-sm);
+  margin-bottom: 16px;
+  font-size: 13px;
+  flex-wrap: wrap;
+  animation: fadeSlideDown 0.4s var(--transition-ease);
+}
+
+.drill-bar.show {
+  display: flex;
+}
+
+.drill-tag {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-light) !important;
+  border-radius: 20px;
+  padding: 4px 12px;
+  color: var(--accent-primary) !important;
+  font-weight: 500;
+  font-size: 12px;
+}
+
+.drill-clear {
+  margin-left: auto;
+  background: #FEF2F2 !important;
+  color: var(--color-danger) !important;
+  border: 1px solid #FECACA !important;
+  border-radius: var(--radius-sm);
+  padding: 5px 14px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.25s var(--transition-ease);
+  font-family: 'Inter', sans-serif;
+}
+
+.drill-clear:hover {
+  background: #FEE2E2 !important;
+  transform: translateY(-2px);
+}
+
+/* =========================================================
+   COMPARADOR
+   ========================================================= */
+.comp-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  padding: 14px 20px;
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-light) !important;
+  border-radius: var(--radius-default) !important;
+  box-shadow: var(--shadow-card) !important;
+  margin-bottom: 20px;
+  animation: fadeSlideDown 0.5s var(--transition-ease);
+}
+
+.comp-wrap label {
+  font-size: 12px;
+  color: var(--text-secondary) !important;
+  font-weight: 600;
+}
+
+.comp-wrap select {
+  background: var(--bg-body) !important;
+  border: 1px solid var(--border-light) !important;
+  border-radius: var(--radius-sm) !important;
+  color: var(--text-primary) !important;
+  padding: 8px 12px;
+  font-size: 12px;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.25s var(--transition-ease);
+  font-family: 'Inter', sans-serif;
+}
+
+.comp-wrap select:focus {
+  border-color: var(--accent-primary) !important;
+  box-shadow: 0 0 0 4px rgba(29, 78, 216, 0.08) !important;
+}
+
+.comp-wrap .vs-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary) !important;
+  padding: 4px 12px;
+  border-radius: 20px;
+  background: var(--bg-body) !important;
+  border: 1px solid var(--border-light) !important;
+}
+
+.btn-comp {
+  padding: 8px 20px;
+  background: #FFFBEB !important;
+  color: var(--color-warning) !important;
+  border: 1px solid #FDE68A !important;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.3s var(--transition-smooth);
+  font-family: 'Inter', sans-serif;
+}
+
+.btn-comp:hover {
+  background: #FEF3C7 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(233, 142, 14, 0.15);
+}
+
+/* =========================================================
+   COMP GRID
+   ========================================================= */
+.comp-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+  animation: fadeSlideUp 0.5s var(--transition-ease);
+}
+
+.comp-card {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-light) !important;
+  border-radius: var(--radius-default) !important;
+  box-shadow: var(--shadow-card) !important;
+  padding: 16px 18px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s var(--transition-ease);
+}
+
+.comp-card:hover {
+  box-shadow: var(--shadow-hover) !important;
+  transform: translateY(-2px);
+}
+
+.comp-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+}
+
+.comp-lbl {
+  font-size: 10px;
+  color: var(--text-muted) !important;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.comp-periodos {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.comp-periodo-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.comp-vA-label, .comp-vB-label {
+  font-size: 10px;
+  color: var(--text-muted) !important;
+  white-space: nowrap;
+  flex-shrink: 0;
+  font-weight: 500;
+}
+
+.comp-vA {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary) !important;
+  white-space: nowrap;
+}
+
+.comp-vB {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary) !important;
+  white-space: nowrap;
+}
+
+.comp-sep {
+  width: 100%;
+  height: 1px;
+  background: var(--border-light) !important;
+}
+
+.comp-pct {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 12px;
+  border-radius: 20px;
+  margin-top: 4px;
+}
+
+.c-up {
+  color: var(--color-success);
+  background: #F0FDF4 !important;
+  border: 1px solid #86EFAC !important;
+}
+
+.c-dn {
+  color: var(--color-danger);
+  background: #FEF2F2 !important;
+  border: 1px solid #FECACA !important;
+}
+
+.c-ne {
+  color: var(--text-secondary) !important;
+  background: var(--bg-body) !important;
+  border: 1px solid var(--border-light) !important;
+}
+
+/* =========================================================
+   KPI GRID
+   ========================================================= */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+  animation: fadeSlideUp 0.7s var(--transition-ease);
+}
+
+.kpi-card {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-light) !important;
+  border-radius: var(--radius-default) !important;
+  box-shadow: var(--shadow-card) !important;
+  padding: 18px 20px;
+  transition: all 0.4s var(--transition-smooth) !important;
+  position: relative;
+  overflow: hidden;
+  cursor: default;
+}
+
+.kpi-card:hover {
+  transform: translateY(-4px) !important;
+  box-shadow: var(--shadow-hover) !important;
+}
+
+.kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--accent-secondary);
+  border-radius: var(--radius-default) 0 0 var(--radius-default);
+  transition: width 0.3s var(--transition-ease);
+}
+
+.kpi-card:hover::before {
+  width: 6px;
+}
+
+.kpi-card.verde::before   { background: var(--color-success); }
+.kpi-card.vermelho::before { background: var(--color-danger); }
+.kpi-card.amarelo::before  { background: var(--color-warning); }
+.kpi-card.ciano::before    { background: var(--accent-secondary); }
+.kpi-card.roxo::before     { background: var(--color-roxo); }
+
+.kpi-label {
+  font-size: 10px;
+  color: var(--text-secondary) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  padding-right: 24px;
+}
+
+.kpi-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary) !important;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.kpi-sub {
+  font-size: 11px;
+  color: var(--text-secondary) !important;
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+.kpi-icon {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  font-size: 18px;
+  opacity: 0.12;
+  transition: all 0.4s var(--transition-smooth);
+}
+
+.kpi-card:hover .kpi-icon {
+  opacity: 0.2;
+  transform: scale(1.1) rotate(-8deg);
+}
+
+/* =========================================================
+   CHARTS ROW
+   ========================================================= */
+.charts-row {
+  display: grid;
+  gap: 18px;
+  margin-bottom: 18px;
+  animation: fadeSlideUp 0.8s var(--transition-ease);
+}
+
+.charts-row.col-2-1 {
+  grid-template-columns: 2fr 1fr;
+}
+
+.charts-row.col-1-1 {
+  grid-template-columns: 1fr 1fr;
+}
+
+.chart-card {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-light) !important;
+  border-radius: var(--radius-default) !important;
+  box-shadow: var(--shadow-card) !important;
+  padding: 22px 24px;
+  transition: all 0.4s var(--transition-smooth);
+}
+
+.chart-card:hover {
+  box-shadow: var(--shadow-hover) !important;
+}
+
+.chart-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary) !important;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+.chart-subtitle {
+  font-size: 12px;
+  color: var(--text-secondary) !important;
+  margin-bottom: 16px;
+  font-weight: 450;
+}
+
+canvas {
+  max-height: 240px;
+  cursor: pointer;
+  transition: opacity 0.5s ease;
+}
+
+/* =========================================================
+   TABLE WRAP
+   ========================================================= */
+.table-wrap {
+  overflow-x: auto;
+  max-height: 320px;
+  overflow-y: auto;
+  border-radius: var(--radius-sm);
+}
+
+.table-wrap::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+.table-wrap::-webkit-scrollbar-track {
+  background: var(--bg-body);
+  border-radius: 4px;
+}
+.table-wrap::-webkit-scrollbar-thumb {
+  background: var(--border-light);
+  border-radius: 4px;
+}
+.table-wrap::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+th {
+  color: var(--text-secondary) !important;
+  font-weight: 600;
+  text-align: left;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-light) !important;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  position: sticky;
+  top: 0;
+  background: var(--bg-card) !important;
+}
+
+td {
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+  color: var(--text-primary) !important;
+  font-weight: 450;
+}
+
+tr:hover td {
+  background: #F8FAFC !important;
+}
+
+.rank {
+  color: var(--accent-secondary) !important;
+  font-weight: 700;
+  width: 30px;
+}
+
+.progress-bar {
+  background: var(--bg-body) !important;
+  border-radius: 4px;
+  height: 4px;
+  margin-top: 5px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  background: var(--accent-secondary);
+  border-radius: 4px;
+  height: 4px;
+  transition: width 0.8s var(--transition-ease);
+}
+
+/* =========================================================
+   LOADING
+   ========================================================= */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 80px;
+  color: var(--text-secondary) !important;
+  font-size: 13px;
+  gap: 10px;
+}
+
+.loading-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--border-light);
+  border-top-color: var(--accent-primary);
+  border-radius: 50%;
+  animation: spin 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
+}
+
+.loading-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(242, 244, 248, 0.92) !important;
+  z-index: 9999;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 20px;
+  backdrop-filter: blur(8px);
+  transition: opacity 0.5s ease;
+}
+
+.loading-overlay.show {
+  display: flex;
+  animation: fadeIn 0.4s ease;
+}
+
+.loading-overlay .loading-spinner {
+  width: 44px;
+  height: 44px;
+}
+
+.loading-overlay span {
+  color: var(--text-secondary) !important;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+/* =========================================================
+   FOOTER
+   ========================================================= */
+.dashboard-footer {
+  margin-top: 48px;
+  padding: 20px 0 8px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-muted) !important;
+  border-top: 1px solid var(--border-light);
+  letter-spacing: 0.5px;
+  animation: fadeIn 1s ease;
+  font-weight: 450;
+}
+
+/* =========================================================
+   SCROLLBAR
+   ========================================================= */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #F1F4F9;
+  border-radius: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 8px;
+  transition: background 0.3s ease;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+
+/* =========================================================
+   ANIMAÇÕES
+   ========================================================= */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* =========================================================
+   HAMBURGER + MOBILE
+   ========================================================= */
+.hamburger {
+  display: none;
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  z-index: 200;
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  width: 42px;
+  height: 42px;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-direction: column;
+  gap: 5px;
+  padding: 8px;
+  box-shadow: var(--shadow-card);
+  transition: all 0.3s var(--transition-ease);
+}
+
+.hamburger:hover {
+  box-shadow: var(--shadow-hover);
+  transform: scale(1.04);
+}
+
+.hamburger span {
+  width: 100%;
+  height: 2px;
+  background: var(--text-secondary);
+  border-radius: 2px;
+  transition: all 0.3s var(--transition-ease);
+}
+
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 99;
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.3s ease;
+}
+.sidebar-overlay.show {
+  display: block;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%) !important;
+    transition: transform 0.4s var(--transition-smooth) !important;
+  }
+  .sidebar.open {
+    transform: translateX(0) !important;
+  }
+  .hamburger {
+    display: flex;
+  }
+  .main {
+    margin-left: 0 !important;
+    padding: 20px 16px 16px !important;
+  }
+  .header {
+    margin-top: 56px;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .kpi-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .charts-row.col-2-1,
+  .charts-row.col-1-1 {
+    grid-template-columns: 1fr !important;
+  }
+  .comp-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .kpi-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+  .comp-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .main {
+    padding: 16px 12px !important;
+  }
+  .header h1 {
+    font-size: 20px;
+  }
+}
+
+/* =========================================================
+   VALTER — Tema Claro Refinado
+   ========================================================= */
+.ia-fab {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--accent-primary) !important;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 20px rgba(29, 78, 216, 0.3) !important;
+  z-index: 900;
+  transition: all 0.4s var(--transition-smooth) !important;
+}
+
+.ia-fab:hover {
+  transform: scale(1.1) !important;
+  box-shadow: 0 8px 32px rgba(29, 78, 216, 0.4) !important;
+}
+
+.ia-fab:active {
+  transform: scale(0.92) !important;
+}
+
+.ia-fab.ia-pulsing {
+  animation: ia-pulse 2.5s ease-in-out infinite;
+}
+
+@keyframes ia-pulse {
+  0%, 100% { box-shadow: 0 4px 20px rgba(29, 78, 216, 0.3); }
+  50% { box-shadow: 0 4px 32px rgba(245, 168, 0, 0.4), 0 0 60px rgba(245, 168, 0, 0.1); }
+}
+
+.ia-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: var(--color-danger);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 10px;
+  min-width: 18px;
+  text-align: center;
+  display: none;
+  z-index: 1;
+}
+
+.ia-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 950;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(8px);
+  animation: fadeIn 0.3s ease;
+}
+.ia-overlay.open { display: flex; }
+
+.ia-panel {
+  position: relative;
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-light) !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow-dropdown) !important;
+  width: 560px;
+  max-width: 96vw;
+  height: 720px;
+  max-height: 93vh;
+  display: flex;
+  flex-direction: column;
+  transform: scale(0.92) translateY(24px);
+  opacity: 0;
+  transition: transform 0.5s var(--transition-smooth), opacity 0.4s var(--transition-ease);
+  overflow: hidden;
+}
+
+.ia-overlay.open .ia-panel {
+  transform: scale(1) translateY(0);
+  opacity: 1;
+}
+
+.ia-header {
+  padding: 18px 22px;
+  background: #F8FAFC !important;
+  border-bottom: 1px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+}
+
+.ia-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--accent-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.5s var(--transition-smooth);
+}
+
+.ia-avatar.thinking {
+  animation: avatarPulse 1.2s ease-in-out infinite;
+}
+
+@keyframes avatarPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(29, 78, 216, 0.2); }
+  50% { box-shadow: 0 0 0 8px rgba(29, 78, 216, 0.05); }
+}
+
+.ia-header-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary) !important;
+}
+
+.ia-header-status {
+  font-size: 12px;
+  color: var(--text-secondary) !important;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.ia-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-success);
+  flex-shrink: 0;
+}
+
+.ia-header-btn {
+  background: transparent !important;
+  border: 1px solid var(--border-light) !important;
+  color: var(--text-secondary) !important;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s var(--transition-ease);
+}
+
+.ia-header-btn:hover {
+  background: #F1F4F9 !important;
+  transform: rotate(90deg);
+}
+
+.ia-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: var(--bg-body) !important;
+}
+
+.ia-msg {
+  max-width: 92%;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  animation: fadeSlideUp 0.4s var(--transition-ease);
+}
+.ia-msg.bot { align-self: flex-start; }
+.ia-msg.user { align-self: flex-end; }
+
+.ia-msg-bubble {
+  padding: 12px 16px;
+  border-radius: var(--radius-default);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.ia-msg.bot .ia-msg-bubble {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-light) !important;
+  color: var(--text-primary) !important;
+  border-radius: 4px var(--radius-default) var(--radius-default) var(--radius-default);
+}
+
+.ia-msg.user .ia-msg-bubble {
+  background: var(--accent-primary) !important;
+  color: #FFFFFF !important;
+  border-radius: var(--radius-default) 4px var(--radius-default) var(--radius-default);
+}
+
+.ia-msg.bot .ia-msg-bubble strong { color: var(--accent-primary); }
+
+.ia-input-area {
+  padding: 12px 16px;
+  border-top: 1px solid var(--border-light);
+  display: flex;
+  gap: 10px;
+  flex-shrink: 0;
+  background: var(--bg-card) !important;
+}
+
+.ia-input {
+  flex: 1;
+  background: var(--bg-body) !important;
+  border: 1px solid var(--border-light) !important;
+  border-radius: 24px;
+  padding: 10px 18px;
+  color: var(--text-primary) !important;
+  font-size: 13px;
+  outline: none;
+  transition: all 0.3s var(--transition-ease);
+  font-family: 'Inter', sans-serif;
+}
+
+.ia-input:focus {
+  border-color: var(--accent-primary) !important;
+  box-shadow: 0 0 0 4px rgba(29, 78, 216, 0.08) !important;
+  transform: translateY(-1px);
+}
+
+.ia-send-btn {
+  background: var(--accent-primary) !important;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  color: #fff;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.3s var(--transition-smooth);
+}
+
+.ia-send-btn:hover {
+  background: var(--accent-primary-hover) !important;
+  transform: scale(1.08);
+}
+
+.ia-send-btn:active {
+  transform: scale(0.92);
+}
+
+.ia-send-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+.ia-mode-menu {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--bg-body) !important;
+  border-top: 1px solid var(--border-light);
+}
+
+.ia-mode-btn {
+  padding: 16px 18px;
+  border-radius: var(--radius-default);
+  border: 1px solid var(--border-light) !important;
+  background: var(--bg-card) !important;
+  color: var(--text-primary) !important;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.3s var(--transition-smooth);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.ia-mode-btn:hover {
+  background: #F8FAFC !important;
+  border-color: var(--accent-secondary) !important;
+  transform: translateX(6px);
+  box-shadow: var(--shadow-card);
+}
+
+.ia-mode-icon {
+  font-size: 24px;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+
+.ia-mode-label {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+.ia-mode-desc {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.ia-quick-bar {
+  padding: 10px 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  border-top: 1px solid var(--border-light);
+  flex-shrink: 0;
+  background: var(--bg-card) !important;
+}
+
+.ia-quick {
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border-light) !important;
+  background: var(--bg-body) !important;
+  color: var(--text-secondary) !important;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.25s var(--transition-ease);
+  white-space: nowrap;
+}
+
+.ia-quick:hover {
+  background: #EEF2FF !important;
+  border-color: var(--accent-secondary) !important;
+  color: var(--accent-primary) !important;
+  transform: translateY(-2px);
+}
+
+.ia-back-btn {
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid transparent !important;
+  background: transparent !important;
+  color: var(--text-muted) !important;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.25s var(--transition-ease);
+}
+
+.ia-back-btn:hover {
+  color: var(--text-secondary) !important;
+  transform: translateX(-2px);
+}
+
+.ia-typing {
+  align-self: flex-start;
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-light) !important;
+  border-radius: 4px var(--radius-default) var(--radius-default) var(--radius-default);
+  padding: 12px 16px;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  animation: fadeIn 0.3s ease;
+}
+
+.ia-typing span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  animation: ia-bounce 1.4s ease-in-out infinite;
+}
+
+.ia-typing span:nth-child(2) { animation-delay: 0.2s; }
+.ia-typing span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes ia-bounce {
+  0%, 60%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-6px); }
+}
+
+.ia-alert {
+  margin: 8px 16px;
+  padding: 10px 14px;
+  background: #FFFBEB !important;
+  border: 1px solid #FDE68A !important;
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--color-warning);
+  font-size: 13px;
+  color: #78350F;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: all 0.3s var(--transition-ease);
+  flex-shrink: 0;
+}
+
+.ia-alert:hover {
+  background: #FEF3C7 !important;
+  transform: translateX(4px);
+}
+
+.ia-mode-tag {
+  align-self: center;
+  padding: 3px 14px;
+  border-radius: 20px;
+  background: #EEF2FF !important;
+  border: 1px solid #C7D2FE !important;
+  color: var(--accent-primary) !important;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-spinner"></div>
+  <span>Carregando Átomo...</span>
+</div>
+
+<!-- HAMBURGER (mobile) -->
+<button class="hamburger" id="hamburgerBtn" onclick="toggleSidebar()" aria-label="Menu">
+  <span></span><span></span><span></span>
+</button>
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="mainSidebar">
+  <img class="sidebar-logo" src="logo.png" alt="Átomo" onerror="this.style.display='none'">
+  <div class="sidebar-title">ÁTOMO</div>
+  <a class="nav-item" href="home.html"><span class="icon">🏠</span> Página Inicial</a>
+  <div class="sidebar-divider"></div>
+  <div class="nav-section">Dashboards</div>
+  <a class="nav-item active" href="regiao.html"><span class="icon">🗺️</span> Região</a>
+  <a class="nav-item" href="visao-geral.html"><span class="icon">📊</span> Visão Geral</a>
+  <a class="nav-item" href="vendedor.html"><span class="icon">👤</span> Vendedor</a>
+  <a class="nav-item" href="marcas.html"><span class="icon">🏷️</span> Marcas</a>
+  <a class="nav-item" href="produtos.html"><span class="icon">📦</span> Produtos</a>
+  <a class="nav-item" href="produtos-cliente.html"><span class="icon">🛍️</span> Produtos por Cliente</a>
+  <div class="sidebar-divider"></div>
+  <div class="nav-section">Gestão</div>
+  <a class="nav-item" href="carteira.html"><span class="icon">👥</span> Carteira</a>
+  <a class="nav-item" href="positivacao.html"><span class="icon">👥</span> Positivação</a>
+  <a class="nav-item" href="shelflife.html"><span class="icon">🕒</span> Shelf Life</a>
+  <a class="nav-item" href="risco.html"><span class="icon">⚠️</span> Clientes em Risco</a>
+  <a class="nav-item" href="compras.html"><span class="icon">🛒</span> Compras</a>
+  <div class="sidebar-divider"></div>
+  <button class="btn-logout" onclick="location.href='index.html'">🚪 Sair</button>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="breadcrumb">
+    <a href="home.html">🏠 Portal</a>
+    <span class="breadcrumb-sep">›</span>
+    <a href="visao-geral.html">Visão Geral</a>
+    <span class="breadcrumb-sep">›</span>
+    <span class="breadcrumb-current">Região</span>
+  </div>
+
+  <div class="header">
+    <div class="header-left">
+      <h1>🗺️ Análise Região</h1>
+      <p id="subtitulo">Carregando dados...</p>
+    </div>
+  </div>
+
+  <div class="nota">⚠️ Faturamento calculado considerando apenas <strong>Vendas e Devoluções</strong>. Bonificações desconsideradas.</div>
+
+  <!-- FILTROS BAR -->
+  <div class="filtros-bar">
+    <span class="filtros-bar-label">🔍 Filtros:</span>
+    <span id="tagsAtivas" style="display:flex;gap:8px;flex-wrap:wrap;"></span>
+    <a href="home.html" class="btn-alt-filtros">✏️ Alterar filtros</a>
+    <button class="btn-exportar" onclick="exportarPagina()" style="background:var(--bg-body);border:1px solid var(--border-light);border-radius:var(--radius-sm);padding:5px 14px;cursor:pointer;font-size:12px;font-weight:500;font-family:'Inter',sans-serif;transition:all 0.25s var(--transition-ease);color:var(--text-secondary);">⬇ Exportar Excel</button>
+  </div>
+
+  <!-- DRILL BAR -->
+  <div class="drill-bar" id="drillBar">
+    <span>🔍 Filtro por clique:</span>
+    <span id="drillTags" style="display:flex;gap:8px;flex-wrap:wrap;"></span>
+    <button class="drill-clear" onclick="limparDrill()">✕ Limpar</button>
+  </div>
+
+  <!-- COMPARADOR -->
+  <div class="comp-wrap" id="compWrap">
+    <label>Comparar:</label>
+    <select id="cAnoA"><option value="">Ano A</option><option value="2024">2024</option><option value="2025">2025</option><option value="2026">2026</option><option value="2027">2027</option></select>
+    <select id="cMesA"><option value="">Mês A</option><option value="1">Jan</option><option value="2">Fev</option><option value="3">Mar</option><option value="4">Abr</option><option value="5">Mai</option><option value="6">Jun</option><option value="7">Jul</option><option value="8">Ago</option><option value="9">Set</option><option value="10">Out</option><option value="11">Nov</option><option value="12">Dez</option></select>
+    <span class="vs-label">vs</span>
+    <select id="cAnoB"><option value="">Ano B</option><option value="2024">2024</option><option value="2025">2025</option><option value="2026">2026</option><option value="2027">2027</option></select>
+    <select id="cMesB"><option value="">Mês B</option><option value="1">Jan</option><option value="2">Fev</option><option value="3">Mar</option><option value="4">Abr</option><option value="5">Mai</option><option value="6">Jun</option><option value="7">Jul</option><option value="8">Ago</option><option value="9">Set</option><option value="10">Out</option><option value="11">Nov</option><option value="12">Dez</option></select>
+    <button class="btn-comp" onclick="compararPeriodos()">⚡ Comparar</button>
+  </div>
+  <div class="comp-grid" id="compGrid" style="display:none"></div>
+
+  <!-- KPIs -->
+  <div class="kpi-grid">
+    <div class="kpi-card verde">
+      <div class="kpi-icon">💰</div>
+      <div class="kpi-label">Fat. Bruto</div>
+      <div class="kpi-value" id="kFat">...</div>
+      <div class="kpi-sub">Vendas no período</div>
+    </div>
+    <div class="kpi-card vermelho">
+      <div class="kpi-icon">↩️</div>
+      <div class="kpi-label">Devoluções</div>
+      <div class="kpi-value" id="kDev">...</div>
+      <div class="kpi-sub" id="kDevPct">% do fat.</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon">📈</div>
+      <div class="kpi-label">Fat. Líquido</div>
+      <div class="kpi-value" id="kLiq">...</div>
+      <div class="kpi-sub">Vendas - Dev.</div>
+    </div>
+    <div class="kpi-card ciano">
+      <div class="kpi-icon">👥</div>
+      <div class="kpi-label">Clientes Ativos</div>
+      <div class="kpi-value" id="kCli">...</div>
+      <div class="kpi-sub">No período</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon">🛒</div>
+      <div class="kpi-label">Ticket Médio</div>
+      <div class="kpi-value" id="kTkt">...</div>
+      <div class="kpi-sub">Por venda</div>
+    </div>
+    <div class="kpi-card amarelo">
+      <div class="kpi-icon">📦</div>
+      <div class="kpi-label">Qtd. Vendas</div>
+      <div class="kpi-value" id="kVendas">...</div>
+      <div class="kpi-sub">Pedidos</div>
+    </div>
+  </div>
+
+  <!-- CHARTS -->
+  <div class="charts-row col-2-1">
+    <div class="chart-card">
+      <div class="chart-title">🌎 Fat. por Região</div>
+      <div class="chart-subtitle">Clique para filtrar por região</div>
+      <canvas id="chartRegiao"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">
+        📈 Evolução Mensal
+        <span id="lblMensal" style="font-size:12px;color:var(--text-muted);font-weight:400;"></span>
+      </div>
+      <div class="chart-subtitle">Clique num mês para filtrar</div>
+      <canvas id="chartMensal"></canvas>
+    </div>
+  </div>
+
+  <div class="charts-row col-1-1">
+    <div class="chart-card">
+      <div class="chart-title">📊 Faturamento por UF</div>
+      <div class="chart-subtitle">Clique numa UF para filtrar • Top 12 estados</div>
+      <canvas id="chartUF" style="max-height:320px;"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">🏙️ Top Cidades</div>
+      <div class="chart-subtitle">Cidades com maior faturamento</div>
+      <canvas id="chartCidade"></canvas>
+    </div>
+  </div>
+
+  <!-- TABELA UF -->
+  <div class="chart-card">
+    <div class="chart-title">📋 Ranking por UF</div>
+    <div class="chart-subtitle">Clique numa UF para filtrar</div>
+    <div class="table-wrap" id="tblUF">
+      <div class="loading"><div class="loading-spinner"></div> Carregando...</div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="dashboard-footer" id="dashboardFooter">Aguardando carregamento dos dados...</div>
+</div>
+
+<!-- ══ VALTER FAB ══ -->
+<button class="ia-fab" id="iaFab" title="Valter — Assistente Átomo">
+  <svg width="26" height="26" viewBox="0 0 38 38" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="19" cy="19" r="19" fill="#1D4ED8"/>
+    <ellipse cx="19" cy="19" rx="15" ry="5.5" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.2" transform="rotate(-40 19 19)"/>
+    <ellipse cx="19" cy="19" rx="15" ry="5.5" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.2" transform="rotate(40 19 19)"/>
+    <ellipse cx="19" cy="19" rx="15" ry="5.5" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.2" transform="rotate(90 19 19)"/>
+    <circle cx="19" cy="19" r="5" fill="#fff"/>
+    <circle cx="19" cy="19" r="3" fill="#3B82F6"/>
+    <circle cx="34" cy="19" r="2.2" fill="#F5A800"/>
+    <circle cx="11.5" cy="6.5" r="2.2" fill="#F5A800"/>
+    <circle cx="11.5" cy="31.5" r="2.2" fill="#F5A800"/>
+  </svg>
+  <span class="ia-badge" id="iaBadge"></span>
+</button>
+
+<!-- ══ VALTER OVERLAY + PAINEL CENTRAL ══ -->
+<div class="ia-overlay" id="iaOverlay">
+<div class="ia-panel" id="iaPanel">
+  <div class="ia-header">
+    <div class="ia-avatar">
+      <svg width="28" height="28" viewBox="0 0 38 38" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="19" cy="19" r="19" fill="#1D4ED8"/>
+        <ellipse cx="19" cy="19" rx="15" ry="5.5" fill="none" stroke="rgba(255,255,255,0.8)" stroke-width="1.2" transform="rotate(-40 19 19)"/>
+        <ellipse cx="19" cy="19" rx="15" ry="5.5" fill="none" stroke="rgba(255,255,255,0.8)" stroke-width="1.2" transform="rotate(40 19 19)"/>
+        <ellipse cx="19" cy="19" rx="15" ry="5.5" fill="none" stroke="rgba(255,255,255,0.8)" stroke-width="1.2" transform="rotate(90 19 19)"/>
+        <circle cx="19" cy="19" r="5" fill="#fff"/>
+        <circle cx="19" cy="19" r="3" fill="#3B82F6"/>
+        <circle cx="34" cy="19" r="2.2" fill="#F5A800"/>
+        <circle cx="11.5" cy="6.5" r="2.2" fill="#F5A800"/>
+        <circle cx="11.5" cy="31.5" r="2.2" fill="#F5A800"/>
+      </svg>
+    </div>
+    <div class="ia-header-info">
+      <div class="ia-header-name">Valter</div>
+      <div class="ia-header-status"><span class="ia-status-dot"></span><span id="iaStatus">Assistente Átomo</span></div>
+    </div>
+    <div class="ia-header-actions">
+      <button class="ia-header-btn" id="iaResetBtn" title="Reiniciar">↺</button>
+      <button class="ia-header-btn" id="iaCloseBtn" title="Fechar">✕</button>
+    </div>
+  </div>
+  <div id="iaAlertArea"></div>
+  <div class="ia-messages" id="iaMessages"></div>
+  <div id="iaModeMenu" style="display:none"></div>
+  <div class="ia-quick-bar" id="iaQuickBar" style="display:none"></div>
+  <div class="ia-input-area" id="iaInputArea" style="display:none">
+    <input class="ia-input" id="iaInput" placeholder="Digite sua pergunta...">
+    <button class="ia-send-btn" id="iaSendBtn">➤</button>
+  </div>
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<script>
+// ============================================================
+// API
+// ============================================================
+const API = 'https://horus-production.up.railway.app';
+const MESES = ['','Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+const MESES_EXT = ['','Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+let cRegiao=null, cUF=null, cMensal=null, cCidade=null;
+let drillMes=null, drillUF=null, drillRegiao=null;
+
+// ============================================================
+// SIDEBAR TOGGLE
+// ============================================================
+function toggleSidebar() {
+  const sidebar = document.getElementById('mainSidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  if (!sidebar) return;
+  const isOpen = sidebar.classList.toggle('open');
+  if (overlay) overlay.classList.toggle('show', isOpen);
+}
+
+// ============================================================
+// UTILS
+// ============================================================
+function getFiltros() {
+  try {
+    return JSON.parse(localStorage.getItem('horus_filtros')) || {};
+  } catch { return {}; }
+}
+
+function montarParams(filtros) {
+  const p = new URLSearchParams();
+  if (filtros.ano)      p.append('ano', filtros.ano);
+  if (filtros.mes)      p.append('mes', filtros.mes);
+  if (filtros.unidade)  p.append('unidade', filtros.unidade);
+  if (filtros.marca)    p.append('marca', filtros.marca);
+  if (filtros.vendedor) p.append('vendedor', filtros.vendedor);
+  return p.toString();
+}
+
+function montarParamsDrill(base) {
+  const p = new URLSearchParams(base);
+  if (drillMes)     p.set('mes', drillMes);
+  if (drillUF)      p.set('uf', drillUF);
+  if (drillRegiao)  p.set('regiao', drillRegiao);
+  return p.toString();
+}
+
+function mostrarTags(filtros) {
+  const container = document.getElementById('tagsAtivas');
+  if (!container) return;
+  const tags = [];
+  if (filtros.ano)      tags.push('Ano: ' + filtros.ano);
+  if (filtros.mes)      tags.push('Mês: ' + MESES_EXT[filtros.mes]);
+  if (filtros.unidade)  tags.push('Unidade: ' + filtros.unidade);
+  if (filtros.marca)    tags.push('Marca: ' + filtros.marca);
+  if (filtros.vendedor) tags.push('Vendedor: ' + filtros.vendedor);
+  if (!tags.length) {
+    container.innerHTML = '<span style="color:var(--text-secondary);font-size:12px;font-weight:500;">Nenhum filtro — exibindo todos os dados</span>';
+  } else {
+    container.innerHTML = tags.map(t => '<div class="filtro-tag">' + t + '</div>').join('');
+  }
+}
+
+function brl(v, compacto) {
+  const n = parseFloat(v) || 0;
+  if (compacto && Math.abs(n) >= 1e6) return 'R$ ' + (n/1e6).toLocaleString('pt-BR', {minimumFractionDigits:1,maximumFractionDigits:1}) + 'M';
+  if (compacto && Math.abs(n) >= 1e3) return 'R$ ' + (n/1e3).toLocaleString('pt-BR', {minimumFractionDigits:1,maximumFractionDigits:1}) + 'K';
+  return new Intl.NumberFormat('pt-BR', {style:'currency', currency:'BRL'}).format(n);
+}
+
+function num(v) {
+  return new Intl.NumberFormat('pt-BR').format(v || 0);
+}
+
+function pct(parte, total) {
+  if (!total) return '0,0%';
+  return ((Math.abs(parte) / Math.abs(total)) * 100).toFixed(1).replace('.', ',') + '%';
+}
+
+// Animação de contador
+function animarContador(elemento, valorFinal, formatador) {
+  if (!elemento) return;
+  const fmt = formatador || function(v){ return v; };
+  const destino = parseFloat(valorFinal) || 0;
+  const textoFinal = fmt(destino);
+  elemento.setAttribute('data-valor-real', textoFinal);
+  const duracao = 600;
+  const inicioTempo = performance.now();
+  function passo(agora) {
+    const progresso = Math.min((agora - inicioTempo) / duracao, 1);
+    if (progresso >= 1) { elemento.textContent = textoFinal; return; }
+    elemento.textContent = fmt(destino * progresso);
+    requestAnimationFrame(passo);
+  }
+  requestAnimationFrame(passo);
+}
+
+// ============================================================
+// DRILL
+// ============================================================
+function atualizarDrillBar() {
+  const tags = [];
+  if (drillMes)     tags.push('Mês: ' + MESES_EXT[drillMes]);
+  if (drillUF)      tags.push('UF: ' + drillUF);
+  if (drillRegiao)  tags.push('Região: ' + drillRegiao);
+  const bar = document.getElementById('drillBar');
+  const tagsEl = document.getElementById('drillTags');
+  if (tags.length) {
+    bar.classList.add('show');
+    tagsEl.innerHTML = tags.map(t => '<span class="drill-tag">' + t + '</span>').join('');
+  } else {
+    bar.classList.remove('show');
+    tagsEl.innerHTML = '';
+  }
+}
+
+function limparDrill() {
+  drillMes = null;
+  drillUF = null;
+  drillRegiao = null;
+  atualizarDrillBar();
+  recarregar();
+}
+
+// ============================================================
+// CARREGAMENTO DE DADOS
+// ============================================================
+async function recarregar() {
+  const loader = document.getElementById('loadingOverlay');
+  if (loader) loader.classList.add('show');
+
+  const filtros = getFiltros();
+  const base = montarParams(filtros);
+  const params = montarParamsDrill(base);
+
+  try {
+    await Promise.all([
+      carregarKPIs(params),
+      carregarRegiao(params),
+      carregarUF(params),
+      carregarMensal(params),
+      carregarCidades(params),
+      carregarTblUF(params),
+    ]);
+  } catch (e) {
+    console.error('Erro ao carregar dados:', e);
+  }
+
+  if (loader) loader.classList.remove('show');
+  atualizarFooter(filtros);
+}
+
+// ============================================================
+// KPIs
+// ============================================================
+async function carregarKPIs(params) {
+  const res = await fetch(API + '/api/kpis?' + params);
+  const d = await res.json();
+
+  const fat = parseFloat(d.faturamento) || 0;
+  const dev = parseFloat(d.devolucoes) || 0;
+  const liq = fat + dev;
+
+  animarContador(document.getElementById('kFat'), fat, v => brl(v, true));
+  animarContador(document.getElementById('kDev'), Math.abs(dev), v => brl(v, true));
+  document.getElementById('kDevPct').textContent = pct(dev, fat) + ' do fat.';
+  animarContador(document.getElementById('kLiq'), liq, v => brl(v, true));
+  animarContador(document.getElementById('kCli'), d.total_clientes, num);
+  animarContador(document.getElementById('kTkt'), d.ticket_medio, brl);
+  animarContador(document.getElementById('kVendas'), d.qtd_vendas, num);
+
+  const sub = document.getElementById('subtitulo');
+  if (sub) {
+    sub.textContent = 'Fat. líquido: ' + brl(liq, true) + ' · ' + num(d.qtd_vendas) + ' vendas · ' + num(d.total_clientes) + ' clientes';
+  }
+}
+
+// ============================================================
+// REGIÃO
+// ============================================================
+async function carregarRegiao(params) {
+  const res = await fetch(API + '/api/faturamento-por-regiao?' + params);
+  const data = await res.json();
+  if (!data || !data.length) return;
+
+  if (cRegiao) cRegiao.destroy();
+
+  cRegiao = new Chart(document.getElementById('chartRegiao'), {
+    type: 'doughnut',
+    data: {
+      labels: data.map(d => d.regiao),
+      datasets: [{
+        data: data.map(d => d.faturamento),
+        backgroundColor: ['#1D4ED8', '#3B82F6', '#60A5FA', '#93C5FD', '#BFDBFE', '#E0E7FF', '#D1D5DB', '#9CA3AF'],
+        borderWidth: 0
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      onClick: function(e, els) {
+        if (!els.length) return;
+        const r = data[els[0].index].regiao;
+        drillRegiao = (drillRegiao === r) ? null : r;
+        drillUF = null;
+        atualizarDrillBar();
+        recarregar();
+      },
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            color: '#1E293B',
+            font: { size: 10, weight: '500' },
+            padding: 8,
+            boxWidth: 12
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: function(c) { return ' ' + c.label + ': ' + brl(c.raw, true); }
+          }
+        }
+      }
+    }
+  });
+}
+
+// ============================================================
+// UF
+// ============================================================
+async function carregarUF(params) {
+  const res = await fetch(API + '/api/faturamento-por-uf?' + params);
+  const data = await res.json();
+  const top = data.slice(0, 12);
+
+  if (cUF) cUF.destroy();
+
+  cUF = new Chart(document.getElementById('chartUF'), {
+    type: 'bar',
+    indexAxis: 'y',
+    data: {
+      labels: top.map(d => d.uf),
+      datasets: [{
+        label: 'Faturamento',
+        data: top.map(d => d.faturamento),
+        backgroundColor: top.map((_, i) => {
+          const colors = ['#1D4ED8', '#3B82F6', '#60A5FA', '#93C5FD', '#BFDBFE', '#E0E7FF', '#D1D5DB', '#9CA3AF', '#6B7280', '#4B5563', '#374151', '#1F2937'];
+          return colors[i % colors.length];
+        }),
+        borderRadius: 4,
+        borderWidth: 0
+      }]
+    },
+    options: {
+      responsive: true,
+      onClick: function(e, els) {
+        if (!els.length) return;
+        const u = top[els[0].index].uf;
+        drillUF = (drillUF === u) ? null : u;
+        drillRegiao = null;
+        atualizarDrillBar();
+        recarregar();
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: function(c) { return ' ' + brl(c.raw, true) + ' | ' + num(top[c.dataIndex].clientes) + ' clientes'; }
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: {
+            color: '#475569',
+            font: { size: 10 },
+            callback: function(v) { return 'R$' + (v/1e6).toFixed(1) + 'M'; }
+          },
+          grid: { color: 'rgba(0,0,0,0.04)' }
+        },
+        y: {
+          ticks: { color: '#1E293B', font: { size: 11, weight: '600' } },
+          grid: { display: false }
+        }
+      }
+    }
+  });
+}
+
+// ============================================================
+// MENSAL
+// ============================================================
+async function carregarMensal(params) {
+  const res = await fetch(API + '/api/faturamento-mensal?' + params);
+  const raw = await res.json();
+  const data = raw.filter(d => d.mes >= 1 && d.mes <= 12);
+
+  const lbl = document.getElementById('lblMensal');
+  if (lbl) lbl.textContent = '(' + data.length + ' meses)';
+
+  if (cMensal) cMensal.destroy();
+
+  cMensal = new Chart(document.getElementById('chartMensal'), {
+    type: 'bar',
+    data: {
+      labels: data.map(d => MESES[d.mes] + '/' + String(d.ano).slice(2)),
+      datasets: [
+        {
+          label: 'Faturamento',
+          data: data.map(d => d.faturamento),
+          backgroundColor: 'rgba(29, 78, 216, 0.75)',
+          borderColor: '#1D4ED8',
+          borderWidth: 1,
+          borderRadius: 4,
+          order: 2
+        },
+        {
+          label: 'Devoluções',
+          data: data.map(d => Math.abs(d.devolucoes)),
+          type: 'line',
+          borderColor: '#DC2626',
+          backgroundColor: 'rgba(220, 38, 38, 0.08)',
+          tension: 0.4,
+          pointRadius: 4,
+          pointBackgroundColor: '#DC2626',
+          fill: false,
+          order: 1
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      onClick: function(e, els) {
+        if (!els.length) return;
+        const d = data[els[0].index];
+        drillMes = (drillMes === d.mes) ? null : d.mes;
+        atualizarDrillBar();
+        recarregar();
+      },
+      plugins: {
+        legend: {
+          labels: { color: '#1E293B', font: { size: 11, weight: '500' } }
+        },
+        tooltip: {
+          callbacks: {
+            label: function(c) { return ' ' + c.dataset.label + ': ' + brl(c.raw); }
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: '#475569', font: { size: 10 } },
+          grid: { color: 'rgba(0,0,0,0.04)' }
+        },
+        y: {
+          ticks: {
+            color: '#475569',
+            font: { size: 10 },
+            callback: function(v) { return 'R$' + (v/1e6).toFixed(1) + 'M'; }
+          },
+          grid: { color: 'rgba(0,0,0,0.04)' }
+        }
+      }
+    }
+  });
+}
+
+// ============================================================
+// CIDADES
+// ============================================================
+async function carregarCidades(params) {
+  const res = await fetch(API + '/api/faturamento-por-cidade?' + params + '&limite=8');
+  const data = await res.json();
+  if (!data || !data.length) return;
+
+  if (cCidade) cCidade.destroy();
+
+  cCidade = new Chart(document.getElementById('chartCidade'), {
+    type: 'bar',
+    indexAxis: 'y',
+    data: {
+      labels: data.map(d => d.cidade + ' (' + d.uf + ')'),
+      datasets: [{
+        label: 'Faturamento',
+        data: data.map(d => d.faturamento),
+        backgroundColor: ['#1D4ED8', '#3B82F6', '#60A5FA', '#93C5FD', '#BFDBFE', '#E0E7FF', '#D1D5DB', '#9CA3AF'],
+        borderRadius: 4,
+        borderWidth: 0
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: function(c) { return ' ' + brl(c.raw, true) + ' | ' + num(data[c.dataIndex].clientes) + ' clientes'; }
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: {
+            color: '#475569',
+            font: { size: 10 },
+            callback: function(v) { return 'R$' + (v/1e6).toFixed(1) + 'M'; }
+          },
+          grid: { color: 'rgba(0,0,0,0.04)' }
+        },
+        y: {
+          ticks: { color: '#1E293B', font: { size: 10, weight: '500' } },
+          grid: { display: false }
+        }
+      }
+    }
+  });
+}
+
+// ============================================================
+// TABELA UF
+// ============================================================
+async function carregarTblUF(params) {
+  const res = await fetch(API + '/api/faturamento-por-uf?' + params);
+  const data = await res.json();
+
+  const container = document.getElementById('tblUF');
+  if (!data || !data.length) {
+    container.innerHTML = '<div class="loading"><span style="font-size:20px;opacity:0.5;">📭</span> Sem dados para esse período</div>';
+    return;
+  }
+
+  const total = data.reduce((s, d) => s + (parseFloat(d.faturamento) || 0), 0);
+  let html = `<table>
+    <thead><tr><th>#</th><th>UF</th><th>Faturamento</th><th>% Total</th><th>Clientes</th></tr></thead>
+    <tbody>`;
+
+  data.forEach((d, i) => {
+    const p = total > 0 ? ((d.faturamento / total) * 100).toFixed(1) : 0;
+    const bar = ((d.faturamento / data[0].faturamento) * 100).toFixed(1);
+    html += `<tr style="cursor:pointer;" onclick="drillUF = (drillUF === '${d.uf}') ? null : '${d.uf}'; drillRegiao = null; atualizarDrillBar(); recarregar();">
+      <td class="rank">${i+1}°</td>
+      <td style="font-weight:600;color:var(--text-primary);">${d.uf}<div class="progress-bar"><div class="progress-fill" style="width:${bar}%"></div></div></td>
+      <td style="font-weight:600;color:var(--text-primary);">${brl(d.faturamento, true)}</td>
+      <td style="color:var(--accent-secondary);font-weight:600;">${p}%</td>
+      <td style="color:var(--text-secondary);">${num(d.clientes)}</td>
+    </tr>`;
+  });
+
+  html += '</tbody></table>';
+  container.innerHTML = html;
+}
+
+// ============================================================
+// COMPARADOR DE PERÍODOS
+// ============================================================
+async function compararPeriodos() {
+  const anoA = document.getElementById('cAnoA').value;
+  const mesA = document.getElementById('cMesA').value;
+  const anoB = document.getElementById('cAnoB').value;
+  const mesB = document.getElementById('cMesB').value;
+
+  if (!anoA || !mesA || !anoB || !mesB) {
+    alert('Selecione ano e mês para os dois períodos.');
+    return;
+  }
+
+  const mn = ['','Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const labelA = mn[parseInt(mesA)] + '/' + anoA;
+  const labelB = mn[parseInt(mesB)] + '/' + anoB;
+
+  const grid = document.getElementById('compGrid');
+  grid.style.display = 'grid';
+  grid.innerHTML = '<div style="grid-column:1/-1;padding:24px;text-align:center;color:var(--text-secondary);font-weight:500;">⏳ Comparando períodos...</div>';
+
+  try {
+    const base = montarParams(getFiltros());
+    const pA = new URLSearchParams(base); pA.set('ano', anoA); pA.set('mes', mesA);
+    const pB = new URLSearchParams(base); pB.set('ano', anoB); pB.set('mes', mesB);
+
+    const [rA, rB] = await Promise.all([
+      fetch(API + '/api/kpis?' + pA).then(r => r.json()),
+      fetch(API + '/api/kpis?' + pB).then(r => r.json())
+    ]);
+
+    const fatA = parseFloat(rA.faturamento)||0, fatB = parseFloat(rB.faturamento)||0;
+    const devA = Math.abs(parseFloat(rA.devolucoes)||0), devB = Math.abs(parseFloat(rB.devolucoes)||0);
+    const liqA = fatA - devA, liqB = fatB - devB;
+    const cliA = parseInt(rA.total_clientes)||0, cliB = parseInt(rB.total_clientes)||0;
+    const tktA = parseFloat(rA.ticket_medio)||0, tktB = parseFloat(rB.ticket_medio)||0;
+    const qA = parseInt(rA.qtd_vendas)||0, qB = parseInt(rB.qtd_vendas)||0;
+
+    function card(lbl, vA, vB, fmt) {
+      const delta = vB !== 0 ? ((vA - vB) / Math.abs(vB)) * 100 : (vA > 0 ? 100 : 0);
+      const cls = delta > 0.5 ? 'c-up' : delta < -0.5 ? 'c-dn' : 'c-ne';
+      const arrow = delta > 0.5 ? '▲' : delta < -0.5 ? '▼' : '–';
+      const fa = fmt === 'brl' ? brl(vA) : num(Math.round(vA));
+      const fb = fmt === 'brl' ? brl(vB) : num(Math.round(vB));
+      return `<div class="comp-card">
+        <div class="comp-lbl">${lbl}</div>
+        <div class="comp-periodos">
+          <div class="comp-periodo-row"><span class="comp-vA-label">${labelA}</span><span class="comp-vA" style="font-weight:700;color:var(--text-primary);">${fa}</span></div>
+          <div class="comp-sep"></div>
+          <div class="comp-periodo-row"><span class="comp-vB-label">${labelB}</span><span class="comp-vB" style="font-weight:600;color:var(--text-secondary);">${fb}</span></div>
+        </div>
+        <span class="comp-pct ${cls}">${arrow} ${Math.abs(delta).toFixed(1).replace('.', ',')}%</span>
+      </div>`;
+    }
+
+    grid.innerHTML =
+      card('💰 Fat. Bruto', fatA, fatB, 'brl') +
+      card('↩️ Devoluções', devA, devB, 'brl') +
+      card('📈 Fat. Líquido', liqA, liqB, 'brl') +
+      card('👥 Clientes', cliA, cliB, 'num') +
+      card('🛒 Ticket Médio', tktA, tktB, 'brl') +
+      card('📦 Qtd. Vendas', qA, qB, 'num');
+
+  } catch (e) {
+    grid.innerHTML = `<div style="grid-column:1/-1;padding:16px;color:var(--color-danger);font-weight:500;">Erro: ${e.message}</div>`;
+  }
+}
+
+// ============================================================
+// FOOTER
+// ============================================================
+function atualizarFooter(filtros) {
+  const el = document.getElementById('dashboardFooter');
+  if (!el) return;
+  const agora = new Date().toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+  const partes = [];
+  if (filtros) {
+    if (filtros.ano) partes.push('Ano: ' + filtros.ano);
+    if (filtros.mes) partes.push('Mês: ' + MESES_EXT[filtros.mes]);
+    if (filtros.unidade) partes.push('Unidade: ' + filtros.unidade);
+  }
+  el.textContent = '📅 Dados carregados em: ' + agora + (partes.length ? ' · Filtros: ' + partes.join(', ') : ' · Sem filtros ativos');
+}
+
+// ============================================================
+// EXPORTAR
+// ============================================================
+function exportarPagina() {
+  const wb = XLSX.utils.book_new();
+
+  // Tabela UF
+  const tblU = document.querySelector('#tblUF table');
+  if (tblU) {
+    const rowsU = [['#','UF','Faturamento','% Total','Clientes']];
+    tblU.querySelectorAll('tbody tr').forEach(tr => {
+      const tds = tr.querySelectorAll('td');
+      if (tds.length >= 5) rowsU.push([tds[0].textContent.trim(), tds[1].textContent.trim(), tds[2].textContent.trim(), tds[3].textContent.trim(), tds[4].textContent.trim()]);
+    });
+    const wsU = XLSX.utils.aoa_to_sheet(rowsU);
+    wsU['!cols'] = [{wch:5},{wch:8},{wch:18},{wch:10},{wch:10}];
+    XLSX.utils.book_append_sheet(wb, wsU, 'Por UF');
+  }
+
+  // KPIs
+  const kpis = [['KPI','Valor']];
+  const ids = ['kFat','kDev','kLiq','kCli','kTkt','kVendas'];
+  const labels = ['Fat. Bruto','Devoluções','Fat. Líquido','Clientes','Ticket Médio','Qtd. Vendas'];
+  ids.forEach((id, i) => {
+    const el = document.getElementById(id);
+    if (el) kpis.push([labels[i], el.getAttribute('data-valor-real') || el.textContent]);
+  });
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(kpis), 'KPIs');
+
+  XLSX.writeFile(wb, 'Atomo-Regiao-' + new Date().toISOString().slice(0,10) + '.xlsx');
+}
+
+// ============================================================
+// INIT
+// ============================================================
+window.onload = function() {
+  const filtros = getFiltros();
+  mostrarTags(filtros);
+  recarregar();
+};
+
+// ============================================================
+// VALTER — Assistente (versão integrada)
+// ============================================================
+(function() {
+  var API_BASE = 'https://horus-production.up.railway.app';
+  var STORAGE_KEY = 'valter_session_v2';
+
+  var state = {
+    open: false,
+    iniciado: false,
+    mode: null,
+    historico: [],
+    contexto: '',
+    pagina: document.title.replace('Átomo — ','').replace('Atomo — ','').trim(),
+  };
+
+  function el(id) { return document.getElementById(id); }
+
+  function setStatus(txt) {
+    var s = el('iaStatus');
+    if (s) s.textContent = txt;
+  }
+
+  function setThinking(on) {
+    var a = el('iaAvatar');
+    var b = el('iaSendBtn');
+    var f = el('iaFab');
+    if (a) a.classList.toggle('thinking', on);
+    if (b) b.disabled = on;
+    if (f) f.classList.toggle('ia-thinking', on && !state.open);
+  }
+
+  function showBadge(n) {
+    var b = el('iaBadge');
+    var f = el('iaFab');
+    if (n > 0) {
+      b.textContent = n;
+      b.style.display = 'block';
+      if (f) f.classList.add('ia-pulsing');
+    } else {
+      b.style.display = 'none';
+      if (f) f.classList.remove('ia-pulsing');
+    }
+  }
+
+  function iaAddMsg(texto, tipo) {
+    var wrap = document.createElement('div');
+    wrap.className = 'ia-msg ' + tipo;
+    var bubble = document.createElement('div');
+    bubble.className = 'ia-msg-bubble';
+    bubble.innerHTML = texto
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/^- (.+)$/gm, '<li>$1</li>')
+      .replace(/(<li>[\s\S]*?<\/li>)/g, '<ul style="margin:6px 0 6px 16px">$1</ul>')
+      .replace(/\n/g, '<br>');
+    wrap.appendChild(bubble);
+    var msgs = el('iaMessages');
+    if (msgs) { msgs.appendChild(wrap); msgs.scrollTop = msgs.scrollHeight; }
+  }
+
+  function iaAddTyping() {
+    var div = document.createElement('div');
+    div.className = 'ia-typing';
+    div.id = 'iaTyping';
+    div.innerHTML = '<span></span><span></span><span></span>';
+    var msgs = el('iaMessages');
+    if (msgs) { msgs.appendChild(div); msgs.scrollTop = msgs.scrollHeight; }
+  }
+
+  function iaRemoveTyping() {
+    var t = el('iaTyping');
+    if (t) t.remove();
+  }
+
+  async function iaVerificarAlertas() {
+    try {
+      var r = await fetch(API_BASE + '/api/valter/alertas');
+      if (!r.ok) return;
+      var data = await r.json();
+      if (data.alertas && data.alertas.length) {
+        showBadge(data.alertas.length);
+        var area = el('iaAlertArea');
+        if (!area) return;
+        area.innerHTML = '';
+        data.alertas.slice(0,2).forEach(function(a) {
+          var div = document.createElement('div');
+          div.className = 'ia-alert';
+          div.innerHTML = '<span class="ia-alert-icon">' + (a.icone||'⚠️') + '</span><span>' + a.texto + '</span>';
+          div.addEventListener('click', function() {
+            if (!state.open) iaToggle();
+            setTimeout(function() { iaSendMensagem(a.pergunta || a.texto); }, 400);
+          });
+          area.appendChild(div);
+        });
+      }
+    } catch(e) {}
+  }
+
+  function iaToggle() {
+    state.open = !state.open;
+    var ov = el('iaOverlay');
+    if (ov) ov.classList.toggle('open', state.open);
+    if (state.open) {
+      showBadge(0);
+      if (!state.iniciado) { state.iniciado = true; setTimeout(iaIniciar, 300); }
+    }
+  }
+
+  if (el('iaOverlay')) {
+    el('iaOverlay').addEventListener('click', function(e) {
+      if (e.target === el('iaOverlay')) iaToggle();
+    });
+  }
+  window.iaToggle = iaToggle;
+
+  async function iaIniciar() {
+    setStatus('Carregando dados...');
+    setThinking(true);
+    try {
+      var r = await fetch(API_BASE + '/api/valter/contexto');
+      var d = await r.json();
+      if (d.contexto) state.contexto = d.contexto;
+    } catch(e) {}
+    state.contexto += '\n\nPÁGINA ATUAL: ' + state.pagina;
+    setThinking(false);
+
+    try {
+      var sessao = JSON.parse(localStorage.getItem(STORAGE_KEY));
+      if (sessao && sessao.mode && sessao.historico && sessao.historico.length) {
+        state.mode = sessao.mode;
+        state.historico = sessao.historico;
+        state.contexto = sessao.contexto || state.contexto;
+        setStatus(state.mode === 'sl' ? '📦 Shelf Life' : '💬 Dúvidas Gerais');
+        iaAddMsg('Bem-vindo de volta! Continuando nossa conversa sobre **' +
+          (state.mode === 'sl' ? 'Shelf Life' : 'Dúvidas Gerais') + '**.', 'bot');
+        iaShowInput(state.mode);
+        return;
+      }
+    } catch(e) {}
+
+    iaApresentar();
+  }
+
+  function iaApresentar() {
+    setStatus('Pronto');
+    iaAddMsg('Olá! Sou o **Valter**, assistente inteligente do sistema Átomo. Estou aqui para te ajudar com análises, dúvidas e insights da Alimentare.\n\nO que você precisa hoje?', 'bot');
+    iaShowMenu();
+  }
+
+  function iaShowMenu() {
+    var menu = el('iaModeMenu');
+    if (!menu) return;
+    var qb = el('iaQuickBar');
+    var ia = el('iaInputArea');
+    if (qb) qb.style.display = 'none';
+    if (ia) ia.style.display = 'none';
+
+    menu.innerHTML =
+      '<div class="ia-mode-menu">' +
+        '<button class="ia-mode-btn" id="iaBtnSL">' +
+          '<div class="ia-mode-icon">📦</div>' +
+          '<div><div class="ia-mode-label">Shelf Life</div>' +
+          '<div class="ia-mode-desc">Validade, produtos críticos e ações SL</div></div>' +
+          '<span class="ia-mode-arrow">›</span>' +
+        '</button>' +
+        '<button class="ia-mode-btn" id="iaBtnGeral">' +
+          '<div class="ia-mode-icon">💬</div>' +
+          '<div><div class="ia-mode-label">Dúvidas Gerais</div>' +
+          '<div class="ia-mode-desc">Faturamento, vendedores, marcas, carteira</div></div>' +
+          '<span class="ia-mode-arrow">›</span>' +
+        '</button>' +
+      '</div>';
+    menu.style.display = 'block';
+
+    var btnSL = document.getElementById('iaBtnSL');
+    var btnGeral = document.getElementById('iaBtnGeral');
+    if (btnSL) btnSL.addEventListener('click', function() { iaEscolherModo('sl'); });
+    if (btnGeral) btnGeral.addEventListener('click', function() { iaEscolherModo('geral'); });
+  }
+
+  function iaHideMenu() {
+    var menu = el('iaModeMenu');
+    if (menu) menu.style.display = 'none';
+  }
+
+  function iaShowInput(modo) {
+    var ia = el('iaInputArea');
+    var qb = el('iaQuickBar');
+    if (ia) ia.style.display = 'flex';
+    if (qb) {
+      qb.style.display = 'flex';
+      qb.innerHTML = '';
+    }
+
+    var btns = modo === 'sl' ? [
+      {l:'🏷️ Reclassificar SL', m:'Quais produtos devo reclassificar para código SL agora?'},
+      {l:'🚨 Críticos',          m:'Quais produtos estão críticos e precisam de ação imediata?'},
+      {l:'📊 Resumo',            m:'Faça um resumo geral do shelf life desta semana.'},
+      {l:'⚠️ Risco de vencer',   m:'Quais produtos têm maior risco de vencer sem saída?'},
+    ] : [
+      {l:'📈 Faturamento',    m:'Como está o faturamento do ano atual?'},
+      {l:'🏆 Top vendedores', m:'Quais são os top vendedores do ano?'},
+      {l:'🏷️ Top marcas',     m:'Quais marcas têm maior faturamento?'},
+      {l:'👥 Carteira',       m:'Me dê insights sobre a carteira de clientes.'},
+    ];
+
+    btns.forEach(function(b) {
+      var btn = document.createElement('button');
+      btn.className = 'ia-quick';
+      btn.textContent = b.l;
+      btn.addEventListener('click', function(){ iaSendMensagem(b.m); });
+      if (qb) qb.appendChild(btn);
+    });
+
+    var back = document.createElement('button');
+    back.className = 'ia-back-btn';
+    back.textContent = '← Menu';
+    back.addEventListener('click', iaReset);
+    if (qb) qb.appendChild(back);
+
+    var inp = el('iaInput');
+    if (inp) inp.focus();
+  }
+
+  function iaReset() {
+    state.mode = null;
+    state.historico = [];
+    try { localStorage.removeItem(STORAGE_KEY); } catch(e) {}
+    var msgs = el('iaMessages');
+    var qb = el('iaQuickBar');
+    var ia = el('iaInputArea');
+    if (msgs) msgs.innerHTML = '';
+    if (qb) qb.style.display = 'none';
+    if (ia) ia.style.display = 'none';
+    setStatus('Assistente Átomo');
+    iaApresentar();
+  }
+
+  async function iaChamarAPI(pergunta, contexto, modo) {
+    var sys = 'Seu nome é Valter. Você é o assistente inteligente do sistema Átomo da Alimentare, ' +
+      'distribuidora de alimentos. Responda sempre em português, de forma direta, prática e objetiva. ' +
+      'Use **negrito** para destacar dados importantes. Use listas com - para sugestões. ' +
+      'Seja conciso mas completo. Nunca invente dados — use apenas o contexto fornecido.';
+
+    if (modo === 'sl') {
+      sys += ' Você está no modo Shelf Life. Foque em: produtos críticos, sugestões de reclassificação SL, ' +
+        'receitas e ideias para girar estoques próximos do vencimento.';
+    } else {
+      sys += ' Você está no modo Dúvidas Gerais. Responda sobre qualquer tema do sistema: faturamento, ' +
+        'vendedores, marcas, produtos, carteira.';
+    }
+
+    setStatus('Pensando...');
+    var userMsg = 'CONTEXTO:\n' + contexto + '\n\nPERGUNTA: ' + pergunta;
+
+    try {
+      var resp = await fetch(API_BASE + '/api/valter/chat', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          system: sys,
+          messages: state.historico.concat([{role:'user',content:userMsg}])
+        })
+      });
+      var data = await resp.json();
+      var texto = data.content && data.content[0] ? data.content[0].text : 'Erro ao obter resposta.';
+      state.historico.push({role:'user',content:pergunta});
+      state.historico.push({role:'assistant',content:texto});
+      if (state.historico.length > 12) state.historico = state.historico.slice(-12);
+      setStatus(modo === 'sl' ? '📦 Shelf Life' : '💬 Dúvidas Gerais');
+      return texto;
+    } catch(e) {
+      setStatus('Erro de conexão');
+      return 'Erro de conexão. Tente novamente.';
+    }
+  }
+
+  async function iaEscolherModo(modo) {
+    state.mode = modo;
+    state.historico = [];
+    iaHideMenu();
+    var msgs = el('iaMessages');
+    if (msgs) msgs.innerHTML = '';
+
+    var label = modo === 'sl' ? '📦 Shelf Life' : '💬 Dúvidas Gerais';
+    setStatus(label);
+    iaAddTyping();
+    setThinking(true);
+
+    var ctx = state.contexto;
+    var prompt = '';
+
+    if (modo === 'sl') {
+      prompt = 'Apresente-se rapidamente como Valter e faça uma análise focada do shelf life. ' +
+        'Destaque os pontos mais urgentes e os produtos que recomenda para código SL com justificativa.';
+    } else {
+      prompt = 'Apresente-se brevemente como Valter e diga que pode ajudar com faturamento, ' +
+        'vendedores, marcas, carteira de clientes, produtos e shelf life da Alimentare. ' +
+        'Mencione 2-3 insights interessantes do contexto fornecido.';
+    }
+
+    var resp = await iaChamarAPI(prompt, ctx, modo);
+    iaRemoveTyping();
+    setThinking(false);
+    iaAddMsg(resp, 'bot');
+    iaShowInput(modo);
+  }
+
+  async function iaSendMensagem(texto) {
+    if (!texto.trim()) return;
+    iaAddMsg(texto, 'user');
+    iaAddTyping();
+    setThinking(true);
+    var ctx = state.contexto;
+    var r = await iaChamarAPI(texto, ctx, state.mode || 'geral');
+    iaRemoveTyping();
+    setThinking(false);
+    iaAddMsg(r, 'bot');
+  }
+
+  // Event listeners
+  var fab = el('iaFab');
+  var close = el('iaCloseBtn');
+  var reset = el('iaResetBtn');
+  var send = el('iaSendBtn');
+  var input = el('iaInput');
+
+  if (fab) fab.addEventListener('click', iaToggle);
+  if (close) close.addEventListener('click', iaToggle);
+  if (reset) reset.addEventListener('click', iaReset);
+  if (send) {
+    send.addEventListener('click', function() {
+      var v = input ? input.value.trim() : '';
+      if (v) {
+        if (input) input.value = '';
+        iaSendMensagem(v);
+      }
+    });
+  }
+  if (input) {
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        var v = input.value.trim();
+        if (v) {
+          input.value = '';
+          iaSendMensagem(v);
+        }
+      }
+    });
+  }
+
+  setTimeout(iaVerificarAlertas, 2000);
+})();
+</script>
+</body>
+</html>
