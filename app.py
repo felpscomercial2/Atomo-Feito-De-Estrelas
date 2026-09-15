@@ -1750,7 +1750,6 @@ def pivot_cliente_produto():
     except Exception as e:
         import traceback as tb
         return jsonify({'erro': str(e), 'trace': tb.format_exc()}), 500
-
 def shelflife_historico():
     shelflife_id = request.args.get('shelflife_id')
     cod_produto  = request.args.get('cod_produto')
@@ -2415,32 +2414,132 @@ def compras_exportar():
 
 
 # ============================================================
-# SERVE ARQUIVOS ESTÁTICOS
+# TABELA DINÂMICA — UPLOAD E ARMAZENAMENTO
 # ============================================================
-@app.route('/carteira')
-def servir_carteira():
-    """Serve a página carteira.html"""
+@app.route('/api/tabela/migrar', methods=['GET', 'POST'])
+def tabela_migrar():
+    """Cria as tabelas necessárias para a Tabela Dinâmica."""
     try:
-        return send_file('carteira.html')
+        conn = get_conn(); cursor = conn.cursor()
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS tabela_uploads (
+                id           SERIAL PRIMARY KEY,
+                nome_arquivo TEXT,
+                total_linhas INTEGER DEFAULT 0,
+                colunas      JSONB,
+                criado_em    TIMESTAMPTZ DEFAULT NOW()
+            )
+        """)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS tabela_dinamica_dados (
+                id          BIGSERIAL PRIMARY KEY,
+                upload_id   INTEGER NOT NULL REFERENCES tabela_uploads(id) ON DELETE CASCADE,
+                dados       JSONB NOT NULL,
+                criado_em   TIMESTAMPTZ DEFAULT NOW()
+            )
+        """)
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_tab_din_upload ON tabela_dinamica_dados (upload_id)")
+        conn.commit(); cursor.close(); conn.close()
+        return jsonify({'ok': True, 'mensagem': 'Tabelas criadas com sucesso'})
     except Exception as e:
-        return jsonify({'erro': f'Erro ao carregar carteira.html: {str(e)}'}), 404
+        import traceback as tb
+        return jsonify({'erro': str(e), 'trace': tb.format_exc()}), 500
 
-@app.route('/<path:filename>')
-def servir_estaticos(filename):
-    """Serve arquivos estáticos como logo.png, CSS, JS, etc."""
-    # Lista de extensões permitidas
-    extensoes = ('.html', '.png', '.jpg', '.jpeg', '.gif', '.css', '.js', '.ico', '.svg')
-    if not any(filename.endswith(ext) for ext in extensoes):
-        return jsonify({'erro': 'Arquivo não encontrado'}), 404
-    
+
+@app.route('/api/tabela/upload', methods=['POST'])
+def tabela_upload():
+    """
+    Recebe:
+      { nome_arquivo: 'x.xlsx', colunas: ['Seq','Cód. Produto',...], linhas: [ {...}, {...} ] }
+    Grava cada linha como um JSONB. Retorna o upload_id.
+    """
     try:
-        return send_file(filename)
+        body = request.get_json(force=True)
+        nome  = (body.get('nome_arquivo') or 'planilha.xlsx')[:200]
+        cols  = body.get('colunas') or []
+        linhas = body.get('linhas') or []
+        if not linhas:
+            return jsonify({'erro': 'Nenhuma linha enviada'}), 400
+
+        conn = get_conn(); cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO tabela_uploads (nome_arquivo, total_linhas, colunas)
+            VALUES (%s, %s, %s::jsonb) RETURNING id
+        """, [nome, len(linhas), json.dumps(cols, ensure_ascii=False)])
+        upload_id = cursor.fetchone()[0]
+
+        # insert em lote (500 por vez)
+        LOTE = 500
+        for i in range(0, len(linhas), LOTE):
+            chunk = linhas[i:i+LOTE]
+            values = ','.join(['(%s, %s::jsonb)'] * len(chunk))
+            params = []
+            for r in chunk:
+                params.append(upload_id)
+                params.append(json.dumps(r, ensure_ascii=False))
+            cursor.execute(
+                f"INSERT INTO tabela_dinamica_dados (upload_id, dados) VALUES {values}",
+                params
+            )
+        conn.commit(); cursor.close(); conn.close()
+        return jsonify({'ok': True, 'upload_id': upload_id, 'linhas': len(linhas)})
+    except Exception as e:
+        import traceback
+        return jsonify({'erro': str(e), 'trace': traceback.format_exc()}), 500
+
+
+@app.route('/api/tabela/uploads', methods=['GET'])
+def tabela_uploads_listar():
+    try:
+        conn = get_conn(); cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cursor.execute("""
+            SELECT id, nome_arquivo, total_linhas, colunas,
+                   to_char(criado_em, 'DD/MM/YYYY HH24:MI') AS criado_em
+            FROM tabela_uploads ORDER BY id DESC
+        """)
+        rows = cursor.fetchall()
+        cursor.close(); conn.close()
+        return jsonify([dict(r) for r in rows])
+    except Exception as e:
+        return jsonify({'erro': str(e)}), 500
+
+
+@app.route('/api/tabela/uploads/<int:uid>', methods=['DELETE'])
+def tabela_uploads_excluir(uid):
+    try:
+        conn = get_conn(); cursor = conn.cursor()
+        cursor.execute("DELETE FROM tabela_uploads WHERE id = %s", [uid])
+        conn.commit(); cursor.close(); conn.close()
+        cache_clear()
+        return jsonify({'ok': True})
+    except Exception as e:
+        return jsonify({'erro': str(e)}), 500
+
+
+@app.route('/api/tabela/dados/<int:uid>', methods=['GET'])
+def tabela_dados(uid):
+    """Devolve todas as linhas JSONB de um upload como lista de objetos."""
+    try:
+        conn = get_conn(); cursor = conn.cursor()
+        cursor.execute("""
+            SELECT dados FROM tabela_dinamica_dados
+            WHERE upload_id = %s ORDER BY id
+        """, [uid])
+        rows = [r[0] for r in cursor.fetchall()]
+        cursor.close(); conn.close()
+        return jsonify(rows)
+    except Exception as e:
+        return jsonify({'erro': str(e)}), 500
+
+
+@app.route('/tabela-dinamica')
+def pagina_tabela_dinamica():
+    """Serve a página HTML da Tabela Dinâmica."""
+    try:
+        return send_file('tabela-dinamica.html')
     except Exception:
-        return jsonify({'erro': 'Arquivo não encontrado'}), 404
+        return jsonify({'erro': 'Arquivo tabela-dinamica.html não encontrado no servidor'}), 404
 
 
-# ============================================================
-# INICIALIZAÇÃO
-# ============================================================
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)), debug=False)
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
