@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Átomo — Tabela Dinâmica</title>
-<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600;700&display=swap" rel="stylesheet">
@@ -16,7 +15,7 @@
   --shadow-hover:0 8px 32px rgba(0,0,0,.07),0 2px 8px rgba(0,0,0,.03);
   --shadow-dropdown:0 16px 48px rgba(0,0,0,.08);
   --accent-primary:#1D4ED8;--accent-primary-hover:#2563EB;--accent-secondary:#3B82F6;
-  --color-success:#0B7C3C;--color-danger:#DC2626;--color-warning:#E98E0E;--color-roxo:#7C3AED;
+  --color-success:#0B7C3C;--color-danger:#DC2626;--color-warning:#E98E0E;
   --radius-default:14px;--radius-sm:10px;--radius-lg:20px;
   --transition-smooth:cubic-bezier(.34,1.56,.64,1);--transition-ease:cubic-bezier(.4,0,.2,1);
 }
@@ -25,7 +24,6 @@ html,body{background:var(--bg-body);color:var(--text-primary);
   font-family:'Inter',system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased;
   line-height:1.6;min-height:100vh}
 
-/* SIDEBAR (igual carteira.html) */
 .sidebar{width:232px;background:var(--bg-card);border-right:1px solid var(--border-light);
   box-shadow:2px 0 16px rgba(0,0,0,.02);padding:28px 16px;position:fixed;top:0;left:0;
   height:100vh;display:flex;flex-direction:column;align-items:center;z-index:100;overflow-y:auto}
@@ -36,7 +34,7 @@ html,body{background:var(--bg-body);color:var(--text-primary);
 .nav-item{width:100%;display:flex;align-items:center;gap:12px;padding:10px 14px;
   border-radius:var(--radius-sm);margin-bottom:2px;font-weight:500;font-size:13px;
   color:var(--text-secondary);text-decoration:none;transition:all .25s var(--transition-ease);
-  border:1px solid transparent;position:relative}
+  border:1px solid transparent}
 .nav-item:hover{background:#F1F4F9;color:var(--text-primary);transform:translateX(4px)}
 .nav-item.active{background:#EEF2FF;color:var(--accent-primary);font-weight:600}
 .nav-item .icon{font-size:16px;width:20px;text-align:center}
@@ -45,7 +43,6 @@ html,body{background:var(--bg-body);color:var(--text-primary);
   background:#FEF2F2;color:var(--color-danger);border:1px solid #FECACA;cursor:pointer;
   font-size:13px;font-weight:600;font-family:'Inter',sans-serif}
 
-/* MAIN */
 .main{margin-left:232px;flex:1;padding:32px 40px;background:var(--bg-body);min-height:100vh}
 .breadcrumb{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-muted);
   margin-bottom:16px}
@@ -62,10 +59,6 @@ html,body{background:var(--bg-body);color:var(--text-primary);
   transition:all .25s var(--transition-ease);font-family:'Inter',sans-serif;
   display:flex;align-items:center;gap:6px}
 .btn-primary:hover{background:var(--accent-primary-hover);transform:translateY(-2px)}
-.btn-ghost{padding:9px 18px;border-radius:var(--radius-sm);background:#EEF2FF;
-  color:var(--accent-primary);border:1px solid #C7D2FE;cursor:pointer;font-size:13px;
-  font-weight:600;transition:all .25s var(--transition-ease);font-family:'Inter',sans-serif}
-.btn-ghost:hover{background:#E0E7FF;transform:translateY(-2px)}
 .btn-export{padding:9px 18px;border-radius:var(--radius-sm);background:#F0FDF4;
   color:var(--color-success);border:1px solid #86EFAC;cursor:pointer;font-size:13px;
   font-weight:600;transition:all .25s var(--transition-ease);font-family:'Inter',sans-serif}
@@ -78,19 +71,8 @@ html,body{background:var(--bg-body);color:var(--text-primary);
 
 .nota{font-size:13px;color:var(--text-secondary);padding:12px 18px;background:#FFFBEB;
   border:1px solid #FDE68A;border-radius:var(--radius-sm);margin-bottom:20px;font-weight:450}
+.nota.info{background:#EFF6FF;border-color:#BFDBFE;color:#1E40AF}
 
-/* UPLOAD / DROP */
-.drop-card{background:var(--bg-card);border:2px dashed var(--border-light);
-  border-radius:var(--radius-default);box-shadow:var(--shadow-card);padding:40px 20px;
-  text-align:center;cursor:pointer;transition:all .3s var(--transition-ease);margin-bottom:20px}
-.drop-card:hover{border-color:var(--accent-secondary);background:#F8FAFC;
-  box-shadow:var(--shadow-hover)}
-.drop-card.dragover{border-color:var(--accent-primary);background:#EEF2FF}
-.drop-card .icon{font-size:44px;display:block;margin-bottom:12px;opacity:.7}
-.drop-card h3{font-size:16px;color:var(--text-primary);font-weight:600;margin-bottom:6px}
-.drop-card p{font-size:13px;color:var(--text-secondary)}
-
-/* LAYOUT 2 COLUNAS: campos à esquerda, áreas da pivot à direita */
 .builder{display:grid;grid-template-columns:280px 1fr;gap:16px;margin-bottom:16px}
 .fields-card{background:var(--bg-card);border:1px solid var(--border-light);
   border-radius:var(--radius-default);box-shadow:var(--shadow-card);padding:16px;
@@ -117,8 +99,7 @@ html,body{background:var(--bg-body);color:var(--text-primary);
 .area-valores{border-color:#BBF7D0}
 .area-filtros{border-color:#FDE68A}
 .area-title{font-size:11px;font-weight:700;color:var(--text-secondary);
-  text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;display:flex;
-  align-items:center;justify-content:space-between}
+  text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}
 .area-hint{font-size:11px;color:var(--text-muted);font-weight:400;text-transform:none;
   letter-spacing:0}
 .area-items{display:flex;flex-wrap:wrap;gap:6px;min-height:24px}
@@ -132,16 +113,12 @@ html,body{background:var(--bg-body);color:var(--text-primary);
   line-height:1;padding:0;opacity:.6}
 .area-item button:hover{opacity:1}
 
-/* Filtros aplicados (chips por campo) */
 .filtros-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));
   gap:12px;margin-bottom:16px}
 .filtro-card{background:var(--bg-card);border:1px solid var(--border-light);
   border-radius:var(--radius-default);box-shadow:var(--shadow-card);padding:14px 16px}
 .filtro-titulo{font-size:11px;font-weight:700;color:var(--text-secondary);
-  text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;
-  display:flex;align-items:center;justify-content:space-between}
-.filtro-titulo .rem{background:none;border:none;color:var(--text-muted);cursor:pointer;
-  font-size:14px}
+  text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px}
 .busca-wrap{position:relative}
 .busca-input{width:100%;padding:8px 12px;background:var(--bg-body);
   border:1px solid var(--border-light);border-radius:var(--radius-sm);color:var(--text-primary);
@@ -162,7 +139,6 @@ html,body{background:var(--bg-body);color:var(--text-primary);
   line-height:1;padding:0;opacity:.6}
 .tag-item button:hover{opacity:1}
 
-/* RESUMO */
 .resumo-bar{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;
   background:var(--bg-card);border:1px solid var(--border-light);
   border-radius:var(--radius-sm);box-shadow:var(--shadow-card);margin-bottom:16px;
@@ -170,8 +146,7 @@ html,body{background:var(--bg-body);color:var(--text-primary);
 .resumo-info{color:var(--text-secondary);font-weight:500;font-size:13px}
 .resumo-actions{display:flex;gap:8px;flex-wrap:wrap}
 
-/* PIVOT TABLE */
-.pivot-wrap{overflow:auto;max-height:calc(100vh - 200px);border-radius:var(--radius-default);
+.pivot-wrap{overflow:auto;max-height:calc(100vh - 260px);border-radius:var(--radius-default);
   border:1px solid var(--border-light);background:var(--bg-card);box-shadow:var(--shadow-card)}
 .pivot-table{border-collapse:collapse;font-size:12px;white-space:nowrap;width:100%}
 .pivot-table thead{position:sticky;top:0;z-index:10}
@@ -186,8 +161,6 @@ html,body{background:var(--bg-body);color:var(--text-primary);
 .pivot-th-total{background:#F8FAFC;padding:10px 12px;text-align:center;font-weight:700;
   color:var(--color-success);font-size:10px;text-transform:uppercase;letter-spacing:.8px;
   border-bottom:2px solid var(--border-light);position:sticky;top:0}
-.pivot-cod{padding:9px 10px;border-bottom:1px solid var(--border-light);
-  border-right:1px solid var(--border-light);color:var(--text-muted);font-size:11px}
 .pivot-nome{padding:9px 14px;border-bottom:1px solid var(--border-light);
   border-right:1px solid var(--border-light);font-weight:600;max-width:260px;
   overflow:hidden;text-overflow:ellipsis;color:var(--text-primary)}
@@ -200,22 +173,10 @@ html,body{background:var(--bg-body);color:var(--text-primary);
 .pivot-row-total td{background:rgba(29,78,216,.04);font-weight:700;
   color:var(--accent-secondary);padding:10px 12px;border-top:2px solid var(--border-light)}
 tbody tr:hover td{background:#F8FAFC}
-.det-row>td{background:rgba(0,0,0,.02);padding:0 18px 18px}
-.det-box{margin-top:6px;border:1px solid var(--border-light);border-radius:var(--radius-sm);
-  overflow:auto;max-height:420px}
-.det-table{width:100%;border-collapse:collapse;font-size:12px;background:var(--bg-card)}
-.det-th{position:sticky;top:0;background:#F8FAFC;color:var(--text-secondary);font-size:10px;
-  text-transform:uppercase;letter-spacing:.5px;padding:8px 10px;text-align:left;
-  border-bottom:1px solid var(--border-light);white-space:nowrap;font-weight:600}
-.det-td{padding:7px 10px;border-bottom:1px solid var(--border-light);color:var(--text-primary)}
-.det-td.num{text-align:right;font-variant-numeric:tabular-nums}
-.det-msg{padding:16px;color:var(--text-secondary);font-size:13px}
 
-/* EMPTY */
 .empty{padding:60px;text-align:center;color:var(--text-secondary)}
 .empty .icon{font-size:36px;display:block;margin-bottom:12px;opacity:.5}
 
-/* LOADING */
 .loading{display:none;position:fixed;inset:0;background:rgba(242,244,248,.92);
   z-index:9999;align-items:center;justify-content:center;flex-direction:column;gap:20px;
   backdrop-filter:blur(8px)}
@@ -225,22 +186,10 @@ tbody tr:hover td{background:#F8FAFC}
 @keyframes spin{to{transform:rotate(360deg)}}
 .loading span{color:var(--text-secondary);font-size:13px;font-weight:500}
 
-/* SCROLLBAR */
 ::-webkit-scrollbar{width:6px;height:6px}
 ::-webkit-scrollbar-track{background:#F1F4F9;border-radius:8px}
 ::-webkit-scrollbar-thumb{background:#CBD5E1;border-radius:8px}
 ::-webkit-scrollbar-thumb:hover{background:#94A3B8}
-
-/* UPLOADS LIST */
-.uploads-list{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
-.upload-item{display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:20px;
-  background:var(--bg-card);border:1px solid var(--border-light);font-size:12px;
-  color:var(--text-secondary);cursor:pointer;transition:all .25s}
-.upload-item:hover{border-color:var(--accent-secondary);color:var(--accent-primary)}
-.upload-item.active{background:#EEF2FF;border-color:var(--accent-secondary);
-  color:var(--accent-primary);font-weight:600}
-.upload-item .rm{color:var(--text-muted);font-size:14px;padding:0 2px}
-.upload-item .rm:hover{color:var(--color-danger)}
 
 @media(max-width:992px){
   .builder{grid-template-columns:1fr}
@@ -251,9 +200,8 @@ tbody tr:hover td{background:#F8FAFC}
 </head>
 <body>
 
-<div class="loading" id="loading"><div class="spinner"></div><span>Processando...</span></div>
+<div class="loading" id="loading"><div class="spinner"></div><span id="loadingMsg">Processando...</span></div>
 
-<!-- SIDEBAR -->
 <div class="sidebar">
   <div class="sidebar-title">ÁTOMO</div>
   <a class="nav-item" href="home.html"><span class="icon">🏠</span> Página Inicial</a>
@@ -274,12 +222,11 @@ tbody tr:hover td{background:#F8FAFC}
   <a class="nav-item" href="compras.html"><span class="icon">🛒</span> Compras</a>
   <div class="sidebar-divider"></div>
   <div class="nav-section">Análise</div>
-  <a class="nav-item active" href="tabela-dinamica.html"><span class="icon">🧩</span> Tabela Dinâmica</a>
+  <a class="nav-item active" href="/tabela-dinamica"><span class="icon">🧩</span> Tabela Dinâmica</a>
   <div class="sidebar-divider"></div>
   <button class="btn-logout" onclick="location.href='index.html'">🚪 Sair</button>
 </div>
 
-<!-- MAIN -->
 <div class="main">
   <div class="breadcrumb">
     <a href="home.html">🏠 Portal</a>
@@ -290,36 +237,23 @@ tbody tr:hover td{background:#F8FAFC}
   <div class="header">
     <div class="header-left">
       <h1>🧩 Tabela Dinâmica</h1>
-      <p id="subtitulo">Suba uma planilha e monte a análise arrastando os campos.</p>
+      <p id="subtitulo">Arraste campos para montar sua análise. Consultas rodam direto no banco.</p>
     </div>
     <div class="header-actions">
-      <button class="btn-ghost" onclick="document.getElementById('fileInput').click()">📤 Carregar Planilha</button>
       <button class="btn-export" id="btnExport" onclick="exportarXLSX()" disabled>📊 Exportar Resultado</button>
-      <button class="btn-danger" id="btnLimpar" onclick="limparTudo()">✕ Limpar</button>
+      <button class="btn-danger" onclick="limparConfig()">✕ Limpar</button>
     </div>
-  </div>
-
-  <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" style="display:none">
-
-  <div class="uploads-list" id="uploadsList"></div>
-
-  <div class="drop-card" id="dropCard">
-    <span class="icon">📄</span>
-    <h3>Arraste a planilha aqui ou clique para escolher</h3>
-    <p>Formatos aceitos: .xlsx, .xls, .csv — os dados ficam salvos no banco de dados</p>
   </div>
 
   <div id="builderArea" style="display:none">
-    <div class="nota">💡 <strong>Como usar:</strong> arraste os campos da esquerda para <strong>Linhas</strong>, <strong>Colunas</strong>, <strong>Valores</strong> ou <strong>Filtros</strong>. Clique em um item dentro de <em>Valores</em> para escolher a agregação (soma, contagem, média).</div>
+    <div class="nota info">💡 <strong>Como usar:</strong> arraste os campos da esquerda para <strong>Linhas</strong>, <strong>Colunas</strong>, <strong>Valores</strong> ou <strong>Filtros</strong>. Clique em um item dentro de <em>Valores</em> para escolher a agregação. O resultado é calculado no banco — não trava mesmo com milhões de linhas.</div>
 
     <div class="builder">
-      <!-- Campos disponíveis -->
       <div class="fields-card">
         <div class="fields-title">📋 Campos disponíveis</div>
         <div id="fieldsList"></div>
       </div>
 
-      <!-- Áreas -->
       <div class="areas-wrap">
         <div class="areas-row">
           <div class="area area-linhas" data-area="linhas">
@@ -333,11 +267,11 @@ tbody tr:hover td{background:#F8FAFC}
         </div>
         <div class="areas-row">
           <div class="area area-valores" data-area="valores">
-            <div class="area-title">Σ Valores <span class="area-hint">clique para mudar a agregação</span></div>
+            <div class="area-title">Σ Valores <span class="area-hint">clique p/ alternar agregação</span></div>
             <div class="area-items" id="areaValores"></div>
           </div>
           <div class="area area-filtros" data-area="filtros">
-            <div class="area-title">🎯 Filtros <span class="area-hint">clique em ⚙ para definir valores</span></div>
+            <div class="area-title">🎯 Filtros <span class="area-hint">restrinja valores</span></div>
             <div class="area-items" id="areaFiltros"></div>
           </div>
         </div>
@@ -366,187 +300,81 @@ tbody tr:hover td{background:#F8FAFC}
 <script>
 const API_BASE = window.location.origin;
 
-// ---------- ESTADO ----------
-let uploadAtual   = null;
-let dados         = [];      // linhas (objetos)
-let campos        = [];      // nomes das colunas
-let camposNumericos = [];
-let dragField     = null;
-let config = {
-  linhas:  [],   // ['Cliente']
-  colunas: [],   // ['Dt Faturamento']
-  valores: [],   // [{campo:'Valor NF', agg:'sum'}]
-  filtros: []    // [{campo:'Vendedor', valores:[]}]
+let info = null;
+let dragField = null;
+let ultimoResultado = null;
+
+const config = {
+  linhas:  [],
+  colunas: [],
+  valores: [],
+  filtros: []
 };
 
-// ---------- UTILS ----------
-function brl(v){return new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(parseFloat(v)||0);}
-function num(v){return new Intl.NumberFormat('pt-BR',{maximumFractionDigits:2}).format(parseFloat(v)||0);}
-function toNum(v){
-  if(v===null||v===undefined||v==='')return NaN;
-  if(typeof v==='number')return v;
-  let s = String(v).trim().replace(/\s/g,'').replace(/\./g,'').replace(',','.');
-  const f = parseFloat(s);
-  return isNaN(f)?NaN:f;
+function brl(v){
+  return new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(parseFloat(v)||0);
 }
-function isNumCol(nome){
-  let n=0, t=0;
-  for(const r of dados){
-    const v=r[nome];
-    if(v===null||v===undefined||v==='')continue;
-    t++;
-    if(!isNaN(toNum(v)))n++;
-    if(t>=50)break;
-  }
-  return t>0 && (n/t)>0.8;
+function num(v){
+  return new Intl.NumberFormat('pt-BR',{maximumFractionDigits:2}).format(parseFloat(v)||0);
 }
-function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-
-// ---------- UPLOAD ----------
-const dropCard  = document.getElementById('dropCard');
-const fileInput = document.getElementById('fileInput');
-
-dropCard.onclick = () => fileInput.click();
-fileInput.onchange = e => { if(e.target.files[0]) lerArquivo(e.target.files[0]); };
-
-['dragenter','dragover'].forEach(ev=>{
-  dropCard.addEventListener(ev,e=>{e.preventDefault();dropCard.classList.add('dragover');});
-});
-['dragleave','drop'].forEach(ev=>{
-  dropCard.addEventListener(ev,e=>{e.preventDefault();dropCard.classList.remove('dragover');});
-});
-dropCard.addEventListener('drop', e=>{
-  const f = e.dataTransfer.files[0];
-  if(f) lerArquivo(f);
-});
-
-function lerArquivo(file){
-  const reader = new FileReader();
-  reader.onload = e => {
-    try{
-      const wb = XLSX.read(e.target.result, {type:'binary', cellDates:false});
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const json = XLSX.utils.sheet_to_json(ws, {defval:'', raw:false});
-      if(!json.length){ alert('Planilha vazia.'); return; }
-      enviarParaBanco(file.name, json);
-    }catch(err){ alert('Erro ao ler planilha: '+err.message); }
-  };
-  reader.readAsBinaryString(file);
+function esc(s){
+  return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function campoNumerico(label){
+  const c = (info?.colunas || []).find(x=>x.label === label);
+  return c && c.tipo === 'numeric';
 }
 
-async function enviarParaBanco(nome, linhas){
+async function carregarInfo(){
   const loader = document.getElementById('loading');
-  loader.querySelector('span').textContent = 'Salvando no banco...';
+  loader.querySelector('span').textContent = 'Carregando estrutura da tabela...';
   loader.classList.add('show');
-
-  // normaliza cabeçalhos e valores
-  const cols = Object.keys(linhas[0]);
-  const limpo = linhas.map(r=>{
-    const o={};
-    cols.forEach(c=>{
-      let v = r[c];
-      if(v===null||v===undefined)v='';
-      o[c]=v;
-    });
-    return o;
-  });
-
   try{
-    const res = await fetch(API_BASE+'/api/tabela/upload',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({nome_arquivo:nome, colunas:cols, linhas:limpo})
-    });
-    const j = await res.json();
-    if(j.erro) throw new Error(j.erro);
-    await carregarUploads();
-    await selecionarUpload(j.upload_id);
-  }catch(err){
-    alert('Erro no upload: '+err.message);
+    const r = await fetch(API_BASE + '/api/tabela/info');
+    info = await r.json();
+    if(info.erro) throw new Error(info.erro);
+
+    if(!info.total || info.total === 0){
+      document.getElementById('subtitulo').innerHTML =
+        '⚠️ Tabela vazia. Rode a importação via <code>psql \\copy</code> primeiro.';
+      loader.classList.remove('show');
+      return;
+    }
+
+    document.getElementById('subtitulo').innerHTML =
+      `${num(info.total)} linhas carregadas · ${info.colunas.length} campos disponíveis · Período: ${info.periodos?.[0] || '—'} a ${info.periodos?.[info.periodos.length-1] || '—'}`;
+
+    document.getElementById('builderArea').style.display = 'block';
+    renderCampos();
+    renderAreas();
+    renderFiltros();
+  }catch(e){
+    alert('Erro ao carregar informações: ' + e.message);
   }finally{
     loader.classList.remove('show');
   }
 }
 
-// ---------- LISTA / CARREGAR UPLOADS ----------
-async function carregarUploads(){
-  try{
-    const r = await fetch(API_BASE+'/api/tabela/uploads');
-    const lista = await r.json();
-    const wrap = document.getElementById('uploadsList');
-    wrap.innerHTML = '';
-    lista.forEach(u=>{
-      const el = document.createElement('div');
-      el.className='upload-item'+(uploadAtual===u.id?' active':'');
-      el.innerHTML = `📄 ${esc(u.nome_arquivo)} · ${u.total_linhas} linhas <span class="rm" title="Excluir">✕</span>`;
-      el.onclick = ev=>{
-        if(ev.target.classList.contains('rm')){ excluirUpload(u.id); return; }
-        selecionarUpload(u.id);
-      };
-      wrap.appendChild(el);
-    });
-  }catch(e){console.error(e);}
-}
-
-async function excluirUpload(id){
-  if(!confirm('Excluir este upload e todos os dados?'))return;
-  const loader = document.getElementById('loading');
-  loader.querySelector('span').textContent = 'Excluindo...';
-  loader.classList.add('show');
-  try{
-    await fetch(API_BASE+'/api/tabela/uploads/'+id,{method:'DELETE'});
-    if(uploadAtual===id){ uploadAtual=null; dados=[]; campos=[];
-      document.getElementById('builderArea').style.display='none'; }
-    await carregarUploads();
-  }finally{ loader.classList.remove('show'); }
-}
-
-async function selecionarUpload(id){
-  const loader = document.getElementById('loading');
-  loader.querySelector('span').textContent = 'Carregando dados...';
-  loader.classList.add('show');
-  try{
-    const r = await fetch(API_BASE+'/api/tabela/dados/'+id);
-    const linhas = await r.json();
-    uploadAtual = id;
-    dados = linhas;
-    campos = Object.keys(dados[0]||{});
-    camposNumericos = campos.filter(isNumCol);
-    config.linhas=[]; config.colunas=[]; config.valores=[]; config.filtros=[];
-    renderCampos();
-    renderAreas();
-    renderFiltros();
-    atualizar();
-    document.getElementById('builderArea').style.display='block';
-    document.querySelectorAll('.upload-item').forEach(el=>el.classList.remove('active'));
-    carregarUploads();
-  }catch(err){
-    alert('Erro ao carregar: '+err.message);
-  }finally{ loader.classList.remove('show'); }
-}
-
-// ---------- RENDER CAMPOS ----------
 function renderCampos(){
   const wrap = document.getElementById('fieldsList');
-  wrap.innerHTML='';
-  campos.forEach(c=>{
+  wrap.innerHTML = '';
+  info.colunas.forEach(c=>{
     const el = document.createElement('div');
-    el.className='field-chip';
+    el.className = 'field-chip';
     el.draggable = true;
-    el.dataset.campo = c;
-    el.innerHTML = `<span class="grip">⋮⋮</span>${esc(c)}${camposNumericos.includes(c)?' <span style="margin-left:auto;color:#0B7C3C;font-size:10px;font-weight:700">Σ</span>':''}`;
+    el.dataset.campo = c.label;
+    el.innerHTML = `<span class="grip">⋮⋮</span>${esc(c.label)}${c.tipo==='numeric'?' <span style="margin-left:auto;color:#0B7C3C;font-size:10px;font-weight:700">Σ</span>':''}`;
     el.addEventListener('dragstart', e=>{
-      dragField = c;
+      dragField = c.label;
       el.classList.add('dragging');
       e.dataTransfer.effectAllowed='copy';
-      e.dataTransfer.setData('text/plain', c);
+      e.dataTransfer.setData('text/plain', c.label);
     });
     el.addEventListener('dragend', ()=>{ el.classList.remove('dragging'); dragField=null; });
     wrap.appendChild(el);
   });
 }
 
-// ---------- DROP NAS ÁREAS ----------
 document.querySelectorAll('.area').forEach(area=>{
   area.addEventListener('dragover', e=>{ e.preventDefault(); area.classList.add('dragover'); });
   area.addEventListener('dragleave', ()=>area.classList.remove('dragover'));
@@ -560,10 +388,12 @@ document.querySelectorAll('.area').forEach(area=>{
     } else if(tipo==='colunas'){
       if(!config.colunas.includes(campo)) config.colunas.push(campo);
     } else if(tipo==='valores'){
-      if(!camposNumericos.includes(campo)){ alert('Só é possível agregar campos numéricos.'); return; }
+      if(!campoNumerico(campo)){ alert('Só é possível agregar campos numéricos.'); return; }
       if(!config.valores.find(v=>v.campo===campo)){
-        const agg = campo.toLowerCase().includes('margem') ? 'avg' :
-                    campo.toLowerCase().includes('preço') || campo.toLowerCase().includes('preco') ? 'avg' : 'sum';
+        let agg = 'sum';
+        const lower = campo.toLowerCase();
+        if(lower.includes('margem')) agg = 'avg';
+        if(lower.includes('preço') || lower.includes('preco')) agg = 'avg';
         config.valores.push({campo, agg});
       }
     } else if(tipo==='filtros'){
@@ -573,7 +403,6 @@ document.querySelectorAll('.area').forEach(area=>{
   });
 });
 
-// ---------- RENDER ÁREAS ----------
 function renderAreas(){
   const map = {
     linhas:  document.getElementById('areaLinhas'),
@@ -581,56 +410,40 @@ function renderAreas(){
     valores: document.getElementById('areaValores'),
     filtros: document.getElementById('areaFiltros')
   };
-  map.linhas.innerHTML = config.linhas.map(c=>
-    `<div class="area-item">${esc(c)}<button onclick="removerDe('linhas','${esc(c)}')">×</button></div>`).join('');
-  map.colunas.innerHTML = config.colunas.map(c=>
-    `<div class="area-item">${esc(c)}<button onclick="removerDe('colunas','${esc(c)}')">×</button></div>`).join('');
+  map.linhas.innerHTML  = config.linhas.map(c=>`<div class="area-item">${esc(c)}<button onclick="removerDe('linhas','${esc(c)}')">×</button></div>`).join('');
+  map.colunas.innerHTML = config.colunas.map(c=>`<div class="area-item">${esc(c)}<button onclick="removerDe('colunas','${esc(c)}')">×</button></div>`).join('');
   map.valores.innerHTML = config.valores.map((v,i)=>{
-    const lbl = {sum:'Σ', avg:'x̄', count:'#', min:'min', max:'max'}[v.agg];
+    const lbl = {sum:'Σ',avg:'x̄',count:'#',min:'min',max:'max'}[v.agg] || 'Σ';
     return `<div class="area-item valores" onclick="mudarAgg(${i})" title="Clique para alternar agregação">
       ${lbl} ${esc(v.campo)} <button onclick="event.stopPropagation();removerValor(${i})">×</button></div>`;
   }).join('');
   map.filtros.innerHTML = config.filtros.map((f,i)=>
-    `<div class="area-item filtros" onclick="abrirFiltro('${esc(f.campo)}')">
+    `<div class="area-item filtros">
       ${esc(f.campo)}${f.valores.length?' ('+f.valores.length+')':''}
-      <button onclick="event.stopPropagation();removerFiltro(${i})">×</button></div>`).join('');
+      <button onclick="removerFiltro(${i})">×</button></div>`).join('');
 }
-
-function removerDe(tipo, campo){
-  config[tipo] = config[tipo].filter(c=>c!==campo);
-  renderAreas(); atualizar();
-}
-function removerValor(i){
-  config.valores.splice(i,1);
-  renderAreas(); atualizar();
-}
+function removerDe(tipo, campo){ config[tipo] = config[tipo].filter(c=>c!==campo); renderAreas(); atualizar(); }
+function removerValor(i){ config.valores.splice(i,1); renderAreas(); atualizar(); }
+function removerFiltro(i){ config.filtros.splice(i,1); renderAreas(); renderFiltros(); atualizar(); }
 function mudarAgg(i){
   const ciclo = ['sum','avg','count','min','max'];
   const atual = ciclo.indexOf(config.valores[i].agg);
   config.valores[i].agg = ciclo[(atual+1)%ciclo.length];
   renderAreas(); atualizar();
 }
-function removerFiltro(i){
-  config.filtros.splice(i,1);
-  renderAreas(); renderFiltros(); atualizar();
-}
 
-// ---------- FILTROS (valores por campo) ----------
 function renderFiltros(){
   const grid = document.getElementById('filtrosGrid');
-  grid.innerHTML='';
-  if(!config.filtros.length){ return; }
-
+  grid.innerHTML = '';
   config.filtros.forEach(f=>{
     const card = document.createElement('div');
-    card.className='filtro-card';
-    const uniq = [...new Set(dados.map(r=>String(r[f.campo]||'')).filter(v=>v!==''))].sort();
+    card.className = 'filtro-card';
     card.innerHTML = `
       <div class="filtro-titulo">🎯 ${esc(f.campo)}
         <span style="font-weight:400;text-transform:none;color:var(--text-muted);font-size:11px">${f.valores.length} selecionado(s)</span>
       </div>
       <div class="busca-wrap">
-        <input class="busca-input" placeholder="Buscar..." oninput="filtrarBusca(this,'${esc(f.campo)}')">
+        <input class="busca-input" placeholder="Buscar..." oninput="buscarValores(this,'${esc(f.campo)}')" onfocus="buscarValores(this,'${esc(f.campo)}')">
         <div class="sug-lista" data-sug="${esc(f.campo)}"></div>
       </div>
       <div class="tags-wrap">
@@ -642,21 +455,29 @@ function renderFiltros(){
   });
 }
 
-function filtrarBusca(input, campo){
-  const q = input.value.trim().toLowerCase();
+let buscaTimer = null;
+function buscarValores(input, campo){
+  clearTimeout(buscaTimer);
+  const q = input.value.trim();
   const lista = input.parentElement.querySelector('.sug-lista');
-  if(q.length<1){ lista.style.display='none'; return; }
-  const uniq = [...new Set(dados.map(r=>String(r[campo]||'')).filter(v=>v!==''))];
-  const f = config.filtros.find(x=>x.campo===campo);
-  const res = uniq.filter(v=>v.toLowerCase().includes(q)).slice(0,25);
-  if(!res.length){ lista.style.display='none'; return; }
-  lista.innerHTML = res.map(v=>{
-    const ok = f.valores.includes(v);
-    return `<div class="sug-item${ok?' sug-ok':''}" onclick="toggleFiltroValor('${esc(campo)}','${esc(v)}')">${esc(v)}${ok?' ✓':''}</div>`;
-  }).join('');
-  lista.style.display='block';
+  buscaTimer = setTimeout(async ()=>{
+    try{
+      const r = await fetch(API_BASE+'/api/tabela/valores-distintos',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({campo, busca:q, limite:50})
+      });
+      const valores = await r.json();
+      if(!valores.length){ lista.style.display='none'; return; }
+      const f = config.filtros.find(x=>x.campo===campo);
+      lista.innerHTML = valores.map(v=>{
+        const ok = f.valores.includes(v);
+        return `<div class="sug-item${ok?' sug-ok':''}" onclick="toggleFiltroValor('${esc(campo)}','${esc(v)}')">${esc(v)}${ok?' ✓':''}</div>`;
+      }).join('');
+      lista.style.display='block';
+    }catch(e){ console.error(e); }
+  }, 250);
 }
-
 function toggleFiltroValor(campo, valor){
   const f = config.filtros.find(x=>x.campo===campo);
   const i = f.valores.indexOf(valor);
@@ -668,316 +489,196 @@ function removerFiltroValor(campo, valor){
   f.valores = f.valores.filter(v=>v!==valor);
   renderFiltros(); atualizar();
 }
-function abrirFiltro(campo){
-  const el = document.querySelector(`[data-sug="${CSS.escape(campo)}"]`);
-  if(el){ const inp = el.parentElement.querySelector('input'); if(inp){ inp.focus(); inp.dispatchEvent(new Event('input')); } }
-}
-
-// Fecha sugestões ao clicar fora
 document.addEventListener('click', e=>{
   if(!e.target.closest('.busca-wrap')){
     document.querySelectorAll('.sug-lista').forEach(el=>el.style.display='none');
   }
 });
 
-// ---------- AGREGAÇÃO ----------
-function agg(a,b,tipo){
-  if(tipo==='sum')   return (a||0)+(b||0);
-  if(tipo==='count') return (a||0)+1;
-  if(tipo==='min')   return a===null?b:Math.min(a,b);
-  if(tipo==='max')   return a===null?b:Math.max(a,b);
-  if(tipo==='avg')   return a; // tratado à parte
-  return a+b;
-}
-
-function aplicarFiltros(linhas){
-  return linhas.filter(r=>{
-    for(const f of config.filtros){
-      if(!f.valores.length) continue;
-      const v = String(r[f.campo]||'');
-      if(!f.valores.includes(v)) return false;
-    }
-    return true;
-  });
-}
-
-function montarPivot(){
-  const linhas  = aplicarFiltros(dados);
+async function atualizar(){
   if(!config.linhas.length || !config.valores.length){
-    return {linhas, colunas:[], matriz:new Map(), totCol:new Map(), totGeral:[], gruposCols:[]};
-  }
-  const chavesCol = config.colunas.length ? config.colunas : ['__total__'];
-  const colSet = new Map();
-  const matriz = new Map(); // chaveLinha -> chaveCol -> [valores por métrica]
-  const totCol = new Map();
-  const totGeral = config.valores.map(()=>0);
-  const accCol = new Map(); // para média por coluna
-
-  linhas.forEach(r=>{
-    const keyL = config.linhas.map(c=>String(r[c]||'')).join(' ‖ ');
-    const keyC = config.colunas.length ? config.colunas.map(c=>String(r[c]||'')).join(' ‖ ') : '__total__';
-    if(!colSet.has(keyC)){
-      colSet.set(keyC, config.colunas.map(c=>String(r[c]||'')));
-    }
-    if(!matriz.has(keyL)) matriz.set(keyL, new Map());
-    const row = matriz.get(keyL);
-    if(!row.has(keyC)) row.set(keyC, config.valores.map(()=>({soma:0, qtd:0, min:null, max:null})));
-
-    const cell = row.get(keyC);
-    config.valores.forEach((v,vi)=>{
-      const n = toNum(r[v.campo]);
-      if(isNaN(n)) return;
-      const c = cell[vi];
-      c.soma += n; c.qtd += 1;
-      c.min = c.min===null?n:Math.min(c.min,n);
-      c.max = c.max===null?n:Math.max(c.max,n);
-    });
-
-    if(!totCol.has(keyC)) totCol.set(keyC, config.valores.map(()=>({soma:0, qtd:0, min:null, max:null})));
-    const tc = totCol.get(keyC);
-    config.valores.forEach((v,vi)=>{
-      const n = toNum(r[v.campo]);
-      if(isNaN(n)) return;
-      const c = tc[vi];
-      c.soma += n; c.qtd += 1;
-      c.min = c.min===null?n:Math.min(c.min,n);
-      c.max = c.max===null?n:Math.max(c.max,n);
-      totGeral[vi] += (v.agg==='count'?1:n);
-    });
-  });
-
-  const gruposCols = [...colSet.entries()].map(([k,parts])=>({key:k, parts}));
-  // ordena colunas
-  gruposCols.sort((a,b)=>{
-    for(let i=0;i<a.parts.length;i++){
-      const cmp = a.parts[i].localeCompare(b.parts[i],'pt-BR',{numeric:true});
-      if(cmp) return cmp;
-    }
-    return 0;
-  });
-
-  return {linhas, colunas:gruposCols, matriz, totCol, totGeral, gruposCols};
-}
-
-function calcularAgg(cell, tipo){
-  if(!cell) return null;
-  if(tipo==='sum')   return cell.soma;
-  if(tipo==='count') return cell.qtd;
-  if(tipo==='avg')   return cell.qtd?cell.soma/cell.qtd:0;
-  if(tipo==='min')   return cell.min;
-  if(tipo==='max')   return cell.max;
-  return cell.soma;
-}
-
-// ---------- ATUALIZAR TABELA ----------
-function atualizar(){
-  const wrap = document.getElementById('pivotWrap');
-  if(!dados.length){ return; }
-  if(!config.linhas.length || !config.valores.length){
-    wrap.innerHTML = `<div class="empty"><span class="icon">🧩</span>Arraste pelo menos um campo para <strong>Linhas</strong> e um para <strong>Valores</strong>.</div>`;
+    document.getElementById('pivotWrap').innerHTML =
+      `<div class="empty"><span class="icon">🧩</span>Arraste pelo menos um campo para <strong>Linhas</strong> e um para <strong>Valores</strong>.</div>`;
     document.getElementById('resumoInfo').textContent = 'Aguardando configuração…';
+    document.getElementById('btnExport').disabled = true;
+    ultimoResultado = null;
+    return;
+  }
+
+  const loader = document.getElementById('loading');
+  loader.querySelector('span').textContent = 'Consultando o banco...';
+  loader.classList.add('show');
+
+  try{
+    const r = await fetch(API_BASE + '/api/tabela/pivot', {
+      method: 'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(config)
+    });
+    const data = await r.json();
+    if(data.erro){ alert('Erro: ' + data.erro); loader.classList.remove('show'); return; }
+
+    ultimoResultado = data;
+    renderPivot(data);
+  }catch(e){
+    alert('Erro na consulta: ' + e.message);
+  }finally{
+    loader.classList.remove('show');
+  }
+}
+
+function renderPivot(data){
+  const wrap = document.getElementById('pivotWrap');
+  const {grupos, partes, colunas, matriz, totCol, totGeral, nValores} = data;
+
+  if(!grupos.length){
+    wrap.innerHTML = `<div class="empty"><span class="icon">📭</span>Nenhum resultado para essa combinação.</div>`;
+    document.getElementById('resumoInfo').textContent = 'Sem dados';
     document.getElementById('btnExport').disabled = true;
     return;
   }
 
-  const {linhas, colunas, matriz, totCol, totGeral} = montarPivot();
-
-  // agrupa linhas únicas
-  const chavesL = new Set();
-  linhas.forEach(r=>chavesL.add(config.linhas.map(c=>String(r[c]||'')).join(' ‖ ')));
-
-  const linhasArr = [...chavesL].map(k=>({key:k, parts:k.split(' ‖ ')}));
-  linhasArr.sort((a,b)=>{
-    for(let i=0;i<a.parts.length;i++){
-      const cmp = a.parts[i].localeCompare(b.parts[i],'pt-BR',{numeric:true});
-      if(cmp) return cmp;
-    }
-    return 0;
-  });
-
-  // HTML
   let html = '<table class="pivot-table"><thead><tr>';
   config.linhas.forEach(l=>{ html += `<th class="pivot-th-fix">${esc(l)}</th>`; });
 
   colunas.forEach(c=>{
-    const label = config.colunas.length ? c.parts.join(' · ') : 'Total';
-    const nVal = config.valores.length;
-    if(nVal===1){
-      html += `<th class="pivot-th-col" colspan="1">${esc(label)}</th>`;
-    } else {
-      config.valores.forEach(v=>{
-        html += `<th class="pivot-th-col" style="font-size:9px">${esc(label)} · ${esc(v.campo)}</th>`;
-      });
-    }
+    const label = c === '__total__' ? 'Total' : c;
+    config.valores.forEach(v=>{
+      const sufixo = nValores>1 ? ` · ${v.campo}` : '';
+      html += `<th class="pivot-th-col">${esc(label)}${esc(sufixo)}</th>`;
+    });
   });
-  // coluna total
   config.valores.forEach(v=>{
     html += `<th class="pivot-th-total">Total ${esc(v.campo)}</th>`;
   });
   html += '</tr></thead><tbody>';
 
-  linhasArr.forEach((lr, idx)=>{
+  grupos.forEach((chave, i)=>{
+    const partesL = partes[i];
     html += '<tr>';
-    config.linhas.forEach((_,i)=>{
-      html += `<td class="pivot-nome">${esc(lr.parts[i])||'—'}</td>`;
+    config.linhas.forEach((_,idx)=>{
+      html += `<td class="pivot-nome">${esc(partesL[idx] || '—')}</td>`;
     });
 
     colunas.forEach(c=>{
-      const cellMap = matriz.get(lr.key);
-      const cellArr = cellMap ? cellMap.get(c.key) : null;
-      config.valores.forEach((v,vi)=>{
-        const c = cellArr ? cellArr[vi] : null;
-        const val = calcularAgg(c, v.agg);
-        let txt = '—';
-        if(val!==null && val!==undefined){
-          if(v.agg==='avg') txt = num(val);
-          else if(v.agg==='count') txt = num(val);
-          else {
-            const temRS = v.campo.toLowerCase().includes('valor')||v.campo.toLowerCase().includes('preço')||v.campo.toLowerCase().includes('preco');
-            txt = temRS ? brl(val) : num(val);
-          }
-        }
+      const cell = matriz[chave]?.[c];
+      config.valores.forEach((v, vi)=>{
+        const val = cell ? cell[vi] : 0;
+        const txt = formatarValor(val, v);
         html += `<td class="pivot-val${val?' pivot-val-pos':''}">${txt}</td>`;
       });
     });
 
-    config.valores.forEach((v,vi)=>{
-      // total da linha
-      let soma=0, qtd=0, min=null, max=null;
+    config.valores.forEach((v, vi)=>{
+      let soma = 0;
       colunas.forEach(c=>{
-        const cellMap = matriz.get(lr.key);
-        const cellArr = cellMap ? cellMap.get(c.key) : null;
-        if(!cellArr) return;
-        const cell = cellArr[vi];
-        if(!cell) return;
-        soma+=cell.soma; qtd+=cell.qtd;
-        min = min===null?cell.min:Math.min(min,cell.min);
-        max = max===null?cell.max:Math.max(max,cell.max);
+        const cell = matriz[chave]?.[c];
+        if(cell) soma += cell[vi] || 0;
       });
-      const val = calcularAgg({soma,qtd,min,max}, v.agg);
-      const temRS = v.campo.toLowerCase().includes('valor')||v.campo.toLowerCase().includes('preço')||v.campo.toLowerCase().includes('preco');
-      const txt = val===null?'—':(v.agg==='avg'||v.agg==='count'?num(val):(temRS?brl(val):num(val)));
-      html += `<td class="pivot-total">${txt}</td>`;
+      html += `<td class="pivot-total">${formatarValor(soma, v)}</td>`;
     });
     html += '</tr>';
   });
 
-  // linha total
   html += '<tr class="pivot-row-total">';
   html += `<td colspan="${config.linhas.length}">TOTAL</td>`;
   colunas.forEach(c=>{
-    const cells = totCol.get(c.key);
-    config.valores.forEach((v,vi)=>{
-      const cell = cells ? cells[vi] : null;
-      const val = calcularAgg(cell, v.agg);
-      const temRS = v.campo.toLowerCase().includes('valor')||v.campo.toLowerCase().includes('preço')||v.campo.toLowerCase().includes('preco');
-      const txt = val===null?'—':(v.agg==='avg'||v.agg==='count'?num(val):(temRS?brl(val):num(val)));
-      html += `<td>${txt}</td>`;
+    const cells = totCol[c] || [];
+    config.valores.forEach((v, vi)=>{
+      const val = cells[vi] || 0;
+      html += `<td>${formatarValor(val, v)}</td>`;
     });
   });
-  config.valores.forEach((v,vi)=>{
-    const val = totGeral[vi];
-    const temRS = v.campo.toLowerCase().includes('valor')||v.campo.toLowerCase().includes('preço')||v.campo.toLowerCase().includes('preco');
-    const txt = v.agg==='avg'||v.agg==='count'?num(val):(temRS?brl(val):num(val));
-    html += `<td>${txt}</td>`;
+  config.valores.forEach((v, vi)=>{
+    const val = totGeral[vi] || 0;
+    html += `<td>${formatarValor(val, v)}</td>`;
   });
   html += '</tr></tbody></table>';
 
   wrap.innerHTML = html;
   document.getElementById('resumoInfo').textContent =
-    `${linhas.length} linhas · ${linhasArr.length} grupos · ${colunas.length} colunas`;
+    `${grupos.length} grupos · ${colunas.length} colunas · ${nValores} métrica(s)`;
   document.getElementById('btnExport').disabled = false;
 }
 
-// ---------- EXPORTAR ----------
-function exportarXLSX(){
-  if(!config.linhas.length || !config.valores.length){ alert('Configure a tabela primeiro.'); return; }
+function formatarValor(val, valorConfig){
+  const v = parseFloat(val) || 0;
+  if(v === 0) return '—';
+  const campo = (valorConfig.campo || '').toLowerCase();
+  const isMoeda = campo.includes('valor') || campo.includes('preço') || campo.includes('preco');
+  const isMedia = valorConfig.agg === 'avg';
+  const isCount = valorConfig.agg === 'count';
+  if(isCount) return num(v);
+  if(isMedia) return num(v);
+  if(isMoeda) return brl(v);
+  return num(v);
+}
 
-  const {linhas, colunas, matriz, totCol, totGeral} = montarPivot();
-  const chavesL = new Set();
-  linhas.forEach(r=>chavesL.add(config.linhas.map(c=>String(r[c]||'')).join(' ‖ ')));
-  const linhasArr = [...chavesL].map(k=>({key:k, parts:k.split(' ‖ ')})).sort((a,b)=>{
-    for(let i=0;i<a.parts.length;i++){
-      const cmp = a.parts[i].localeCompare(b.parts[i],'pt-BR',{numeric:true});
-      if(cmp) return cmp;
-    }
-    return 0;
-  });
+function limparConfig(){
+  config.linhas  = [];
+  config.colunas = [];
+  config.valores = [];
+  config.filtros = [];
+  renderAreas(); renderFiltros(); atualizar();
+}
+
+function exportarXLSX(){
+  if(!ultimoResultado){ alert('Nada para exportar.'); return; }
+  const {grupos, partes, colunas, matriz, totCol, totGeral, nValores} = ultimoResultado;
 
   const header = [...config.linhas];
   colunas.forEach(c=>{
-    const label = config.colunas.length ? c.parts.join(' · ') : 'Total';
+    const label = c === '__total__' ? 'Total' : c;
     config.valores.forEach(v=>{
-      const sufixo = config.valores.length>1 ? ` · ${v.campo}` : '';
+      const sufixo = nValores>1 ? ` · ${v.campo}` : '';
       header.push(label + sufixo);
     });
   });
   config.valores.forEach(v=> header.push('Total '+v.campo));
 
   const rows = [header];
-  linhasArr.forEach(lr=>{
-    const row = [...lr.parts];
+  grupos.forEach((chave, i)=>{
+    const row = [...partes[i]];
     colunas.forEach(c=>{
-      const cellMap = matriz.get(lr.key);
-      const cellArr = cellMap ? cellMap.get(c.key) : null;
-      config.valores.forEach((v,vi)=>{
-        const cell = cellArr ? cellArr[vi] : null;
-        const val = calcularAgg(cell, v.agg);
-        row.push(val===null?'':val);
+      const cell = matriz[chave]?.[c];
+      config.valores.forEach((v, vi)=>{
+        row.push(cell ? (cell[vi] || 0) : 0);
       });
     });
-    config.valores.forEach((v,vi)=>{
-      let soma=0, qtd=0, min=null, max=null;
+    config.valores.forEach((v, vi)=>{
+      let soma = 0;
       colunas.forEach(c=>{
-        const cellMap = matriz.get(lr.key);
-        const cellArr = cellMap ? cellMap.get(c.key) : null;
-        if(!cellArr) return;
-        const cell = cellArr[vi]; if(!cell) return;
-        soma+=cell.soma; qtd+=cell.qtd;
-        min = min===null?cell.min:Math.min(min,cell.min);
-        max = max===null?cell.max:Math.max(max,cell.max);
+        const cell = matriz[chave]?.[c];
+        if(cell) soma += cell[vi] || 0;
       });
-      row.push(calcularAgg({soma,qtd,min,max}, v.agg));
+      row.push(soma);
     });
     rows.push(row);
   });
 
-  // total
-  const tr = config.linhas.map(()=>'');
-  tr[0]='TOTAL';
+  const tr = config.linhas.map(()=>''); tr[0] = 'TOTAL';
   colunas.forEach(c=>{
-    const cells = totCol.get(c.key);
-    config.valores.forEach((v,vi)=>{
-      const cell = cells ? cells[vi] : null;
-      tr.push(calcularAgg(cell, v.agg));
-    });
+    const cells = totCol[c] || [];
+    config.valores.forEach((v, vi)=> tr.push(cells[vi] || 0));
   });
-  config.valores.forEach((v,vi)=> tr.push(totGeral[vi]));
+  config.valores.forEach((v, vi)=> tr.push(totGeral[vi] || 0));
   rows.push(tr);
 
-  const ws = XLSX.utils.aoa_to_sheet(rows);
-  ws['!cols'] = header.map(h=>({wch: Math.max(14, String(h).length+2)}));
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Pivot');
-  XLSX.writeFile(wb, 'Atomo-Pivot-'+new Date().toISOString().slice(0,10)+'.xlsx');
+  const csv = rows.map(r=>r.map(c=>{
+    const s = String(c == null ? '' : c);
+    return s.includes(';') || s.includes('"') ? '"'+s.replace(/"/g,'""')+'"' : s;
+  }).join(';')).join('\n');
+
+  const blob = new Blob(['\ufeff'+csv], {type:'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'atomo-pivot-'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
-// ---------- LIMPEZA ----------
-function limparConfig(){
-  config = {linhas:[],colunas:[],valores:[],filtros:[]};
-  renderAreas(); renderFiltros(); atualizar();
-}
-function limparTudo(){
-  uploadAtual = null; dados=[]; campos=[]; camposNumericos=[];
-  config = {linhas:[],colunas:[],valores:[],filtros:[]};
-  document.getElementById('builderArea').style.display='none';
-  carregarUploads();
-}
-
-// ---------- INIT ----------
-window.onload = async ()=>{
-  await carregarUploads();
-};
+window.onload = carregarInfo;
 </script>
 </body>
 </html>
