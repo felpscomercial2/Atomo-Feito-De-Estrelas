@@ -32,8 +32,7 @@ def _devolver_conexoes(exc):
 @app.after_request
 def _cache_headers(resp):
     try:
-        _sem_cache = ('/api/shelflife/semanas', '/api/shelflife/listar',
-                      '/api/tabela/info', '/api/tabela/valores-distintos')
+        _sem_cache = ('/api/shelflife/semanas', '/api/shelflife/listar')
         if request.method == 'GET' and request.path in _sem_cache:
             resp.headers['Cache-Control'] = 'no-store, max-age=0'
         elif request.method == 'GET' and request.path.startswith('/api/') and resp.status_code == 200:
@@ -53,9 +52,11 @@ def _cache_headers(resp):
 
 # ============================================================
 # CACHE SIMPLES EM MEMÓRIA
+# Guarda resultados por 5 minutos para não bater no banco
+# toda vez que alguém acessa a página
 # ============================================================
 _cache = {}
-CACHE_TTL = 28800  # 8 horas
+CACHE_TTL = 28800  # 8 horas em segundos
 
 def cache_get(key):
     if key in _cache:
@@ -71,11 +72,12 @@ def cache_clear():
     _cache.clear()
 
 # ============================================================
-# CONEXÃO COM SUPABASE / RAILWAY
+# CONEXÃO COM SUPABASE
 # ============================================================
 _POOL = None
 
 def _init_pool():
+    """Cria o pool UMA vez por processo. Evita abrir TCP+TLS+auth a cada query."""
     global _POOL
     if _POOL is None:
         _POOL = psycopg2.pool.ThreadedConnectionPool(
@@ -96,6 +98,11 @@ def _init_pool():
 
 
 class _PooledConn:
+    """Envolve a conexao do pool. .close() devolve ao pool em vez de fechar.
+
+    Assim TODO o codigo antigo (conn = get_conn() ... conn.close()) continua
+    funcionando, mas sem pagar handshake em cada request.
+    """
     def __init__(self, conn):
         self._conn = conn
         self._returned = False
@@ -111,6 +118,7 @@ class _PooledConn:
             if self._conn.closed:
                 _init_pool().putconn(self._conn, close=True)
                 return
+            # descarta transacao pendente antes de devolver
             if self._conn.get_transaction_status() != psycopg2.extensions.TRANSACTION_STATUS_IDLE:
                 self._conn.rollback()
             _init_pool().putconn(self._conn)
@@ -128,11 +136,13 @@ class _PooledConn:
 
 
 def get_conn():
+    """Pega uma conexao do pool (com ate 3 tentativas)."""
     last_err = None
     for attempt in range(3):
         try:
             pool = _init_pool()
             conn = pool.getconn()
+            # valida: conexoes idle podem ter sido derrubadas pelo servidor
             try:
                 cur = conn.cursor()
                 cur.execute('SELECT 1')
@@ -144,6 +154,8 @@ def get_conn():
                     pass
                 conn = pool.getconn()
             wrapped = _PooledConn(conn)
+            # registra para devolver ao pool no fim do request,
+            # mesmo se a rota estourar erro antes do conn.close()
             try:
                 if has_request_context():
                     if not hasattr(g, '_conns'):
@@ -168,7 +180,7 @@ def _serializar_row(row):
             try:
                 out[k] = v.isoformat()
             except Exception:
-                out[k] = None
+                out[k] = None  # data inválida no banco (ex: ano 20256) → ignora
         else:
             out[k] = v
     return out
@@ -181,6 +193,7 @@ def consultar(sql, params=()):
         try:
             rows = [_serializar_row(dict(r)) for r in cursor.fetchall()]
         except Exception:
+            # fallback linha a linha (datas invalidas no banco)
             cursor.execute(sql, params)
             rows = []
             while True:
@@ -240,6 +253,15 @@ def montar_filtros(args):
 
     vendedores = args.getlist('vendedor')
     if vendedores:
+        # -------------------------------------------------------------
+        # CORRECAO: filtrar pelo CODIGO do vendedor, nao pelo nome.
+        # O mesmo vendedor pode aparecer com variacoes de nome
+        # (espacos extras, maiuscula/minuscula, nome diferente por
+        # unidade). Filtrar so pelo nome exato descartava notas e o
+        # total ficava menor que a planilha.
+        # Aqui pegamos todos os cod_vendedor ligados aos nomes
+        # selecionados e trazemos TODAS as notas desses codigos.
+        # -------------------------------------------------------------
         placeholders = ','.join(['%s'] * len(vendedores))
         nomes_norm   = [' '.join(str(v).strip().upper().split()) for v in vendedores]
         ph_norm      = ','.join(['%s'] * len(nomes_norm))
@@ -257,9 +279,9 @@ def montar_filtros(args):
             "     ))"
             ")"
         )
-        params.extend(nomes_norm)
-        params.extend(nomes_norm)
-        params.extend(nomes_norm)
+        params.extend(nomes_norm)   # comparacao direta pelo nome normalizado
+        params.extend(nomes_norm)   # subquery faturamento
+        params.extend(nomes_norm)   # subquery vendedores
 
     where = ("WHERE " + " AND ".join(condicoes)) if condicoes else ""
     return where, params
@@ -268,7 +290,7 @@ def cache_key(rota, args):
     return rota + '?' + '&'.join(f'{k}={v}' for k, v in sorted(args.items()))
 
 # ============================================================
-# CACHE WARMUP
+# ROTAS
 # ============================================================
 def _aquecer_cache():
     import threading
@@ -299,6 +321,7 @@ def _aquecer_cache():
             print(f"Erro cache warmup: {e}")
     threading.Thread(target=_warm, daemon=True).start()
 
+# Aquece cache ao iniciar o servidor
 _aquecer_cache()
 
 @app.route('/')
@@ -311,6 +334,7 @@ def filtros():
     cached = cache_get(key)
     if cached: return jsonify(cached)
 
+    # Uma conexão, queries executadas sequencialmente
     conn   = get_conn()
     cursor = conn.cursor()
 
@@ -334,6 +358,7 @@ def filtros():
 
 @app.route('/api/dashboard')
 def dashboard():
+    """Retorna KPIs + mensal + unidade + vendedores + marcas em UMA chamada."""
     key    = cache_key('dashboard', dict(request.args))
     cached = cache_get(key)
     if cached: return jsonify(cached)
@@ -592,6 +617,11 @@ def carteira_vendedor():
 
 @app.route('/api/resumo-carteira')
 def resumo_carteira():
+    """
+    Retorna total de clientes em carteira e margem média.
+    Se filtrar por vendedor (nome), busca o cod_vendedor correspondente
+    e retorna a carteira daquele vendedor.
+    """
     key    = cache_key('resumo-carteira', dict(request.args))
     cached = cache_get(key)
     if cached: return jsonify(cached)
@@ -608,6 +638,7 @@ def resumo_carteira():
     """, params)
     margem_media = margem[0]['margem_media'] if margem else 0
 
+    # Conta CNPJs distintos (mesmo CNPJ via Esdel e Indústria = 1 cliente único)
     if vendedor:
         cods = consultar("""
             SELECT DISTINCT cod_vendedor FROM faturamento
@@ -636,8 +667,8 @@ def resumo_carteira():
     total_codigos  = carteira[0]['total_codigos'] if carteira else 0
     total_cnpjs    = carteira[0]['total_cnpjs']   if carteira else 0
     resultado = {
-        'total_carteira': total_cnpjs,
-        'total_codigos':  total_codigos,
+        'total_carteira': total_cnpjs,    # CNPJs únicos — usado no KPI principal
+        'total_codigos':  total_codigos,  # todos os códigos (incluindo duplicatas por unidade)
         'margem_media':   float(margem_media) if margem_media else 0,
     }
     cache_set(key, resultado)
@@ -705,10 +736,12 @@ def buscar_produtos():
     if not termo or len(termo) < 2:
         return jsonify([])
 
+    # Cache por termo para evitar queries repetidas
     cache_k = f'busca_prod_{termo.lower()}'
     cached  = cache_get(cache_k)
     if cached: return jsonify(cached)
 
+    # Busca por prefixo primeiro (mais rápido), depois por substring
     resultado = consultar("""
         SELECT produto, cod_produto, marca FROM (
             SELECT DISTINCT produto, cod_produto, marca
@@ -785,14 +818,20 @@ def vendedores_por_produto():
     return jsonify(res)
 
 # ============================================================
-# SHELF LIFE — MIGRAÇÃO
+# SHELF LIFE — MIGRAÇÃO (rode uma vez após deploy)
 # ============================================================
 @app.route('/api/shelflife/migrar', methods=['GET', 'POST'])
 def shelflife_migrar():
+    """
+    Cria a constraint UNIQUE necessária para o UPSERT funcionar.
+    Chame este endpoint UMA VEZ após o deploy via:
+      curl -X POST https://horus-bmcj.onrender.com/api/shelflife/migrar
+    """
     conn   = get_conn()
     cursor = conn.cursor()
     resultados = []
 
+    # 1. Remove duplicatas antes de criar a constraint (mantém o de maior id)
     cursor.execute("""
         DELETE FROM shelflife a
         USING shelflife b
@@ -805,6 +844,7 @@ def shelflife_migrar():
     removidos = cursor.rowcount
     resultados.append(f'Duplicatas removidas: {removidos}')
 
+    # 2. Cria a constraint se não existir
     cursor.execute("""
         SELECT COUNT(*) FROM pg_constraint
         WHERE conname = 'shelflife_semana_unidade_cod_produto_validade_key'
@@ -827,6 +867,8 @@ def shelflife_migrar():
 # ============================================================
 # SHELF LIFE — CONTROLE DE ACESSO
 # ============================================================
+# Lista de e-mails autorizados a acessar o Shelf Life
+# Para adicionar ou remover alguém, edite esta lista
 EMAILS_AUTORIZADOS_SL = [
     'comercial2@reforpan.com.br',
     'comercial3@esdel.com.br',
@@ -878,9 +920,13 @@ def shelflife_upload():
         else:            status = 'OK'
 
         nome  = str(p.get('produto', ''))
+        # SL somente quando cod_sl for um codigo numerico real (ignora '-', '', None)
         cod_sl_raw = str(p.get('cod_sl') or '').strip()
         is_sl = bool(cod_sl_raw and cod_sl_raw not in ('-', u'—', 'nan', 'none', 'null', '0'))
 
+        # UPSERT: insere se não existe, atualiza dados logísticos se já existe.
+        # Campos editoriais (acao, obs, vendedor, qtd_atual, vendas, data_inc)
+        # são preservados via COALESCE — só atualizam se ainda estiverem NULL no banco.
         cursor.execute("""
             INSERT INTO shelflife (
                 semana, unidade, cod_produto, cod_sl, produto, marca,
@@ -889,6 +935,7 @@ def shelflife_upload():
             ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
             ON CONFLICT (semana, unidade, cod_produto, validade)
             DO UPDATE SET
+                -- Dados logísticos: sempre atualiza com o novo arquivo
                 cod_sl           = EXCLUDED.cod_sl,
                 produto          = EXCLUDED.produto,
                 marca            = EXCLUDED.marca,
@@ -899,6 +946,7 @@ def shelflife_upload():
                 status           = EXCLUDED.status,
                 is_sl            = EXCLUDED.is_sl,
                 updated_at       = NOW(),
+                -- Campos editoriais: preserva o que já foi preenchido
                 quantidade_atual    = COALESCE(shelflife.quantidade_atual,    EXCLUDED.quantidade_atual),
                 venda_3meses        = COALESCE(shelflife.venda_3meses,        EXCLUDED.venda_3meses),
                 venda_mes           = COALESCE(shelflife.venda_mes,           EXCLUDED.venda_mes),
@@ -918,6 +966,7 @@ def shelflife_upload():
             status, is_sl, None
         ])
 
+        # xmax = 0 significa INSERT, > 0 significa UPDATE
         cursor.execute("SELECT xmax FROM shelflife WHERE semana=%s AND unidade=%s AND cod_produto=%s AND validade=%s",
                        [semana, unidade, p.get('cod_produto'), val_fmt])
         row = cursor.fetchone()
@@ -937,6 +986,10 @@ def shelflife_upload():
 
 @app.route('/api/shelflife/manual', methods=['POST'])
 def shelflife_manual():
+    """
+    Insere (ou atualiza, via UPSERT) um produto cadastrado manualmente
+    pelo usuário na tela de Shelf Life.
+    """
     data = request.get_json(force=True) or {}
 
     semana      = data.get('semana')
@@ -1064,6 +1117,7 @@ def shelflife_listar():
 
 @app.route('/api/shelflife/migrar-valor-sl', methods=['POST'])
 def shelflife_migrar_valor_sl():
+    """Adiciona coluna valor_sl na tabela shelflife se não existir."""
     try:
         conn   = get_conn()
         cursor = conn.cursor()
@@ -1079,6 +1133,7 @@ def shelflife_migrar_valor_sl():
 
 @app.route('/api/shelflife/corrigir-is-sl', methods=['POST'])
 def shelflife_corrigir_is_sl():
+    """Corrige is_sl: True somente quando cod_sl for um codigo real (nao vazio, nao traco)."""
     try:
         conn   = get_conn()
         cursor = conn.cursor()
@@ -1103,6 +1158,7 @@ def shelflife_corrigir_is_sl():
 
 @app.route('/api/vendedores/sincronizar', methods=['POST'])
 def vendedores_sincronizar():
+    """Recebe lista [{cod_vendedor, nome}] e faz upsert na tabela vendedores."""
     try:
         data = request.get_json(force=True)
         lista = data.get('vendedores', [])
@@ -1150,6 +1206,10 @@ def shelflife_atualizar():
     """, [id_prod])
     row = cursor.fetchone()
 
+    # data_inconsistencia:
+    #   None        → preserva o valor atual do banco (campo não foi tocado)
+    #   '' (vazio)  → apaga intencionalmente (SET NULL)
+    #   'yyyy-mm-dd'→ atualiza para a nova data
     _data_inc_raw = data.get('data_inconsistencia')
     if _data_inc_raw is None:
         _data_inc_sql    = 'data_inconsistencia'
@@ -1158,19 +1218,20 @@ def shelflife_atualizar():
         _data_inc_sql    = 'NULL'
         _data_inc_params = []
     else:
+        # Valida a data antes de salvar — rejeita anos fora do intervalo 2000-2099
         try:
             import datetime as _dti
             _d = _dti.date.fromisoformat(str(_data_inc_raw)[:10])
             if not (2000 <= _d.year <= 2099):
                 raise ValueError(f'Ano inválido: {_d.year}')
-            _data_inc_raw = _d.isoformat()
+            _data_inc_raw = _d.isoformat()  # normaliza para yyyy-mm-dd
         except Exception:
-            _data_inc_raw = None
+            _data_inc_raw = None  # data inválida → não salva
         if _data_inc_raw:
             _data_inc_sql    = '%s::date'
             _data_inc_params = [_data_inc_raw]
         else:
-            _data_inc_sql    = 'data_inconsistencia'
+            _data_inc_sql    = 'data_inconsistencia'  # mantém o que tem
             _data_inc_params = []
 
     cursor.execute(f"""
@@ -1268,7 +1329,7 @@ def shelflife_excluir():
     return jsonify({'excluidos': deleted})
 
 # ============================================================
-# SHELF LIFE — EXPORTAR EXCEL
+# SHELF LIFE — EXPORTAR EXCEL FORMATADO
 # ============================================================
 @app.route('/api/shelflife/exportar', methods=['POST'])
 def shelflife_exportar():
@@ -1306,18 +1367,21 @@ def shelflife_exportar():
     for i, w in enumerate(col_widths, 1):
         ws.column_dimensions[get_column_letter(i)].width = w
 
-    NUM_COLS    = {7, 8, 9, 11, 12, 13}
+    NUM_COLS    = {7, 8, 9, 11, 12, 13}  # Qtde Log, Qtde Ant, Qtde Atual, Dias, V3M, VMes
     CENTER_COLS = {1, 2, 3, 6, 10, 11, 14, 15, 18}
-    COLS_INT    = {7, 8, 10, 11, 12}
+
+    # Colunas que devem ser numéricas (1-based): Qtde Log, Qtde Atual, Dias, V3M, VMes
+    COLS_INT   = {7, 8, 10, 11, 12}  # mesmas de NUM_COLS
 
     def to_num(v):
+        """Converte string para int ou float; retorna None se vazio/inválido."""
         if v is None or str(v).strip() == '':
             return None
         try:
             f = float(str(v).replace(',', '.'))
             return int(f) if f == int(f) else f
         except (ValueError, TypeError):
-            return v
+            return v   # mantém original se não for número
 
     for r_idx, row in enumerate(linhas, 1):
         ws.row_dimensions[r_idx].height = 22 if r_idx == 1 else 18
@@ -1325,6 +1389,7 @@ def shelflife_exportar():
         row_bg = ROW_ODD if r_idx % 2 == 0 else ROW_EVEN
 
         for c_idx, value in enumerate(row, 1):
+            # Converte colunas numéricas para número real (evita bandeira verde do Excel)
             if not is_hdr and c_idx in COLS_INT:
                 value = to_num(value)
             cell = ws.cell(row=r_idx, column=c_idx, value=value)
@@ -1371,6 +1436,19 @@ def shelflife_exportar():
         download_name='Atomo-ShelfLife.xlsx'
     )
 
+
+# ============================================================
+# PIVOT CLIENTES — VERSÃO CORRIGIDA
+# ============================================================
+# Correções aplicadas:
+# 1) Filtra faturamento DIRETO por cod_vendedor (não por nome)
+# 2) Agrega faturamento por cliente × mês ANTES de juntar com carteira
+#    → evita duplicação de linhas por match de CNPJ / cod_cliente em
+#      várias carteiras
+# 3) LEFT JOIN com carteira APENAS para enriquecer (endereço/CNPJ)
+# 4) UNION ALL com clientes da carteira SEM compra no período
+#    (respeitando o mesmo filtro de vendedor)
+# ============================================================
 @app.route('/api/pivot-clientes')
 def pivot_clientes_novo():
     try:
@@ -1380,6 +1458,7 @@ def pivot_clientes_novo():
         anos       = request.args.getlist('ano')
         unidades   = request.args.getlist('unidade')
 
+        # ---------- filtro de período ----------
         periodo_conds  = []
         periodo_params = []
         if periodos:
@@ -1388,7 +1467,7 @@ def pivot_clientes_novo():
                     ano_p, mes_p = per.split('-')
                     periodo_conds.append('(f.ano = %s AND f.mes = %s)')
                     periodo_params += [int(ano_p), int(mes_p)]
-                except:
+                except Exception:
                     pass
         elif anos:
             for a in anos:
@@ -1402,39 +1481,19 @@ def pivot_clientes_novo():
 
         periodo_filter = ('AND (' + ' OR '.join(periodo_conds) + ')') if periodo_conds else ''
 
-        def _col(tabela, candidatos):
-            try:
-                rows = consultar(
-                    "SELECT column_name FROM information_schema.columns WHERE table_name = %s",
-                    [tabela]
-                )
-            except Exception:
-                return None
-            existentes = {str(r['column_name']).lower() for r in rows}
-            for c in candidatos:
-                if c in existentes:
-                    return c
-            return None
+        # ---------- filtro de unidade ----------
+        unid_filter = ''
+        unid_params = []
+        if unidades:
+            unid_filter = ' AND f.unidade = ANY(%s::TEXT[])'
+            unid_params = [list(unidades)]
 
-        CAND      = ['cnpj_cpf', 'cnpj', 'cpf_cnpj', 'cnpj_cliente', 'documento', 'doc']
-        c_cnpj    = _col('carteira', CAND)
-        f_cnpj    = _col('faturamento', CAND)
-        cart_unid = _col('carteira', ['unidade', 'base', 'filial', 'empresa'])
-
-        def nz(expr):
-            return ("LTRIM(REGEXP_REPLACE(COALESCE(" + expr + "::TEXT, ''), '[^0-9]', '', 'g'), '0')")
-
-        def un(expr):
-            return "UPPER(BTRIM(COALESCE(" + expr + "::TEXT, '')))"
-
+        # ---------- operacao normalizada ----------
         OP = ("UPPER(TRANSLATE(COALESCE(f.tipo_operacao, ''),"
               " 'ÁÀÂÃÄÉÈÊËÍÌÎÏÓÒÔÕÖÚÙÛÜÇáàâãäéèêëíìîïóòôõöúùûüç',"
               " 'AAAAAEEEEIIIIOOOOOUUUUCaaaaaeeeeiiiiooooouuuuc'))")
 
-        c_cnpj_sql = nz('c.' + c_cnpj) if c_cnpj else "''"
-        f_cnpj_sql = nz('f.' + f_cnpj) if f_cnpj else "''"
-        c_unid_sql = un('c.' + cart_unid) if cart_unid else "''"
-
+        # ---------- resolve cod_vendedor a partir dos nomes ----------
         cods = []
         if vendedores:
             vend_ph  = ','.join(['%s'] * len(vendedores))
@@ -1445,149 +1504,116 @@ def pivot_clientes_novo():
                 'AND cod_vendedor IS NOT NULL',
                 vendedores + vendedores
             )
-            cods = [str(r['cod_vendedor']) for r in cod_rows if r.get('cod_vendedor') is not None]
+            cods = [str(r['cod_vendedor']) for r in cod_rows
+                    if r.get('cod_vendedor') is not None]
 
-        unid_filter = ' AND f.unidade = ANY(%s::TEXT[])' if unidades else ''
-        unid_params = [list(unidades)] if unidades else []
+        if not cods:
+            return jsonify([])
 
-        base_cte = (
-            'WITH cart AS ('
-            '  SELECT c.cod_cliente, c.cliente, c.endereco, c.cidade, c.uf,'
-            '         c.cod_vendedor, ' + c_cnpj_sql + ' AS cnpj_n,'
-            '         ' + c_unid_sql + ' AS unid_n'
-            '  FROM carteira c'
-            '), cart_cod AS ('
-            '  SELECT DISTINCT ON (cod_cliente, unid_n) * FROM cart'
-            '  ORDER BY cod_cliente, unid_n, (cod_vendedor::TEXT = ANY(%s::TEXT[])) DESC, cnpj_n'
-            '), cart_doc AS ('
-            '  SELECT DISTINCT ON (cnpj_n) * FROM cart WHERE cnpj_n <> %s'
-            '  ORDER BY cnpj_n, (cod_vendedor::TEXT = ANY(%s::TEXT[])) DESC, cod_cliente'
-            '), fat AS ('
-            '  SELECT f.cod_cliente, f.cliente, f.cidade, f.uf, f.bairro, f.ano, f.mes,'
-            '         ' + OP + ' AS op, f.valor_nf, f.produto,'
-            '         f.cod_vendedor AS fat_cod_vendedor,'
-            '         ' + f_cnpj_sql + ' AS cnpj_n,'
-            '         ' + un('f.unidade') + ' AS unid_n'
-            '  FROM faturamento f'
-            '  WHERE f.mes > 0 AND ' + OP + " IN ('VENDA', 'DEVOLUCAO')"
-            '  ' + periodo_filter + unid_filter +
-            '), m0 AS ('
-            '  SELECT fat.*,'
-            '         cc.cod_vendedor AS cc_vend, cc.cliente AS cc_cliente,'
-            '         cc.cod_cliente  AS cc_cod,  cc.endereco AS cc_end, cc.cnpj_n AS cc_cnpj,'
-            '         cd.cod_vendedor AS cd_vend, cd.cliente AS cd_cliente,'
-            '         cd.cod_cliente  AS cd_cod,  cd.endereco AS cd_end'
-            '  FROM fat'
-            '  LEFT JOIN cart_cod cc ON cc.cod_cliente = fat.cod_cliente'
-            "   AND (cc.unid_n = '' OR fat.unid_n = '' OR cc.unid_n = fat.unid_n)"
-            '  LEFT JOIN cart_doc cd ON fat.cnpj_n <> %s AND cd.cnpj_n = fat.cnpj_n'
-            '), m AS ('
-            '  SELECT m0.*,'
-            '    CASE WHEN cc_cod IS NOT NULL THEN cc_vend    ELSE cd_vend    END AS cart_cod_vendedor,'
-            '    CASE WHEN cc_cod IS NOT NULL THEN cc_cliente ELSE cd_cliente END AS cart_cliente,'
-            '    CASE WHEN cc_cod IS NOT NULL THEN cc_cod     ELSE cd_cod     END AS cart_cod_cliente,'
-            '    CASE WHEN cc_cod IS NOT NULL THEN cc_end     ELSE cd_end     END AS cart_endereco'
-            '  FROM m0'
-            ')'
-        )
-        base_params = [cods, '', cods] + periodo_params + unid_params + ['']
+        # ---------- filtro de vendedor (sempre por cod_vendedor) ----------
+        vend_filter = ' AND f.cod_vendedor::TEXT = ANY(%s::TEXT[])'
+        vend_params = [cods]
 
-        vend_filter = ''
-        vend_params = []
-        if cods:
-            vend_filter = (' AND (m.cart_cod_vendedor::TEXT = ANY(%s::TEXT[])'
-                           ' OR (m.cart_cod_vendedor IS NULL'
-                           ' AND m.fat_cod_vendedor::TEXT = ANY(%s::TEXT[])))')
-            vend_params = [cods, cods]
-        elif vendedores:
-            vend_filter = ' AND v.nome IN (' + ','.join(['%s'] * len(vendedores)) + ')'
-            vend_params = list(vendedores)
-
-        select_cols = (
-            ' SELECT COALESCE(m.cart_cliente, m.cliente) AS cliente,'
-            ' COALESCE(m.cart_cod_cliente, m.cod_cliente) AS cod_cliente,'
-            ' m.cod_cliente AS cod_cliente_nota,'
-            ' COALESCE(v.nome, vf.nome) AS vendedor, m.ano, m.mes,'
-            ' MAX(m.cidade) AS cidade, MAX(m.uf) AS uf, MAX(m.bairro) AS bairro,'
-            ' MAX(COALESCE(m.cart_endereco, NULL)) AS endereco,'
-            ' BOOL_AND(m.cart_cod_vendedor IS NULL) AS sem_carteira,'
-            " ROUND(SUM(CASE WHEN m.op = 'VENDA' THEN m.valor_nf ELSE 0 END)::NUMERIC,2) AS faturamento,"
-            " ROUND(SUM(CASE WHEN m.op = 'DEVOLUCAO' THEN ABS(m.valor_nf) ELSE 0 END)::NUMERIC,2) AS devolucoes"
-        )
-        joins = (' FROM m'
-                 ' LEFT JOIN vendedores v  ON v.cod_vendedor  = m.cart_cod_vendedor'
-                 ' LEFT JOIN vendedores vf ON vf.cod_vendedor = m.fat_cod_vendedor')
-        group_by = (' GROUP BY COALESCE(m.cart_cliente, m.cliente),'
-                    ' COALESCE(m.cart_cod_cliente, m.cod_cliente), m.cod_cliente,'
-                    ' COALESCE(v.nome, vf.nome), m.ano, m.mes')
-
-        conn   = get_conn()
-        cursor = conn.cursor()
-
+        # ---------- filtro de produto ----------
+        prod_filter = ''
+        prod_params = []
         if produtos:
             prod_ph = ','.join(['%s'] * len(produtos))
-            sql = (
-                base_cte + select_cols + joins +
-                ' WHERE m.produto IN (' + prod_ph + ')'
-                + vend_filter + group_by +
-                ' ORDER BY 1, m.ano, m.mes'
+            prod_filter = ' AND f.produto IN (' + prod_ph + ')'
+            prod_params = list(produtos)
+
+        # ============================================================
+        # QUERY 1: faturamento agregado por cliente × ano × mês
+        # ============================================================
+        sql_fat = f"""
+            WITH fat_agg AS (
+                SELECT
+                    f.cod_cliente::TEXT AS cod_cliente,
+                    f.cod_vendedor::TEXT AS cod_vendedor,
+                    f.ano, f.mes,
+                    MAX(f.cliente)  AS cliente,
+                    MAX(f.cidade)   AS cidade,
+                    MAX(f.uf)       AS uf,
+                    MAX(f.bairro)   AS bairro,
+                    ROUND(SUM(CASE WHEN {OP} = 'VENDA'
+                                   THEN f.valor_nf ELSE 0 END)::NUMERIC, 2) AS faturamento,
+                    ROUND(SUM(CASE WHEN {OP} = 'DEVOLUCAO'
+                                   THEN ABS(f.valor_nf) ELSE 0 END)::NUMERIC, 2) AS devolucoes
+                FROM faturamento f
+                WHERE f.mes > 0
+                  AND {OP} IN ('VENDA', 'DEVOLUCAO')
+                  {periodo_filter}
+                  {unid_filter}
+                  {vend_filter}
+                  {prod_filter}
+                GROUP BY f.cod_cliente, f.cod_vendedor, f.ano, f.mes
             )
-            cursor.execute(sql, base_params + list(produtos) + vend_params)
+            SELECT
+                fa.cod_cliente,
+                fa.cod_cliente     AS cod_cliente_nota,
+                fa.cliente,
+                fa.ano, fa.mes,
+                fa.cidade, fa.uf, fa.bairro,
+                NULL::TEXT         AS endereco,
+                COALESCE(v.nome, fa.cod_vendedor) AS vendedor,
+                FALSE              AS sem_carteira,
+                fa.faturamento,
+                fa.devolucoes
+            FROM fat_agg fa
+            LEFT JOIN vendedores v ON v.cod_vendedor::TEXT = fa.cod_vendedor
+        """
 
-        else:
-            cart_zero   = ''
-            zero_params = []
-            if cods or unidades:
-                where_zero = []
-                if cods:
-                    where_zero.append('c.cod_vendedor::TEXT = ANY(%s::TEXT[])')
-                    zero_params.append(cods)
-                if unidades:
-                    if cart_unid:
-                        where_zero.append('c.' + cart_unid + '::TEXT = ANY(%s::TEXT[])')
-                        zero_params.append(list(unidades))
-                    else:
-                        where_zero.append(
-                            ' EXISTS (SELECT 1 FROM faturamento fz'
-                            '   WHERE fz.cod_cliente = c.cod_cliente'
-                            '     AND fz.unidade = ANY(%s::TEXT[]))'
-                        )
-                        zero_params.append(list(unidades))
-                cart_zero = (
-                    ' UNION ALL'
-                    ' SELECT c.cliente, c.cod_cliente, c.cod_cliente AS cod_cliente_nota,'
-                    ' v.nome AS vendedor,'
-                    ' NULL::INT AS ano, NULL::INT AS mes,'
-                    ' c.cidade, c.uf, NULL::TEXT AS bairro, c.endereco, FALSE AS sem_carteira,'
-                    ' 0::NUMERIC AS faturamento, 0::NUMERIC AS devolucoes'
-                    ' FROM carteira c'
-                    ' LEFT JOIN vendedores v ON v.cod_vendedor = c.cod_vendedor'
-                    ' WHERE ' + ' AND '.join(where_zero) +
-                    ' AND NOT EXISTS (SELECT 1 FROM m WHERE m.cart_cod_cliente = c.cod_cliente)'
-                )
+        # ============================================================
+        # QUERY 2: clientes da carteira SEM compra no período
+        # ============================================================
+        sql_zero = f"""
+            SELECT
+                c.cod_cliente::TEXT AS cod_cliente,
+                c.cod_cliente::TEXT AS cod_cliente_nota,
+                c.cliente,
+                NULL::INT AS ano,
+                NULL::INT AS mes,
+                c.cidade, c.uf, c.bairro, c.endereco,
+                COALESCE(v.nome, c.cod_vendedor::TEXT) AS vendedor,
+                FALSE AS sem_carteira,
+                0::NUMERIC AS faturamento,
+                0::NUMERIC AS devolucoes
+            FROM carteira c
+            LEFT JOIN vendedores v ON v.cod_vendedor::TEXT = c.cod_vendedor::TEXT
+            WHERE c.cod_vendedor::TEXT = ANY(%s::TEXT[])
+              AND NOT EXISTS (
+                  SELECT 1 FROM faturamento f
+                  WHERE f.cod_cliente::TEXT = c.cod_cliente::TEXT
+                    AND f.cod_vendedor::TEXT = ANY(%s::TEXT[])
+                    AND f.mes > 0
+                    AND {OP} IN ('VENDA', 'DEVOLUCAO')
+                    {periodo_filter}
+                    {unid_filter}
+                    {prod_filter}
+              )
+        """
 
-            sql = (
-                base_cte +
-                ' SELECT * FROM (' + select_cols + joins +
-                ' WHERE TRUE' + vend_filter + group_by +
-                cart_zero +
-                ' ) t ORDER BY cliente, ano, mes'
-            )
-            cursor.execute(sql, base_params + vend_params + zero_params)
+        # ============================================================
+        # EXECUTA AS DUAS E CONCATENA
+        # ============================================================
+        resultado = consultar(
+            sql_fat + ' UNION ALL ' + sql_zero +
+            ' ORDER BY cliente, ano NULLS LAST, mes NULLS LAST',
+            periodo_params + unid_params + [cods] + prod_params   # fat
+            + periodo_params + unid_params + prod_params           # subquery NOT EXISTS
+            + [cods, cods]                                          # zero
+        )
 
-        rows      = cursor.fetchall()
-        cols      = [desc[0] for desc in cursor.description]
-        resultado = [_serializar_row(dict(zip(cols, row))) for row in rows]
-        cursor.close()
-        conn.close()
         return jsonify(resultado)
 
     except Exception as e:
         import traceback as tb
         return jsonify({'erro': str(e), 'trace': tb.format_exc()}), 500
 
+
 @app.route('/api/todos-clientes')
 def todos_clientes():
+    """Lista de clientes para busca local instantânea no frontend (igual /api/todos-produtos)."""
     key    = 'todos_clientes'
     cached = cache_get(key)
     if cached: return jsonify(cached)
@@ -1604,6 +1630,11 @@ def todos_clientes():
 
 @app.route('/api/pivot-cliente-produto')
 def pivot_cliente_produto():
+    """
+    Retorna o cruzamento Produto x Cliente x Período (ano/mês) com o valor comprado.
+    Usado na página de 'Produtos por Cliente': permite filtrar vários clientes e vários
+    períodos de uma vez, e ver quais produtos cada cliente comprou e quanto gastou.
+    """
     try:
         clientes_cod = request.args.getlist('cod_cliente')
         periodos     = request.args.getlist('periodo')
@@ -1616,6 +1647,7 @@ def pivot_cliente_produto():
         where_parts = ['f.cod_cliente IN (' + cli_ph + ')', 'f.mes > 0']
         params      = list(clientes_cod)
 
+        # Monta filtro de período (mesma lógica do /api/pivot-clientes)
         periodo_conds  = []
         periodo_params = []
         if periodos:
@@ -1624,7 +1656,7 @@ def pivot_cliente_produto():
                     ano_p, mes_p = per.split('-')
                     periodo_conds.append('(f.ano = %s AND f.mes = %s)')
                     periodo_params += [int(ano_p), int(mes_p)]
-                except:
+                except Exception:
                     pass
         elif anos:
             for a in anos:
@@ -1652,6 +1684,7 @@ def pivot_cliente_produto():
         import traceback as tb
         return jsonify({'erro': str(e), 'trace': tb.format_exc()}), 500
 
+
 def shelflife_historico():
     shelflife_id = request.args.get('shelflife_id')
     cod_produto  = request.args.get('cod_produto')
@@ -1669,13 +1702,16 @@ def shelflife_historico():
     """, params)
     return jsonify(resultado)
 
+# Limpa cache (útil após atualizar dados)
 @app.route('/api/cache/clear', methods=['GET', 'POST'])
 def limpar_cache():
     cache_clear()
     return jsonify({"status": "cache limpo!"})
 
+# Ping — mantém o servidor acordado
 @app.route('/ping')
 def ping():
+    # Aquece o cache em background se estiver frio
     if 'filtros' not in _cache:
         _aquecer_cache()
     return jsonify({"status": "pong", "uptime": "ok"})
@@ -1683,6 +1719,8 @@ def ping():
 
 # ============================================================
 #  VALTER — PESQUISA DE PRODUTO
+#  Busca informações do produto nos sites da Alimentare
+#  antes de recorrer à internet geral
 # ============================================================
 @app.route('/api/valter/pesquisar')
 def valter_pesquisar():
@@ -1713,6 +1751,7 @@ def valter_pesquisar():
         return {}
 
     if SERPER_KEY:
+        # 1. Busca nos sites da Alimentare primeiro
         query_sites = f'{produto} site:alimentareshop.com.br OR site:alimentare.com.br OR site:esdel.com.br OR site:reforpan.com.br'
         data = buscar_serper(query_sites)
         for item in data.get('organic', [])[:4]:
@@ -1724,6 +1763,7 @@ def valter_pesquisar():
                 'descricao': item.get('snippet',''),
             })
 
+        # 2. Se não achou, busca geral na internet
         if not resultados:
             data = buscar_serper(f'{produto} produto alimentício ingredientes calorias código barras')
             for item in data.get('organic', [])[:4]:
@@ -1734,6 +1774,7 @@ def valter_pesquisar():
                     'descricao': item.get('snippet',''),
                 })
 
+        # 3. Inclui knowledge graph se disponível
         kg = data.get('knowledgeGraph', {})
         if kg.get('description'):
             resultados.insert(0, {
@@ -1758,6 +1799,9 @@ def valter_pesquisar():
         'fontes_consultadas': SITES_ALIMENTARE + ['Internet'],
     })
 
+# ============================================================
+#  VALTER — CONTEXTO COMPLETO DO SISTEMA
+# ============================================================
 @app.route('/api/valter/contexto')
 def valter_contexto():
     try:
@@ -1851,6 +1895,9 @@ def valter_contexto():
         import traceback
         return jsonify({'erro': str(e), 'trace': traceback.format_exc()}), 500
 
+# ============================================================
+#  VALTER — ALERTAS PROATIVOS
+# ============================================================
 @app.route('/api/valter/alertas')
 def valter_alertas():
     try:
@@ -1872,6 +1919,9 @@ def valter_alertas():
     except Exception as e:
         return jsonify({'alertas': [], 'erro': str(e)})
 
+# ============================================================
+#  VALTER — PROXY CHAT
+# ============================================================
 @app.route('/api/valter/chat', methods=['POST'])
 def valter_chat():
     import requests as _req
@@ -1933,6 +1983,9 @@ def clientes_em_risco():
         import traceback
         return jsonify({'erro': str(e), 'trace': traceback.format_exc()}), 500
 
+# ============================================================
+#  COMPARAÇÃO DE PERÍODOS
+# ============================================================
 @app.route('/api/comparar-periodos')
 def comparar_periodos():
     try:
@@ -1975,6 +2028,9 @@ def comparar_periodos():
     except Exception as e:
         return jsonify({'erro': str(e)}), 500
 
+# ============================================================
+#  HISTÓRICO DE COMPRAS POR VENDEDOR / CLIENTE
+# ============================================================
 @app.route('/api/clientes/historico')
 def cliente_historico():
     try:
@@ -2029,6 +2085,11 @@ def cliente_historico():
         import traceback as tb
         return jsonify({'erro': str(e), 'trace': tb.format_exc()}), 500
 
+# ============================================================
+# EXPORTACAO DE PRODUTOS - AGREGADO NO BANCO (rapido)
+# Substitui o /api/clientes/historico chamado varias vezes pelo front.
+# Recebe os filtros ja aplicados e devolve so o que vai para o Excel.
+# ============================================================
 @app.route('/api/clientes/produtos_export', methods=['POST'])
 def clientes_produtos_export():
     try:
@@ -2037,7 +2098,7 @@ def clientes_produtos_export():
         vendedores  = body.get('vendedores') or []
         produtos    = body.get('produtos') or []
         clientes    = [str(c) for c in (body.get('cod_clientes') or [])]
-        periodos    = body.get('periodos') or []
+        periodos    = body.get('periodos') or []   # [{'ano':2025,'mes':3}, ...]
 
         where, params = [], []
         if unidades:
@@ -2060,6 +2121,7 @@ def clientes_produtos_export():
 
         where_str = "WHERE " + " AND ".join(where) if where else ""
 
+        # vendedor dono da carteira do cliente (fallback: vendedor da nota)
         resultado = consultar(f"""
             WITH cart AS (
                 SELECT DISTINCT ON (cod_cliente)
@@ -2093,6 +2155,7 @@ def clientes_produtos_export():
 
 @app.route('/api/compras/upload', methods=['POST'])
 def compras_upload():
+    """Recebe os itens da planilha (JSON) e grava no Railway."""
     conn = None
     try:
         data = request.get_json(force=True)
@@ -2103,22 +2166,26 @@ def compras_upload():
         conn = get_conn()
         cursor = conn.cursor()
 
+        # Último upload (para comparação)
         cursor.execute("SELECT id FROM purchases_uploads ORDER BY id DESC LIMIT 1")
         row = cursor.fetchone()
         ultimo_upload_id = row[0] if row else None
 
+      # Novo lote — busca o primeiro usuário disponível no banco
         cursor.execute("SELECT id FROM users LIMIT 1")
         user_row = cursor.fetchone()
         user_id = user_row[0] if user_row else None
         if not user_id:
             return jsonify({'success': False, 'message': 'Nenhum usuário cadastrado no banco'}), 500
 
+        # DEPOIS
         cursor.execute("""
             INSERT INTO purchases_uploads (userid, filename, totalitems)
             VALUES (%s, 'Compras_Diarias.xlsx', %s) RETURNING id
         """, [user_id, len(items)])
         novo_upload_id = cursor.fetchone()[0]
 
+        # Itens
         for item in items:
             cursor.execute("""
                 INSERT INTO purchase_items
@@ -2133,6 +2200,7 @@ def compras_upload():
                 str(item.get('dataHora', '')),
             ])
 
+        # KPIs comparativos
         codigos_atuais = [str(i.get('codigoProduto', '')).strip()
                           for i in items if i.get('codigoProduto')]
 
@@ -2169,6 +2237,7 @@ def compras_upload():
 
 @app.route('/api/compras/snapshots', methods=['GET'])
 def compras_snapshots():
+    """Lista todas as planilhas enviadas (mais recentes primeiro)."""
     try:
         conn = get_conn()
         cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -2187,6 +2256,7 @@ def compras_snapshots():
 
 @app.route('/api/compras/listar', methods=['GET'])
 def compras_listar():
+    """Retorna os itens de um upload + códigos da planilha anterior (para marcar 'NOVO')."""
     try:
         upload_id = int(request.args.get('uploadId'))
         conn = get_conn()
@@ -2224,6 +2294,7 @@ def compras_listar():
 
 @app.route('/api/compras/upload/<int:upload_id>', methods=['DELETE'])
 def compras_deletar(upload_id):
+    """Exclui uma planilha (cascata apaga os itens)."""
     try:
         conn = get_conn()
         cursor = conn.cursor()
@@ -2238,6 +2309,7 @@ def compras_deletar(upload_id):
 
 @app.route('/api/compras/exportar', methods=['GET'])
 def compras_exportar():
+    """Exporta os itens de um upload em .xlsx."""
     try:
         import openpyxl
         upload_id = int(request.args.get('uploadId'))
@@ -2271,366 +2343,3 @@ def compras_exportar():
         )
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-
-
-# ============================================================
-# TABELA DINÂMICA — lê da tabela nativa faturamento_upload
-# ============================================================
-TABELA_DINAMICA_META = {
-    'seq':            ('Seq',                    'integer'),
-    'cod_produto':    ('Cód. Produto',           'text'),
-    'produto':        ('Produto',                'text'),
-    'cod_cliente':    ('Cód. Cliente',           'text'),
-    'cliente':        ('Cliente',                'text'),
-    'unidade':        ('Unidade',                'text'),
-    'cod_vendedor':   ('Cód. Vendedor',          'text'),
-    'dt_faturamento': ('Dt. Faturamento',        'text'),
-    'quantidade':     ('Quantidade',             'numeric'),
-    'a_quantid':      ('A. Quantid.',            'numeric'),
-    'valor_nf':       ('Valor NF',               'numeric'),
-    'a_valor_nf':     ('A. Valor NF',            'numeric'),
-    'margem':         ('% Margem',               'numeric'),
-    'preco_medio':    ('Preço Médio',            'numeric'),
-}
-
-
-def _meta_por_label(label):
-    """Acha a coluna real a partir do nome amigável."""
-    for col, val in TABELA_DINAMICA_META.items():
-        if isinstance(val, tuple) and val[0] == label:
-            return col, val[1]
-    return None, None
-
-
-def _traduzir_campo(label):
-    """Traduz label amigável ou nome de coluna para (coluna, tipo)."""
-    if label in TABELA_DINAMICA_META:
-        v = TABELA_DINAMICA_META[label]
-        if isinstance(v, tuple):
-            return label, v[1]
-        return label, 'text'
-    return _meta_por_label(label)
-
-
-@app.route('/api/tabela/migrar', methods=['GET', 'POST'])
-def tabela_migrar():
-    """Garante que a tabela faturamento_upload existe com índices."""
-    try:
-        conn = get_conn(); cursor = conn.cursor()
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS faturamento_upload (
-                id              BIGSERIAL PRIMARY KEY,
-                seq             INTEGER,
-                cod_produto     TEXT,
-                produto         TEXT,
-                cod_cliente     TEXT,
-                cliente         TEXT,
-                unidade         TEXT,
-                cod_vendedor    TEXT,
-                dt_faturamento  TEXT,
-                quantidade      NUMERIC,
-                a_quantid       NUMERIC,
-                valor_nf        NUMERIC,
-                a_valor_nf      NUMERIC,
-                margem          NUMERIC,
-                preco_medio     NUMERIC
-            )
-        """)
-        for col in ['cod_cliente', 'cliente', 'cod_produto', 'produto',
-                    'cod_vendedor', 'unidade', 'dt_faturamento']:
-            cursor.execute(f"""
-                CREATE INDEX IF NOT EXISTS idx_fat_{col}
-                ON faturamento_upload ({col})
-            """)
-        conn.commit(); cursor.close(); conn.close()
-        return jsonify({'ok': True, 'mensagem': 'Tabela verificada/criada'})
-    except Exception as e:
-        import traceback as tb
-        return jsonify({'erro': str(e), 'trace': tb.format_exc()}), 500
-
-
-@app.route('/api/tabela/info', methods=['GET'])
-def tabela_info():
-    """
-    Devolve:
-      - total de linhas
-      - lista de colunas disponíveis (com label amigável, tipo e card.)
-      - períodos presentes em dt_faturamento
-    """
-    try:
-        conn = get_conn(); cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-
-        # Verifica se a tabela existe
-        cursor.execute("""
-            SELECT EXISTS (
-                SELECT FROM information_schema.tables
-                WHERE table_name = 'faturamento_upload'
-            ) AS existe
-        """)
-        if not cursor.fetchone()['existe']:
-            cursor.close(); conn.close()
-            return jsonify({'total': 0, 'colunas': [], 'periodos': []})
-
-        cursor.execute("SELECT COUNT(*) AS total FROM faturamento_upload")
-        total = cursor.fetchone()['total']
-
-        # Card. aproximada de cada coluna (para montar filtros)
-        colunas = []
-        for col, val in TABELA_DINAMICA_META.items():
-            label, tipo = val
-            try:
-                cursor.execute(f'SELECT COUNT(DISTINCT "{col}") AS n FROM faturamento_upload')
-                n = cursor.fetchone()['n']
-            except Exception:
-                n = 0
-            colunas.append({
-                'coluna': col,
-                'label':  label,
-                'tipo':   tipo,
-                'card':   n
-            })
-
-        # Anos e meses únicos
-        cursor.execute("""
-            SELECT DISTINCT dt_faturamento
-            FROM faturamento_upload
-            WHERE dt_faturamento IS NOT NULL AND dt_faturamento <> ''
-            ORDER BY 1
-        """)
-        periodos = [r['dt_faturamento'] for r in cursor.fetchall()]
-
-        cursor.close(); conn.close()
-
-        return jsonify({
-            'total':    total,
-            'colunas':  colunas,
-            'periodos': periodos,
-        })
-    except Exception as e:
-        import traceback as tb
-        return jsonify({'erro': str(e), 'trace': tb.format_exc()}), 500
-
-
-@app.route('/api/tabela/valores-distintos', methods=['POST'])
-def tabela_valores_distintos():
-    """
-    Devolve valores distintos de uma coluna (para filtros).
-    Body: { campo: 'cliente', busca: 'texto', limite: 200 }
-    """
-    try:
-        body   = request.get_json(force=True) or {}
-        campo  = body.get('campo')
-        busca  = (body.get('busca') or '').strip()
-        limite = int(body.get('limite', 200))
-
-        col, tipo = _traduzir_campo(campo)
-        if not col:
-            return jsonify({'erro': f'Campo desconhecido: {campo}'}), 400
-
-        where  = f'"{col}" IS NOT NULL AND "{col}"::TEXT <> \'\''
-        params = []
-        if busca:
-            where += f' AND "{col}"::TEXT ILIKE %s'
-            params.append(f'%{busca}%')
-
-        sql = f"""
-            SELECT DISTINCT "{col}"::TEXT AS valor
-            FROM faturamento_upload
-            WHERE {where}
-            ORDER BY 1
-            LIMIT {limite}
-        """
-        resultado = consultar(sql, params)
-        return jsonify([r['valor'] for r in resultado])
-    except Exception as e:
-        import traceback as tb
-        return jsonify({'erro': str(e), 'trace': tb.format_exc()}), 500
-
-
-@app.route('/api/tabela/pivot', methods=['POST'])
-def tabela_pivot():
-    """
-    Executa a tabela dinâmica no banco (rápido mesmo com milhões de linhas).
-    Body: { linhas, colunas, valores, filtros }
-    """
-    try:
-        body    = request.get_json(force=True) or {}
-        linhas  = body.get('linhas') or []
-        colunas = body.get('colunas') or []
-        valores = body.get('valores') or []
-        filtros = body.get('filtros') or []
-
-        if not linhas:
-            return jsonify({'erro': 'Selecione pelo menos uma linha'}), 400
-        if not valores:
-            return jsonify({'erro': 'Selecione pelo menos um valor'}), 400
-
-        # --- traduzir labels ---
-        dims_l = []
-        for l in linhas:
-            col, tipo = _traduzir_campo(l)
-            if not col: return jsonify({'erro': f'Linha desconhecida: {l}'}), 400
-            dims_l.append(col)
-
-        dims_c = []
-        for c in colunas:
-            col, tipo = _traduzir_campo(c)
-            if not col: return jsonify({'erro': f'Coluna desconhecida: {c}'}), 400
-            dims_c.append(col)
-
-        agg_sql_map = {
-            'sum':   'SUM',
-            'avg':   'AVG',
-            'count': 'COUNT',
-            'min':   'MIN',
-            'max':   'MAX',
-        }
-        val_sql = []
-        for v in valores:
-            col, tipo = _traduzir_campo(v.get('campo'))
-            if not col: return jsonify({'erro': f'Valor desconhecido: {v.get("campo")}'}), 400
-            agg = v.get('agg') or 'sum'
-            if agg not in agg_sql_map:
-                return jsonify({'erro': f'Agregação inválida: {agg}'}), 400
-            if tipo != 'numeric' and agg != 'count':
-                return jsonify({'erro': f'Campo "{v.get("campo")}" não é numérico. Use agg=count.'}), 400
-            val_sql.append(f'{agg_sql_map[agg]}("{col}")::NUMERIC')
-
-        # --- WHERE ---
-        where_parts = []
-        params = []
-        for f in filtros:
-            campo = f.get('campo')
-            vals  = f.get('valores') or []
-            if not vals: continue
-            col, tipo = _traduzir_campo(campo)
-            if not col: continue
-            ph = ','.join(['%s'] * len(vals))
-            where_parts.append(f'"{col}"::TEXT IN ({ph})')
-            params.extend([str(v) for v in vals])
-
-        where_sql = ('WHERE ' + ' AND '.join(where_parts)) if where_parts else ''
-
-        # --- SELECT ---
-        select_dims_l = ', '.join([f'"{c}"::TEXT' for c in dims_l])
-        select_dims_c = ', '.join([f'"{c}"::TEXT' for c in dims_c]) if dims_c else "'__total__'"
-        select_vals   = ', '.join(val_sql)
-
-        group_l = ', '.join([f'"{c}"::TEXT' for c in dims_l])
-        if dims_c:
-            group_c = ', '.join([f'"{c}"::TEXT' for c in dims_c])
-            group_by = f'GROUP BY {group_l}, {group_c}'
-        else:
-            group_by = f'GROUP BY {group_l}'
-
-        sql = f"""
-            SELECT
-                {select_dims_l} AS dim_l,
-                {select_dims_c} AS dim_c,
-                {select_vals}
-            FROM faturamento_upload
-            {where_sql}
-            {group_by}
-        """
-        conn = get_conn(); cursor = conn.cursor()
-        cursor.execute(sql, params)
-        rows = cursor.fetchall()
-        cursor.close(); conn.close()
-
-        n_vals = len(val_sql)
-
-        # --- monta estrutura ---
-        grupos_set   = {}
-        colunas_set  = set()
-        matriz       = {}
-        totCol       = {}
-        totGeral     = [0.0] * n_vals
-        SEP = ' ‖ '
-
-        for r in rows:
-            # dims linhas
-            if len(dims_l) == 1:
-                chave_l = str(r[0]) if r[0] is not None else ''
-                partes_l = [chave_l]
-            else:
-                partes_l = [str(r[i]) if r[i] is not None else '' for i in range(len(dims_l))]
-                chave_l  = SEP.join(partes_l)
-
-            idx = len(dims_l)
-            chave_c = str(r[idx]) if r[idx] is not None else '__total__'
-            vals    = list(r[idx+1: idx+1+n_vals])
-
-            colunas_set.add(chave_c)
-            grupos_set[chave_l] = partes_l
-
-            if chave_l not in matriz:
-                matriz[chave_l] = {}
-            matriz[chave_l][chave_c] = [float(v) if v is not None else 0 for v in vals]
-
-            if chave_c not in totCol:
-                totCol[chave_c] = [0.0] * n_vals
-            for i, v in enumerate(vals):
-                vv = float(v) if v is not None else 0
-                totCol[chave_c][i] += vv
-                totGeral[i] += vv
-
-        return jsonify({
-            'grupos':    list(grupos_set.keys()),
-            'partes':    list(grupos_set.values()),
-            'colunas':   sorted(colunas_set),
-            'matriz':    matriz,
-            'totCol':    totCol,
-            'totGeral':  totGeral,
-            'nValores':  n_vals,
-        })
-
-    except Exception as e:
-        import traceback as tb
-        return jsonify({'erro': str(e), 'trace': tb.format_exc()}), 500
-
-
-@app.route('/api/tabela/atualizar', methods=['POST'])
-def tabela_atualizar():
-    """Atualiza um registro de faturamento_upload."""
-    try:
-        body = request.get_json(force=True) or {}
-        row_id = body.get('id')
-        if not row_id:
-            return jsonify({'erro': 'id obrigatório'}), 400
-
-        campos_permitidos = ['seq', 'cod_produto', 'produto', 'cod_cliente',
-                             'cliente', 'unidade', 'cod_vendedor', 'dt_faturamento',
-                             'quantidade', 'a_quantid', 'valor_nf', 'a_valor_nf',
-                             'margem', 'preco_medio']
-
-        sets   = []
-        params = []
-        for c in campos_permitidos:
-            if c in body:
-                sets.append(f'"{c}" = %s')
-                params.append(body[c])
-        if not sets:
-            return jsonify({'erro': 'Nenhum campo para atualizar'}), 400
-        params.append(row_id)
-
-        conn = get_conn(); cursor = conn.cursor()
-        cursor.execute(f'UPDATE faturamento_upload SET {", ".join(sets)} WHERE id = %s', params)
-        conn.commit(); cursor.close(); conn.close()
-        cache_clear()
-        return jsonify({'ok': True})
-    except Exception as e:
-        import traceback as tb
-        return jsonify({'erro': str(e), 'trace': tb.format_exc()}), 500
-
-
-@app.route('/tabela-dinamica')
-def pagina_tabela_dinamica():
-    """Serve a página HTML da Tabela Dinâmica."""
-    try:
-        return send_file('tabela-dinamica.html')
-    except Exception:
-        return jsonify({'erro': 'Arquivo tabela-dinamica.html não encontrado no servidor'}), 404
-
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
