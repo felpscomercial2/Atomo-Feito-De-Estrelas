@@ -1,0 +1,1926 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Átomo — Carteira de Clientes</title>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+/* =========================================================
+   ÁTOMO LIGHT — Tema Refinado com Contraste Aprimorado
+   ========================================================= */
+
+:root {
+  --bg-body: #F2F4F8;
+  --bg-card: #FFFFFF;
+  --bg-sidebar: #FFFFFF;
+  --text-primary: #0F172A;
+  --text-secondary: #1E293B;
+  --text-muted: #475569;
+  --border-light: #E2E8F0;
+  --shadow-card: 0 2px 16px rgba(0, 0, 0, 0.04), 0 1px 4px rgba(0, 0, 0, 0.02);
+  --shadow-hover: 0 8px 32px rgba(0, 0, 0, 0.07), 0 2px 8px rgba(0, 0, 0, 0.03);
+  --shadow-dropdown: 0 16px 48px rgba(0, 0, 0, 0.08);
+  --accent-primary: #1D4ED8;
+  --accent-primary-hover: #2563EB;
+  --accent-secondary: #3B82F6;
+  --color-success: #0B7C3C;
+  --color-danger: #DC2626;
+  --color-warning: #E98E0E;
+  --color-roxo: #7C3AED;
+  --radius-default: 14px;
+  --radius-sm: 10px;
+  --radius-lg: 20px;
+  --transition-smooth: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --transition-ease: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  background: var(--bg-body) !important;
+  color: var(--text-primary) !important;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.6 !important;
+  min-height: 100vh;
+}
+
+/* SIDEBAR */
+.sidebar {
+  width: 232px;
+  background: var(--bg-card) !important;
+  border-right: 1px solid var(--border-light) !important;
+  box-shadow: 2px 0 16px rgba(0, 0, 0, 0.02) !important;
+  padding: 28px 16px !important;
+  position: fixed;
+  top: 0; left: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 100;
+  transition: transform 0.4s var(--transition-smooth) !important;
+  overflow-y: auto;
+}
+.sidebar-logo { width: 100px; margin-bottom: 4px; transition: transform 0.3s var(--transition-smooth); }
+.sidebar-logo:hover { transform: scale(1.04); }
+.sidebar-title {
+  color: var(--text-secondary) !important;
+  font-size: 10px !important;
+  letter-spacing: 2px !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  margin-bottom: 28px;
+}
+.nav-section {
+  width: 100%;
+  font-size: 9px;
+  letter-spacing: 1.2px;
+  color: var(--text-muted) !important;
+  text-transform: uppercase;
+  padding: 0 8px;
+  margin-bottom: 8px;
+}
+.nav-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px !important;
+  border-radius: var(--radius-sm) !important;
+  margin-bottom: 2px !important;
+  font-weight: 500 !important;
+  font-size: 13px !important;
+  color: var(--text-secondary) !important;
+  text-decoration: none;
+  transition: all 0.25s var(--transition-ease) !important;
+  border: 1px solid transparent !important;
+  position: relative;
+}
+.nav-item::after {
+  content: '';
+  position: absolute;
+  left: 0; top: 50%;
+  transform: translateY(-50%) scaleY(0);
+  width: 3px; height: 60%;
+  background: var(--accent-primary);
+  border-radius: 0 4px 4px 0;
+  transition: transform 0.3s var(--transition-ease);
+}
+.nav-item:hover::after { transform: translateY(-50%) scaleY(1); }
+.nav-item:hover {
+  background: #F1F4F9 !important;
+  color: var(--text-primary) !important;
+  transform: translateX(4px);
+}
+.nav-item.active {
+  background: #EEF2FF !important;
+  color: var(--accent-primary) !important;
+  font-weight: 600 !important;
+}
+.nav-item.active::after { transform: translateY(-50%) scaleY(1); }
+.nav-item .icon { font-size: 16px; width: 20px; text-align: center; transition: transform 0.25s var(--transition-smooth); }
+.nav-item:hover .icon { transform: scale(1.12); }
+.sidebar-divider { width: 100%; height: 1px; background: var(--border-light) !important; margin: 14px 0; }
+.btn-logout {
+  margin-top: auto;
+  width: 100%;
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  background: #FEF2F2 !important;
+  color: var(--color-danger) !important;
+  border: 1px solid #FECACA !important;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.25s var(--transition-ease);
+  font-family: 'Inter', sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.btn-logout:hover { background: #FEE2E2 !important; transform: translateY(-2px); }
+
+/* MAIN */
+.main {
+  margin-left: 232px;
+  flex: 1;
+  padding: 32px 40px !important;
+  background: var(--bg-body) !important;
+  color: var(--text-primary) !important;
+  min-height: 100vh;
+  transition: margin-left 0.4s var(--transition-smooth);
+}
+
+/* BREADCRUMB */
+.breadcrumb { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-muted) !important; margin-bottom: 16px; }
+.breadcrumb a { color: var(--text-muted) !important; text-decoration: none; transition: all 0.2s ease; }
+.breadcrumb a:hover { color: var(--accent-primary) !important; }
+.breadcrumb .breadcrumb-sep { opacity: 0.4; }
+.breadcrumb .breadcrumb-current { color: var(--text-primary) !important; font-weight: 600; }
+
+/* HEADER */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.header-left h1 { font-size: 26px; font-weight: 700 !important; color: var(--text-primary) !important; letter-spacing: -0.03em !important; }
+.header-left p { font-size: 14px; color: var(--text-secondary) !important; margin-top: 4px; font-weight: 500; }
+.header-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+/* NOTA */
+.nota {
+  font-size: 13px;
+  color: var(--text-secondary) !important;
+  padding: 12px 18px;
+  background: #FFFBEB !important;
+  border: 1px solid #FDE68A !important;
+  border-radius: var(--radius-sm);
+  margin-bottom: 20px;
+  font-weight: 450;
+}
+.nota strong { color: var(--text-primary); font-weight: 600; }
+
+/* FILTROS */
+.filtros-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.filtro-card {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-light) !important;
+  border-radius: var(--radius-default) !important;
+  box-shadow: var(--shadow-card) !important;
+  padding: 18px 20px;
+  transition: all 0.3s var(--transition-ease);
+}
+.filtro-card:hover { box-shadow: var(--shadow-hover) !important; }
+.filtro-titulo {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 12px;
+}
+.busca-wrap { position: relative; }
+.busca-input {
+  width: 100%;
+  padding: 10px 14px;
+  background: var(--bg-body) !important;
+  border: 1px solid var(--border-light) !important;
+  border-radius: var(--radius-sm) !important;
+  color: var(--text-primary) !important;
+  font-size: 13px;
+  outline: none;
+  transition: all 0.25s var(--transition-ease);
+  font-family: 'Inter', sans-serif;
+}
+.busca-input:focus {
+  border-color: var(--accent-primary) !important;
+  box-shadow: 0 0 0 4px rgba(29, 78, 216, 0.08) !important;
+}
+.busca-input::placeholder { color: var(--text-muted) !important; }
+.sug-lista {
+  display: none;
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0; right: 0;
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-light) !important;
+  border-radius: var(--radius-sm) !important;
+  box-shadow: var(--shadow-dropdown) !important;
+  z-index: 200;
+  max-height: 200px;
+  overflow-y: auto;
+}
+.sug-item {
+  padding: 10px 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--border-light);
+  transition: all 0.2s ease;
+}
+.sug-item:last-child { border-bottom: none; }
+.sug-item:hover { background: #F1F4F9 !important; }
+.sug-item.sug-ok { background: rgba(11, 124, 60, 0.05) !important; }
+.sug-nome { flex: 1; font-size: 13px; color: var(--text-primary) !important; font-weight: 500; }
+.sug-marca { font-size: 11px; color: var(--text-muted) !important; background: var(--bg-body) !important; padding: 2px 8px; border-radius: 4px; }
+.sug-check { color: var(--color-success) !important; font-weight: 700; }
+.tags-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; min-height: 24px; align-items: center; }
+.tag-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: #EEF2FF !important;
+  border: 1px solid #C7D2FE !important;
+  border-radius: 20px;
+  padding: 4px 12px 4px 16px;
+  font-size: 12px;
+  color: var(--accent-primary) !important;
+  font-weight: 500;
+}
+.tag-item button {
+  background: none;
+  border: none;
+  color: var(--accent-primary) !important;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0;
+  opacity: 0.5;
+}
+.tag-item button:hover { opacity: 1; transform: rotate(90deg); }
+
+/* CALENDÁRIO */
+.cal-card {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-light) !important;
+  border-radius: var(--radius-default) !important;
+  box-shadow: var(--shadow-card) !important;
+  padding: 18px 20px;
+  margin-bottom: 16px;
+}
+.cal-ano { margin-bottom: 12px; }
+.cal-ano:last-child { margin-bottom: 0; }
+.cal-ano-label { font-size: 12px; font-weight: 700; color: var(--accent-primary) !important; margin-bottom: 8px; letter-spacing: 1px; }
+.cal-meses { display: flex; flex-wrap: wrap; gap: 6px; }
+.cal-mes {
+  padding: 6px 12px;
+  background: var(--bg-body) !important;
+  border: 1px solid var(--border-light) !important;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.25s var(--transition-ease);
+  user-select: none;
+  font-weight: 500;
+  color: var(--text-secondary) !important;
+}
+.cal-mes:hover {
+  background: #EEF2FF !important;
+  border-color: var(--accent-secondary) !important;
+  color: var(--accent-primary) !important;
+  transform: translateY(-1px);
+}
+.cal-mes-sel {
+  background: var(--accent-primary) !important;
+  border-color: var(--accent-primary) !important;
+  color: #FFFFFF !important;
+}
+
+/* BASES */
+.status-bar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 4px; }
+.status-chip {
+  padding: 4px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border-light) !important;
+  background: var(--bg-body) !important;
+  color: var(--text-secondary) !important;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.25s var(--transition-ease);
+  font-family: 'Inter', sans-serif;
+}
+.status-chip:hover { background: #F1F4F9 !important; transform: translateY(-1px); }
+.status-chip.active {
+  background: #EEF2FF !important;
+  border-color: var(--accent-secondary) !important;
+  color: var(--accent-primary) !important;
+}
+
+/* RESUME BAR */
+.resumo-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-light) !important;
+  border-radius: var(--radius-sm) !important;
+  box-shadow: var(--shadow-card) !important;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.resumo-info { color: var(--text-secondary) !important; font-weight: 500; font-size: 13px; }
+.resumo-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.btn-export {
+  padding: 7px 16px;
+  border-radius: var(--radius-sm);
+  background: #F0FDF4 !important;
+  color: var(--color-success) !important;
+  border: 1px solid #86EFAC !important;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.25s var(--transition-ease);
+  font-family: 'Inter', sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-export:hover { background: #DCFCE7 !important; transform: translateY(-2px); }
+.btn-export:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+.btn-primary {
+  padding: 7px 16px;
+  border-radius: var(--radius-sm);
+  background: var(--accent-primary) !important;
+  color: #FFFFFF !important;
+  border: 1px solid var(--accent-primary) !important;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.25s var(--transition-ease);
+  font-family: 'Inter', sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-primary:hover { background: var(--accent-primary-hover) !important; transform: translateY(-2px); }
+
+.btn-limpar-tudo {
+  padding: 7px 16px;
+  border-radius: var(--radius-sm);
+  background: #FEF2F2 !important;
+  color: var(--color-danger) !important;
+  border: 1px solid #FECACA !important;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.25s var(--transition-ease);
+  font-family: 'Inter', sans-serif;
+}
+.btn-limpar-tudo:hover { background: #FEE2E2 !important; transform: translateY(-2px); }
+
+/* STATUS FILTER */
+.status-filter-bar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+.status-filter-chip {
+  padding: 6px 16px;
+  border-radius: 20px;
+  border: 1px solid var(--border-light) !important;
+  background: var(--bg-body) !important;
+  color: var(--text-secondary) !important;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.25s var(--transition-ease);
+  font-family: 'Inter', sans-serif;
+}
+.status-filter-chip:hover { background: #F1F4F9 !important; transform: translateY(-1px); }
+.status-filter-chip.active {
+  background: #EEF2FF !important;
+  border-color: var(--accent-secondary) !important;
+  color: var(--accent-primary) !important;
+}
+.chip-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+.dot-all { background: var(--accent-secondary); }
+.dot-pos { background: var(--color-success); }
+.dot-neg { background: var(--color-danger); }
+
+/* PIVOT */
+.pivot-wrap {
+  overflow: auto;
+  max-height: calc(100vh - 200px);
+  border-radius: var(--radius-default) !important;
+  border: 1px solid var(--border-light) !important;
+  background: var(--bg-card) !important;
+  box-shadow: var(--shadow-card) !important;
+}
+.pivot-table { border-collapse: collapse; font-size: 12px; white-space: nowrap; width: 100%; }
+.pivot-table thead { position: sticky; top: 0; z-index: 10; }
+.pivot-th-fix {
+  background: #F8FAFC !important;
+  padding: 10px 14px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-secondary) !important;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  border-bottom: 2px solid var(--border-light) !important;
+  border-right: 1px solid var(--border-light) !important;
+  position: sticky;
+  top: 0;
+}
+.pivot-th-col {
+  background: #F8FAFC !important;
+  padding: 10px 12px;
+  text-align: center;
+  font-weight: 600;
+  color: var(--accent-primary) !important;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  border-bottom: 2px solid var(--border-light) !important;
+  border-right: 1px solid var(--border-light) !important;
+  min-width: 90px;
+  position: sticky;
+  top: 0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.pivot-th-col:hover { background: #F1F4F9 !important; }
+.pivot-th-total {
+  background: #F8FAFC !important;
+  padding: 10px 12px;
+  text-align: center;
+  font-weight: 700;
+  color: var(--color-success) !important;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  border-bottom: 2px solid var(--border-light) !important;
+  position: sticky;
+  top: 0;
+  cursor: pointer;
+}
+.pivot-th-total:hover { background: #F1F4F9 !important; }
+.pivot-th-end { color: var(--text-muted) !important; font-style: italic; }
+.pivot-end {
+  font-size: 12px;
+  color: var(--text-muted) !important;
+  white-space: nowrap;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pivot-uf { text-align: center; font-weight: 600; color: var(--accent-secondary) !important; }
+.pivot-cod {
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--border-light) !important;
+  border-right: 1px solid var(--border-light) !important;
+  color: var(--text-muted) !important;
+  font-size: 11px;
+}
+.pivot-cod.clickable { cursor: pointer; color: var(--accent-primary) !important; transition: all 0.2s ease; }
+.pivot-cod.clickable:hover { color: var(--accent-primary-hover) !important; text-decoration: underline; }
+.pivot-nome {
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--border-light) !important;
+  border-right: 1px solid var(--border-light) !important;
+  font-weight: 600;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text-primary) !important;
+}
+.pivot-nome.clickable { cursor: pointer; color: var(--accent-primary) !important; transition: all 0.2s ease; }
+.pivot-nome.clickable:hover { color: var(--accent-primary-hover) !important; text-decoration: underline; }
+.pivot-vend {
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--border-light) !important;
+  border-right: 1px solid var(--border-light) !important;
+  font-size: 11px;
+  color: var(--text-muted) !important;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pivot-val {
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--border-light) !important;
+  border-right: 1px solid var(--border-light) !important;
+  text-align: right;
+  color: var(--text-muted) !important;
+  transition: all 0.2s ease;
+}
+.pivot-val-pos { color: var(--text-primary) !important; font-weight: 500; }
+.pivot-total {
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--border-light) !important;
+  text-align: right;
+  font-weight: 700;
+  color: var(--color-success) !important;
+  background: rgba(11, 124, 60, 0.03) !important;
+}
+.pivot-row-total td {
+  background: rgba(29, 78, 216, 0.04) !important;
+  font-weight: 700;
+  color: var(--accent-secondary) !important;
+  padding: 10px 12px;
+  border-top: 2px solid var(--border-light) !important;
+}
+tbody tr:hover td { background: #F8FAFC !important; }
+.cli-caret {
+  display: inline-block;
+  width: 12px;
+  color: var(--text-muted) !important;
+  font-size: 10px;
+  margin-right: 4px;
+  transition: transform 0.3s var(--transition-ease);
+}
+.cli-caret.open { transform: rotate(90deg); color: var(--accent-primary) !important; }
+.detalhe-row > td { background: rgba(0, 0, 0, 0.02) !important; padding: 0 18px 18px 18px !important; }
+.detalhe-box {
+  margin-top: 6px;
+  border: 1px solid var(--border-light) !important;
+  border-radius: var(--radius-sm) !important;
+  overflow: auto;
+  max-height: 420px;
+}
+.detalhe-table { width: 100%; border-collapse: collapse; font-size: 12px; background: var(--bg-card) !important; }
+.detalhe-th {
+  position: sticky;
+  top: 0;
+  background: #F8FAFC !important;
+  color: var(--text-secondary) !important;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 8px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-light) !important;
+  white-space: nowrap;
+  font-weight: 600;
+}
+.detalhe-td { padding: 7px 10px; border-bottom: 1px solid var(--border-light) !important; color: var(--text-primary) !important; white-space: nowrap; }
+.detalhe-td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.detalhe-td.pos { color: var(--color-success) !important; font-weight: 600; }
+.detalhe-foot td {
+  padding: 8px 10px;
+  font-weight: 700;
+  color: var(--color-success) !important;
+  background: rgba(11, 124, 60, 0.04) !important;
+  border-top: 1px solid var(--border-light) !important;
+  text-align: right;
+}
+.detalhe-foot td:first-child { text-align: left; color: var(--text-primary) !important; }
+.det-msg { padding: 16px; color: var(--text-secondary) !important; font-size: 13px; }
+
+/* LOADING */
+.loading-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(242, 244, 248, 0.92) !important;
+  z-index: 9999;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 20px;
+  backdrop-filter: blur(8px);
+}
+.loading-overlay.show { display: flex; }
+.loading-spinner {
+  width: 44px;
+  height: 44px;
+  border: 3px solid #E8ECF2;
+  border-top-color: var(--accent-primary);
+  border-radius: 50%;
+  animation: spin 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
+}
+.loading-overlay span { color: var(--text-secondary) !important; font-size: 13px; font-weight: 500; letter-spacing: 0.5px; }
+
+/* PLACEHOLDER / EMPTY */
+.empty-state {
+  padding: 60px 20px;
+  text-align: center;
+  color: var(--text-secondary);
+}
+.empty-state .empty-icon {
+  font-size: 32px;
+  opacity: 0.5;
+  display: block;
+  margin-bottom: 12px;
+}
+.empty-state .empty-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+.empty-state .empty-desc {
+  font-size: 13px;
+  opacity: 0.8;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+/* FOOTER */
+.dashboard-footer {
+  margin-top: 48px;
+  padding: 20px 0 8px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-muted) !important;
+  border-top: 1px solid var(--border-light);
+  font-weight: 450;
+}
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #F1F4F9; border-radius: 8px; }
+::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+
+/* ANIMAÇÕES */
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* HAMBURGER + MOBILE */
+.hamburger {
+  display: none;
+  position: fixed;
+  top: 16px; left: 16px;
+  z-index: 200;
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  width: 42px; height: 42px;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-direction: column;
+  gap: 5px;
+  padding: 8px;
+  box-shadow: var(--shadow-card);
+}
+.hamburger span { width: 100%; height: 2px; background: var(--text-secondary); border-radius: 2px; }
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 99;
+  backdrop-filter: blur(4px);
+}
+.sidebar-overlay.show { display: block; }
+
+@media (max-width: 992px) { .filtros-grid { grid-template-columns: 1fr 1fr !important; } }
+@media (max-width: 768px) {
+  .sidebar { transform: translateX(-100%) !important; }
+  .sidebar.open { transform: translateX(0) !important; }
+  .hamburger { display: flex; }
+  .main { margin-left: 0 !important; padding: 20px 16px 16px !important; }
+  .header { margin-top: 56px; flex-direction: column; align-items: stretch; }
+  .filtros-grid { grid-template-columns: 1fr !important; }
+  .cal-mes { padding: 4px 10px; font-size: 11px; }
+  .resumo-bar { flex-direction: column; align-items: stretch; }
+  .pivot-wrap { max-height: calc(100vh - 300px); }
+}
+@media (max-width: 480px) {
+  .main { padding: 16px 12px !important; }
+  .header-left h1 { font-size: 20px; }
+  .filtro-card { padding: 14px 16px; }
+  .cal-mes { padding: 3px 8px; font-size: 10px; }
+}
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-spinner"></div>
+  <span id="loadingText">Carregando Átomo...</span>
+</div>
+
+<!-- HAMBURGER -->
+<button class="hamburger" id="hamburgerBtn" onclick="toggleSidebar()" aria-label="Menu">
+  <span></span><span></span><span></span>
+</button>
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="mainSidebar">
+  <img class="sidebar-logo" src="logo.png" alt="Átomo" onerror="this.style.display='none'">
+  <div class="sidebar-title">ÁTOMO</div>
+  <a class="nav-item" href="home.html"><span class="icon">🏠</span> Página Inicial</a>
+  <div class="sidebar-divider"></div>
+  <div class="nav-section">Dashboards</div>
+  <a class="nav-item" href="visao-geral.html"><span class="icon">📊</span> Visão Geral</a>
+  <a class="nav-item" href="vendedor.html"><span class="icon">👤</span> Vendedor</a>
+  <a class="nav-item" href="regiao.html"><span class="icon">🗺️</span> Região</a>
+  <a class="nav-item" href="marcas.html"><span class="icon">🏷️</span> Marcas</a>
+  <a class="nav-item" href="produtos.html"><span class="icon">📦</span> Produtos</a>
+  <a class="nav-item" href="produtos-cliente.html"><span class="icon">🛍️</span> Produtos por Cliente</a>
+  <div class="sidebar-divider"></div>
+  <div class="nav-section">Gestão</div>
+  <a class="nav-item active" href="carteira.html"><span class="icon">👥</span> Carteira</a>
+  <a class="nav-item" href="positivacao.html"><span class="icon">👥</span> Positivação</a>
+  <a class="nav-item" href="shelflife.html"><span class="icon">🕒</span> Shelf Life</a>
+  <a class="nav-item" href="risco.html"><span class="icon">⚠️</span> Clientes em Risco</a>
+  <a class="nav-item" href="compras.html"><span class="icon">🛒</span> Compras</a>
+  <div class="sidebar-divider"></div>
+  <button class="btn-logout" onclick="location.href='index.html'">🚪 Sair</button>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="breadcrumb">
+    <a href="home.html">🏠 Portal</a>
+    <span class="breadcrumb-sep">›</span>
+    <span class="breadcrumb-current">Carteira</span>
+  </div>
+
+  <div class="header">
+    <div class="header-left">
+      <h1>👥 Carteira de Clientes</h1>
+      <p id="subtitulo">Aguardando seleção...</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-primary" onclick="carregarAnoAtual()" title="Carrega todos os meses do ano atual — pode demorar">
+        ⚡ Carregar ano atual
+      </button>
+      <button class="btn-export" onclick="exportarCarteira()">📊 Exportar Carteira</button>
+      <button class="btn-export" onclick="exportarProduto()" id="btnExpCompleto" style="background:#EEF2FF;border-color:#C7D2FE;color:var(--accent-primary);">📦 Exportar Produtos</button>
+    </div>
+  </div>
+
+  <div class="nota">📋 Selecione um vendedor, produto e os períodos desejados. Clique em <strong>"Carregar ano atual"</strong> para ver todos os meses do ano corrente de uma só vez.</div>
+
+  <!-- FILTROS -->
+  <div class="filtros-grid">
+    <div class="filtro-card">
+      <div class="filtro-titulo">👤 Filtrar por Vendedor</div>
+      <div class="busca-wrap">
+        <input type="text" id="inputVend" class="busca-input" placeholder="Digite o nome do vendedor..." oninput="onBuscaVend()">
+        <div class="sug-lista" id="listaVend"></div>
+      </div>
+      <div class="tags-wrap" id="tagsVend">
+        <span style="color:var(--text-muted);font-size:12px;">Selecione um vendedor</span>
+      </div>
+    </div>
+
+    <div class="filtro-card">
+      <div class="filtro-titulo">📦 Filtrar por Produto</div>
+      <div class="busca-wrap">
+        <input type="text" id="inputProd" class="busca-input" placeholder="Digite nome ou código do produto..." oninput="onBuscaProd()">
+        <div class="sug-lista" id="listaProd"></div>
+      </div>
+      <div class="tags-wrap" id="tagsProd">
+        <span style="color:var(--text-muted);font-size:12px;">Todos os produtos</span>
+      </div>
+    </div>
+
+    <div class="filtro-card">
+      <div class="filtro-titulo">🏢 Filtrar por Unidade</div>
+      <div class="tags-wrap" id="basesWrap" style="margin-top:0;">
+        <span style="color:var(--text-muted);font-size:12px;">Carregando bases...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CALENDÁRIO -->
+  <div class="cal-card">
+    <div class="filtro-titulo" style="margin-bottom:12px;">📅 Selecionar Períodos — clique nos meses desejados</div>
+    <div id="calendarioMeses"></div>
+    <div style="display:flex;align-items:center;gap:10px;margin-top:14px;flex-wrap:wrap;">
+      <span style="font-size:12px;font-weight:600;color:var(--text-secondary);">📆 Ou adicione dias específicos:</span>
+      <input type="date" id="inputData" class="busca-input" style="width:auto;" onchange="onDataChange()">
+      <button class="btn-limpar-tudo" id="btnLimparData" style="display:none;" onclick="limparData()">✕ Limpar dias</button>
+    </div>
+    <div id="tagsDatas" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;"></div>
+    <div class="tags-wrap" style="margin-top:12px;" id="tagsPeriodo">
+      <span style="color:var(--text-muted);font-size:12px;">Todos os períodos</span>
+    </div>
+  </div>
+
+  <!-- RESUME BAR -->
+  <div class="resumo-bar">
+    <span class="resumo-info" id="resumoInfo">Aguardando seleção...</span>
+    <div class="resumo-actions">
+      <button class="btn-export" onclick="exportarCarteira()">📊 Exportar Carteira</button>
+      <button class="btn-export" onclick="exportarProduto()" style="background:#EEF2FF;border-color:#C7D2FE;color:var(--accent-primary);">📦 Exportar Produtos</button>
+      <button class="btn-limpar-tudo" onclick="limparFiltros()">✕ Limpar filtros</button>
+    </div>
+  </div>
+
+  <!-- STATUS FILTER -->
+  <div class="status-filter-bar">
+    <button class="status-filter-chip active" id="chipTodos" onclick="setFiltroStatus('todos')"><span class="chip-dot dot-all"></span>Todos</button>
+    <button class="status-filter-chip" id="chipPos" onclick="setFiltroStatus('comprantes')"><span class="chip-dot dot-pos"></span>Comprantes</button>
+    <button class="status-filter-chip" id="chipNeg" onclick="setFiltroStatus('naocomprantes')"><span class="chip-dot dot-neg"></span>Não comprantes</button>
+    <span style="font-size:11px;color:var(--text-muted);margin-left:6px;">Clique no código ou no nome do cliente para ver os produtos comprados por período.</span>
+  </div>
+
+  <!-- PIVOT -->
+  <div class="pivot-wrap" id="pivotWrap">
+    <div class="empty-state">
+      <span class="empty-icon">🔎</span>
+      <div class="empty-title">Selecione um filtro para começar</div>
+      <div class="empty-desc">Escolha um vendedor, produto ou período acima. Ou clique em <strong>"Carregar ano atual"</strong> no topo para ver tudo de uma vez.</div>
+    </div>
+  </div>
+
+  <div class="dashboard-footer" id="dashboardFooter">Aguardando seleção de filtro</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<script>
+// ============================================================
+// API
+// ============================================================
+const API = 'https://horus-production.up.railway.app';
+const MESES_NOME = ['','Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+const CHUNK_RENDER = 250; // linhas por vez na tabela
+
+let vendedoresSel = [];
+let produtosSel = [];
+let periodosSel = [];
+let datasSel = [];
+function normData(v) {
+  if (!v) return '';
+  const t = String(v);
+  const m = t.match(/^(\d{4}-\d{2}-\d{2})/);
+  if (m) return m[1];
+  const d = new Date(t);
+  if (isNaN(d)) return '';
+  return d.getUTCFullYear() + '-' + String(d.getUTCMonth() + 1).padStart(2, '0') + '-' + String(d.getUTCDate()).padStart(2, '0');
+}
+function fmtDataBR(d) { return d.split('-').reverse().join('/'); }
+function colKey(c) { return c.data ? c.data : colKey(c); }
+function rowKey(r) { return datasSel.length ? normData(r.data_movimento) : r.ano + '-' + r.mes; }
+let basesSel = [];
+let todosVendedores = [];
+let todosProdutos = [];
+let todasBases = [];
+let filtroStatus = 'todos';
+let clientesRender = [];
+let pivotCols = [];
+let pivotValMap = {};
+let detalheAberto = {};
+let histCache = {};
+let carteiraCompleta = [];
+let pivotSort = { key: null, dir: 'desc' };
+let carregando = false;
+
+// ============================================================
+// SIDEBAR TOGGLE
+// ============================================================
+function toggleSidebar() {
+  const sidebar = document.getElementById('mainSidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  if (!sidebar) return;
+  const isOpen = sidebar.classList.toggle('open');
+  if (overlay) overlay.classList.toggle('show', isOpen);
+}
+
+// ============================================================
+// UTILS
+// ============================================================
+function brl(v) {
+  const n = parseFloat(v) || 0;
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n);
+}
+
+function num(v) {
+  return new Intl.NumberFormat('pt-BR').format(v || 0);
+}
+
+function qtdDe(r) {
+  const cand = [r.quantidade, r.qtde, r.qtd, r.quantidade_nf, r.qtd_nf, r.quantidade_faturada, r.qt];
+  for (let i = 0; i < cand.length; i++) {
+    if (cand[i] !== undefined && cand[i] !== null && cand[i] !== '') {
+      const n = parseFloat(String(cand[i]).replace(',', '.'));
+      if (!isNaN(n)) return n;
+    }
+  }
+  return 0;
+}
+
+function fmtQtd(n) {
+  const v = parseFloat(n) || 0;
+  return new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(v);
+}
+
+// ============================================================
+// BUSCA VENDEDOR
+// ============================================================
+function onBuscaVend() {
+  const q = document.getElementById('inputVend').value.trim().toLowerCase();
+  const lista = document.getElementById('listaVend');
+  if (!q || q.length < 1) { lista.style.display = 'none'; return; }
+
+  const filtrados = todosVendedores.filter(v => v.toLowerCase().indexOf(q) >= 0);
+  if (!filtrados.length) { lista.style.display = 'none'; return; }
+
+  lista.innerHTML = '';
+  filtrados.slice(0, 20).forEach(v => {
+    const ok = vendedoresSel.indexOf(v) >= 0;
+    const el = document.createElement('div');
+    el.className = 'sug-item' + (ok ? ' sug-ok' : '');
+    el.innerHTML = `<span class="sug-nome">${v}</span>${ok ? '<span class="sug-check">✓</span>' : ''}`;
+    el.addEventListener('click', (function(nome) {
+      return function() { addVendedor(nome); };
+    })(v));
+    lista.appendChild(el);
+  });
+  lista.style.display = 'block';
+}
+
+function addVendedor(nome) {
+  if (vendedoresSel.indexOf(nome) < 0) vendedoresSel.push(nome);
+  document.getElementById('inputVend').value = '';
+  document.getElementById('listaVend').style.display = 'none';
+  renderTagsVend();
+  recarregar();
+}
+
+function remVendedor(nome) {
+  vendedoresSel = vendedoresSel.filter(v => v !== nome);
+  renderTagsVend();
+  recarregar();
+}
+
+function renderTagsVend() {
+  const container = document.getElementById('tagsVend');
+  if (!vendedoresSel.length) {
+    container.innerHTML = '<span style="color:var(--text-muted);font-size:12px;">Selecione um vendedor</span>';
+    return;
+  }
+  container.innerHTML = '';
+  vendedoresSel.forEach(v => {
+    const tag = document.createElement('div');
+    tag.className = 'tag-item';
+    tag.innerHTML = `${v} <button onclick="remVendedor('${v.replace(/'/g, "\\'")}')">×</button>`;
+    container.appendChild(tag);
+  });
+}
+
+// ============================================================
+// BUSCA PRODUTO
+// ============================================================
+function onBuscaProd() {
+  const q = document.getElementById('inputProd').value.trim();
+  const lista = document.getElementById('listaProd');
+  if (q.length < 2) { lista.style.display = 'none'; return; }
+
+  const q_low = q.toLowerCase();
+  const resultados = todosProdutos.filter(d => {
+    return (d.produto || '').toLowerCase().indexOf(q_low) >= 0 ||
+           (d.cod_produto || '').toLowerCase().indexOf(q_low) >= 0;
+  }).slice(0, 20);
+
+  if (!resultados.length) { lista.style.display = 'none'; return; }
+
+  lista.innerHTML = '';
+  resultados.forEach(d => {
+    const ok = produtosSel.indexOf(d.produto) >= 0;
+    const el = document.createElement('div');
+    el.className = 'sug-item' + (ok ? ' sug-ok' : '');
+    el.innerHTML = `<span class="sug-nome">${d.produto}</span><span class="sug-marca">${d.marca}</span>${ok ? '<span class="sug-check">✓</span>' : ''}`;
+    el.addEventListener('click', (function(nome) {
+      return function() { addProduto(nome); };
+    })(d.produto));
+    lista.appendChild(el);
+  });
+  lista.style.display = 'block';
+}
+
+function addProduto(nome) {
+  if (produtosSel.indexOf(nome) < 0) produtosSel.push(nome);
+  document.getElementById('inputProd').value = '';
+  document.getElementById('listaProd').style.display = 'none';
+  renderTagsProd();
+  recarregar();
+}
+
+function remProduto(nome) {
+  produtosSel = produtosSel.filter(p => p !== nome);
+  renderTagsProd();
+  recarregar();
+}
+
+function renderTagsProd() {
+  const container = document.getElementById('tagsProd');
+  if (!produtosSel.length) {
+    container.innerHTML = '<span style="color:var(--text-muted);font-size:12px;">Todos os produtos</span>';
+    return;
+  }
+  container.innerHTML = '';
+  produtosSel.forEach(v => {
+    const tag = document.createElement('div');
+    tag.className = 'tag-item';
+    tag.innerHTML = `${v} <button onclick="remProduto('${v.replace(/'/g, "\\'")}')">×</button>`;
+    container.appendChild(tag);
+  });
+}
+
+// ============================================================
+// BASES
+// ============================================================
+function renderBases(bases) {
+  const wrap = document.getElementById('basesWrap');
+  if (!wrap) return;
+  if (!bases || !bases.length) {
+    wrap.innerHTML = '<span style="color:var(--text-muted);font-size:12px;">Nenhuma base encontrada</span>';
+    return;
+  }
+
+  let html = `<button class="status-chip${basesSel.length ? '' : ' active'}" onclick="limparBases()">Todas as bases</button>`;
+  bases.forEach(b => {
+    const on = basesSel.indexOf(b) >= 0;
+    html += `<button class="status-chip${on ? ' active' : ''}" onclick="toggleBase('${b.replace(/'/g, "\\'")}')">${b}</button>`;
+  });
+  wrap.innerHTML = html;
+}
+
+function toggleBase(b) {
+  const i = basesSel.indexOf(b);
+  if (i >= 0) basesSel.splice(i, 1);
+  else basesSel.push(b);
+  histCache = {};
+  detalheAberto = {};
+  renderBases(todasBases);
+  recarregar();
+}
+
+function limparBases() {
+  if (!basesSel.length) return;
+  basesSel = [];
+  histCache = {};
+  detalheAberto = {};
+  renderBases(todasBases);
+  recarregar();
+}
+
+// ============================================================
+// PERÍODOS
+// ============================================================
+function togglePeriodo(ano, mes) {
+  if (datasSel.length) limparDataSilencioso();
+  const idx = periodosSel.findIndex(p => p.ano === ano && p.mes === mes);
+  if (idx >= 0) periodosSel.splice(idx, 1);
+  else periodosSel.push({ ano, mes });
+
+  periodosSel.sort((a, b) => {
+    if (a.ano !== b.ano) return a.ano - b.ano;
+    return a.mes - b.mes;
+  });
+
+  document.querySelectorAll('.cal-mes').forEach(el => {
+    const isSel = periodosSel.some(p => p.ano == el.dataset.ano && p.mes == el.dataset.mes);
+    el.classList.toggle('cal-mes-sel', isSel);
+  });
+
+  renderTagsPeriodo();
+  recarregar();
+}
+
+function onDataChange() {
+  const inp = document.getElementById('inputData');
+  const v = inp.value;
+  if (!v) return;
+  if (datasSel.indexOf(v) < 0) datasSel.push(v);
+  datasSel.sort();
+  inp.value = '';
+  periodosSel = [];
+  atualizarCalendario();
+  renderTagsPeriodo();
+  renderTagsDatas();
+  histCache = {};
+  recarregar();
+}
+
+function remData(d) {
+  datasSel = datasSel.filter(x => x !== d);
+  renderTagsDatas();
+  recarregar();
+}
+
+function renderTagsDatas() {
+  const w = document.getElementById('tagsDatas');
+  if (w) {
+    w.innerHTML = datasSel.map(d =>
+      `<span class="tag" style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:20px;background:var(--bg-secondary,#EEF2FF);border:1px solid var(--border-color,#C7D2FE);font-size:12px;font-weight:600;">📆 ${fmtDataBR(d)}<button type="button" onclick="remData('${d}')" title="Remover" style="border:none;background:none;cursor:pointer;font-size:14px;line-height:1;color:inherit;padding:0;">×</button></span>`
+    ).join('');
+  }
+  const bd = document.getElementById('btnLimparData');
+  if (bd) bd.style.display = datasSel.length ? '' : 'none';
+}
+
+function limparData() {
+  limparDataSilencioso();
+  recarregar();
+}
+
+function limparDataSilencioso() {
+  datasSel = [];
+  const di = document.getElementById('inputData');
+  if (di) di.value = '';
+  renderTagsDatas();
+}
+
+function renderTagsPeriodo() {
+  const container = document.getElementById('tagsPeriodo');
+  if (!periodosSel.length) {
+    container.innerHTML = '<span style="color:var(--text-muted);font-size:12px;">Todos os períodos</span>';
+    return;
+  }
+  container.innerHTML = '';
+  periodosSel.forEach(p => {
+    const tag = document.createElement('div');
+    tag.className = 'tag-item';
+    tag.innerHTML = `${MESES_NOME[p.mes]}/${p.ano} <button onclick="togglePeriodo(${p.ano}, ${p.mes})">×</button>`;
+    container.appendChild(tag);
+  });
+}
+
+function atualizarCalendario() {
+  document.querySelectorAll('.cal-mes').forEach(el => {
+    const ano = parseInt(el.dataset.ano);
+    const mes = parseInt(el.dataset.mes);
+    const sel = periodosSel.some(p => p.ano === ano && p.mes === mes);
+    el.classList.toggle('cal-mes-sel', sel);
+  });
+}
+
+// ============================================================
+// BOTÃO "CARREGAR ANO ATUAL"
+// ============================================================
+function carregarAnoAtual() {
+  limparDataSilencioso();
+  const anoAtual = new Date().getFullYear();
+  periodosSel = [];
+  for (let m = 1; m <= 12; m++) periodosSel.push({ ano: anoAtual, mes: m });
+  atualizarCalendario();
+  renderTagsPeriodo();
+  recarregar();
+}
+
+// ============================================================
+// CARREGAR FILTROS (paralelizado)
+// ============================================================
+async function carregarFiltros() {
+  try {
+    // 3 fetches em paralelo em vez de sequenciais
+    const [resFiltros, resProd] = await Promise.all([
+      fetch(API + '/api/filtros'),
+      fetch(API + '/api/todos-produtos').catch(() => null)
+    ]);
+
+    if (!resFiltros.ok) throw new Error('HTTP ' + resFiltros.status);
+    const data = await resFiltros.json();
+    todosVendedores = data.vendedores || [];
+
+    todasBases = (data.unidades || []).map(u => {
+      return (typeof u === 'string') ? u : (u.unidade || u.nome || '');
+    }).filter(u => !!u);
+    renderBases(todasBases);
+
+    if (resProd && resProd.ok) {
+      try { todosProdutos = await resProd.json(); }
+      catch (e) { todosProdutos = []; }
+    } else {
+      todosProdutos = [];
+    }
+
+    // Calendário
+    const anos = data.anos || [];
+    const container = document.getElementById('calendarioMeses');
+    container.innerHTML = '';
+    anos.forEach(ano => {
+      const div = document.createElement('div');
+      div.className = 'cal-ano';
+      const label = document.createElement('div');
+      label.className = 'cal-ano-label';
+      label.textContent = ano;
+      div.appendChild(label);
+
+      const meses = document.createElement('div');
+      meses.className = 'cal-meses';
+      for (let m = 1; m <= 12; m++) {
+        const btn = document.createElement('div');
+        btn.className = 'cal-mes';
+        btn.dataset.ano = ano;
+        btn.dataset.mes = m;
+        btn.textContent = MESES_NOME[m];
+        btn.addEventListener('click', (function(a, ms) {
+          return function() { togglePeriodo(a, ms); };
+        })(ano, m));
+        meses.appendChild(btn);
+      }
+      div.appendChild(meses);
+      container.appendChild(div);
+    });
+  } catch (e) {
+    console.error('Erro ao carregar filtros:', e);
+    document.getElementById('basesWrap').innerHTML =
+      '<span style="color:var(--color-danger);font-size:12px;">Erro ao carregar bases</span>';
+  }
+}
+
+// ============================================================
+// STATUS FILTRO
+// ============================================================
+function setFiltroStatus(v) {
+  filtroStatus = v;
+  detalheAberto = {};
+  if (carteiraCompleta && carteiraCompleta.length) renderPivot(carteiraCompleta);
+
+  document.getElementById('chipTodos').classList.toggle('active', v === 'todos');
+  document.getElementById('chipPos').classList.toggle('active', v === 'comprantes');
+  document.getElementById('chipNeg').classList.toggle('active', v === 'naocomprantes');
+}
+
+// ============================================================
+// RECARREGAR
+// ============================================================
+async function recarregar() {
+  atualizarCalendario();
+
+  if (!vendedoresSel.length && !produtosSel.length && !periodosSel.length && !basesSel.length && !datasSel.length) {
+    document.getElementById('pivotWrap').innerHTML = `
+      <div class="empty-state">
+        <span class="empty-icon">🔎</span>
+        <div class="empty-title">Selecione um filtro para começar</div>
+        <div class="empty-desc">Escolha um vendedor, produto ou período acima. Ou clique em <strong>"Carregar ano atual"</strong> no topo para ver tudo de uma vez.</div>
+      </div>
+    `;
+    document.getElementById('resumoInfo').textContent = 'Aguardando seleção de filtro';
+    document.getElementById('dashboardFooter').textContent = 'Aguardando seleção de filtro';
+    carteiraCompleta = [];
+    return;
+  }
+
+  if (carregando) return;
+  carregando = true;
+
+  const loader = document.getElementById('loadingOverlay');
+  const loadingText = document.getElementById('loadingText');
+  if (loadingText) loadingText.textContent = 'Carregando dados...';
+  loader.classList.add('show');
+
+  try {
+    const p = new URLSearchParams();
+    vendedoresSel.forEach(v => p.append('vendedor', v));
+    produtosSel.forEach(v => p.append('produtos', v));
+    basesSel.forEach(b => p.append('unidade', b));
+    periodosSel.forEach(per => {
+      p.append('periodo', per.ano + '-' + String(per.mes).padStart(2, '0'));
+    });
+    datasSel.forEach(d => p.append('data', d));
+
+    const res = await fetch(API + '/api/pivot-clientes?' + p.toString());
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    carteiraCompleta = data;
+    renderPivot(data);
+  } catch (e) {
+    console.error('Erro no recarregar:', e);
+    document.getElementById('pivotWrap').innerHTML = `
+      <div class="empty-state">
+        <span class="empty-icon" style="color:var(--color-danger);">⚠️</span>
+        <div class="empty-title">Erro ao carregar dados</div>
+        <div class="empty-desc">${e.message}<br>Tente novamente ou reduza os filtros.</div>
+      </div>
+    `;
+    document.getElementById('resumoInfo').textContent = 'Erro ao carregar';
+  }
+
+  loader.classList.remove('show');
+  carregando = false;
+}
+
+// ============================================================
+// RENDER PIVOT
+// ============================================================
+function setaSort(key) {
+  if (pivotSort.key !== key) return ' <span style="opacity:.35">⇅</span>';
+  return pivotSort.dir === 'desc' ? ' ▼' : ' ▲';
+}
+
+function ordenarPivot(key) {
+  if (pivotSort.key === key) {
+    pivotSort.dir = pivotSort.dir === 'desc' ? 'asc' : 'desc';
+  } else {
+    pivotSort.key = key;
+    pivotSort.dir = 'desc';
+  }
+  if (window.__ultimoPivotData) renderPivot(window.__ultimoPivotData);
+}
+
+function renderPivot(data) {
+  const wrap = document.getElementById('pivotWrap');
+  window.__ultimoPivotData = data;
+
+  // Colunas de período
+  const colsMap = {};
+  if (datasSel.length) {
+    datasSel.forEach(d => { colsMap[d] = { data: d }; });
+  } else if (periodosSel.length) {
+    periodosSel.forEach(p => { colsMap[p.ano + '-' + p.mes] = { ano: p.ano, mes: p.mes }; });
+  } else {
+    data.forEach(r => {
+      if (r.ano && r.mes) colsMap[r.ano + '-' + r.mes] = { ano: r.ano, mes: r.mes };
+    });
+  }
+  const cols = Object.values(colsMap).sort((a, b) => a.data ? a.data.localeCompare(b.data) : (a.ano !== b.ano ? a.ano - b.ano : a.mes - b.mes));
+
+  // ============================================================
+  // 🔑 MESCLA: base de clientes (carteira) + faturamento
+  //  - Todo cliente que aparece em `data` entra
+  //  - Se o backend mandar todos os clientes da carteira com faturamento zerado,
+  //    eles já aparecem aqui automaticamente
+  // ============================================================
+  const clientesMap = {};
+  function chaveCliente(r) {
+    const c = (r.cod_cliente === null || r.cod_cliente === undefined) ? '' : String(r.cod_cliente).trim();
+    return c ? ('c:' + c) : ('n:' + (r.cliente || ''));
+  }
+
+  data.forEach(r => {
+    const key = chaveCliente(r);
+    if (!clientesMap[key]) {
+      clientesMap[key] = {
+        key: key,
+        cod: r.cod_cliente,
+        cods: {},
+        nome: r.cliente,
+        vendedor: r.vendedor || '—',
+        cidade: r.cidade || '',
+        uf: r.uf || '',
+        bairro: r.bairro || '',
+        endereco: r.endereco || ''
+      };
+    } else if (r.vendedor && r.vendedor !== '—' && (clientesMap[key].vendedor === '—' || !clientesMap[key].vendedor)) {
+      clientesMap[key].vendedor = r.vendedor;
+    }
+    if (r.cod_cliente !== null && r.cod_cliente !== undefined) clientesMap[key].cods[String(r.cod_cliente).trim()] = 1;
+    if (r.cod_cliente_nota !== null && r.cod_cliente_nota !== undefined) clientesMap[key].cods[String(r.cod_cliente_nota).trim()] = 1;
+    if (!clientesMap[key].cidade && r.cidade) clientesMap[key].cidade = r.cidade;
+    if (!clientesMap[key].uf && r.uf) clientesMap[key].uf = r.uf;
+    if (!clientesMap[key].bairro && r.bairro) clientesMap[key].bairro = r.bairro;
+    if (!clientesMap[key].endereco && r.endereco) clientesMap[key].endereco = r.endereco;
+  });
+
+  const clientes = Object.values(clientesMap).sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
+
+  if (!clientes.length) {
+    wrap.innerHTML = `
+      <div class="empty-state">
+        <span class="empty-icon">📭</span>
+        <div class="empty-title">Nenhum dado encontrado</div>
+        <div class="empty-desc">Não há clientes para os filtros selecionados.</div>
+      </div>
+    `;
+    document.getElementById('resumoInfo').textContent = 'Sem dados';
+    return;
+  }
+
+  // Mapa de valores por cliente × período
+  const valMap = {};
+  data.forEach(r => {
+    if (datasSel.length) {
+      if (datasSel.indexOf(normData(r.data_movimento)) < 0) return;
+    } else if (!r.ano || !r.mes) return;
+    if (!datasSel.length && periodosSel.length) {
+      const ok = periodosSel.some(per => per.ano == r.ano && per.mes == r.mes);
+      if (!ok) return;
+    }
+    const ck = chaveCliente(r);
+    const ck2 = rowKey(r);
+    if (!valMap[ck]) valMap[ck] = {};
+    const liquido = (parseFloat(r.faturamento) || 0) - Math.abs(parseFloat(r.devolucoes) || 0);
+    valMap[ck][ck2] = (valMap[ck][ck2] || 0) + liquido;
+  });
+
+  // Totais por coluna
+  const totCols = {};
+  cols.forEach(c => {
+    const key = colKey(c);
+    totCols[key] = clientes.reduce((s, cl) => {
+      const ck = cl.key;
+      return s + (valMap[ck] && valMap[ck][key] ? valMap[ck][key] : 0);
+    }, 0);
+  });
+
+  // Ordenação
+  if (pivotSort.key) {
+    const sk = pivotSort.key,
+      sdir = pivotSort.dir === 'asc' ? 1 : -1;
+    clientes.sort((a, b) => {
+      let va = 0, vb = 0;
+      const ka = a.key, kb = b.key;
+      if (sk === 'total') {
+        cols.forEach(c => {
+          const k = colKey(c);
+          va += (valMap[ka] && valMap[ka][k]) || 0;
+          vb += (valMap[kb] && valMap[kb][k]) || 0;
+        });
+      } else {
+        va = (valMap[ka] && valMap[ka][sk]) || 0;
+        vb = (valMap[kb] && valMap[kb][sk]) || 0;
+      }
+      if (va === vb) return (a.nome || '').localeCompare(b.nome || '');
+      return (va - vb) * sdir;
+    });
+  }
+
+  const periodoLabel = datasSel.length ? (datasSel.length === 1 ? 'dia ' : datasSel.length + ' dias: ') + datasSel.map(fmtDataBR).join(', ') : (periodosSel.length ? cols.length + ' período' + (cols.length > 1 ? 's' : '') : 'ano atual (' + new Date().getFullYear() + ')');
+
+  try {
+    let html = '<table class="pivot-table"><thead><tr>';
+    html += '<th class="pivot-th-fix">Cód</th><th class="pivot-th-fix">Cliente</th><th class="pivot-th-fix">Status</th><th class="pivot-th-fix">Vendedor</th><th class="pivot-th-fix pivot-th-end">Cidade</th><th class="pivot-th-fix pivot-th-end">UF</th><th class="pivot-th-fix pivot-th-end">Endereço</th><th class="pivot-th-fix pivot-th-end">Bairro</th>';
+    cols.forEach(c => {
+      const k = colKey(c);
+      html += `<th class="pivot-th-col sortable" onclick="ordenarPivot('${k}')" title="Ordenar por esta coluna">${labelCol(c)}${setaSort(k)}</th>`;
+    });
+    html += `<th class="pivot-th-total sortable" onclick="ordenarPivot('total')" title="Ordenar pelo valor total">Total${setaSort('total')}</th></tr></thead><tbody>`;
+
+    clientesRender = [];
+    pivotCols = cols;
+    pivotValMap = valMap;
+    let nCompr = 0, nNao = 0, totVisivel = 0;
+    const totColsVis = {};
+    cols.forEach(c => { totColsVis[colKey(c)] = 0; });
+
+    clientes.forEach(cl => {
+      const ck = cl.key;
+      let totRow = 0;
+      const vals = cols.map(c => {
+        const val = (valMap[ck] && valMap[ck][colKey(c)]) ? valMap[ck][colKey(c)] : 0;
+        totRow += val;
+        return val;
+      });
+      const comprou = totRow > 0;
+      if (comprou) nCompr++;
+      else nNao++;
+      if (filtroStatus === 'comprantes' && !comprou) return;
+      if (filtroStatus === 'naocomprantes' && comprou) return;
+
+      totVisivel += totRow;
+      let tds = '';
+      cols.forEach((c, i) => {
+        totColsVis[colKey(c)] += vals[i];
+        tds += `<td class="pivot-val${vals[i] > 0 ? ' pivot-val-pos' : ''}">${vals[i] > 0 ? brl(vals[i]) : '—'}</td>`;
+      });
+
+      const idx = clientesRender.length;
+      clientesRender.push(cl);
+
+      const statusText = comprou ? 'Comprante' : 'Não comprante';
+      const statusStyle = comprou
+        ? 'background:#F0FDF4;color:#0B7C3C;border:1px solid #86EFAC;'
+        : 'background:#FEF2F2;color:#DC2626;border:1px solid #FECACA;';
+
+      html += `<tr>
+        <td class="pivot-cod clickable" onclick="toggleDetalheCliente(${idx})"><span class="cli-caret" id="caret-${idx}">▶</span>${cl.cod || '—'}</td>
+        <td class="pivot-nome clickable" onclick="toggleDetalheCliente(${idx})" title="${(cl.nome || '—').replace(/"/g, '&quot;')}">${cl.nome || '—'}</td>
+        <td class="pivot-vend"><span style="display:inline-block;padding:2px 12px;border-radius:20px;font-size:11px;font-weight:600;${statusStyle}">${statusText}</span></td>
+        <td class="pivot-vend" title="${(cl.vendedor || '').replace(/"/g, '&quot;')}">${cl.vendedor || '—'}</td>
+        <td class="pivot-end" title="${(cl.cidade || '').replace(/"/g, '&quot;')}">${cl.cidade || '—'}</td>
+        <td class="pivot-end pivot-uf">${cl.uf || '—'}</td>
+        <td class="pivot-end" title="${(cl.endereco || '').replace(/"/g, '&quot;')}">${cl.endereco || '—'}</td>
+        <td class="pivot-end" title="${(cl.bairro || '').replace(/"/g, '&quot;')}">${cl.bairro || '—'}</td>
+        ${tds}
+        <td class="pivot-total">${brl(totRow)}</td>
+      </tr>
+      <tr class="detalhe-row" id="det-${idx}" style="display:none"><td colspan="${9 + cols.length}"><div class="det-msg" id="detbox-${idx}">Carregando…</div></td></tr>`;
+    });
+
+    const totalExibidos = clientesRender.length;
+    document.getElementById('resumoInfo').textContent =
+      totalExibidos + ' clientes · ' + nCompr + ' comprantes / ' + nNao + ' não comprantes · ' + periodoLabel + ' · Total: ' + brl(totVisivel);
+
+    if (cols.length > 0) {
+      html += '<tr class="pivot-row-total"><td colspan="8">TOTAL</td>';
+      cols.forEach(c => { html += `<td>${brl(totColsVis[colKey(c)])}</td>`; });
+      html += `<td>${brl(totVisivel)}</td></tr>`;
+    }
+
+    html += '</tbody></table>';
+    wrap.innerHTML = html;
+  } catch (err) {
+    console.error('renderPivot erro:', err);
+    wrap.innerHTML = `<div class="empty-state"><div class="empty-title">Erro ao renderizar</div><div class="empty-desc">${err.message}</div></div>`;
+  }
+}
+
+// ============================================================
+// DETALHE DO CLIENTE
+// ============================================================
+async function historicoVendedor(vendedor) {
+  const chave = vendedor + '||' + basesSel.slice().sort().join(',');
+  if (histCache[chave]) return histCache[chave];
+  const qs = new URLSearchParams();
+  qs.append('vendedor', vendedor);
+  basesSel.forEach(b => qs.append('unidade', b));
+  const res = await fetch(API + '/api/clientes/historico?' + qs.toString());
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const data = await res.json();
+  histCache[chave] = Array.isArray(data) ? data : [];
+  return histCache[chave];
+}
+
+function colunasDetalhe(linhas) {
+  if (datasSel.length) return datasSel.slice().sort().map(d => ({ data: d }));
+  if (periodosSel.length) {
+    return periodosSel.slice().sort((a, b) => a.ano !== b.ano ? a.ano - b.ano : a.mes - b.mes);
+  }
+  const set = {};
+  linhas.forEach(r => { if (r.ano && r.mes) set[r.ano + '-' + r.mes] = { ano: Number(r.ano), mes: Number(r.mes) }; });
+  return Object.values(set).sort((a, b) => a.ano !== b.ano ? a.ano - b.ano : a.mes - b.mes);
+}
+
+async function toggleDetalheCliente(idx) {
+  const tr = document.getElementById('det-' + idx);
+  const box = document.getElementById('detbox-' + idx);
+  const caret = document.getElementById('caret-' + idx);
+  if (!tr || !box) return;
+
+  if (tr.style.display !== 'none') {
+    tr.style.display = 'none';
+    detalheAberto[idx] = false;
+    if (caret) caret.classList.remove('open');
+    return;
+  }
+  tr.style.display = 'table-row';
+  detalheAberto[idx] = true;
+  if (caret) caret.classList.add('open');
+  if (box.dataset.carregado === '1') return;
+
+  const cl = clientesRender[idx];
+  box.className = 'det-msg';
+  box.textContent = 'Carregando produtos…';
+
+  let alvos = vendedoresSel.length ? vendedoresSel.slice() : [];
+  if (!alvos.length && cl.vendedor && cl.vendedor !== '—') alvos = [cl.vendedor];
+  if (!alvos.length) { box.textContent = 'Selecione um vendedor para ver os produtos deste cliente.'; return; }
+
+  try {
+    let linhas = [];
+    for (let i = 0; i < alvos.length; i++) {
+      const dados = await historicoVendedor(alvos[i]);
+      linhas = linhas.concat(dados);
+    }
+
+    linhas = linhas.filter(r => {
+      const c = String(r.cod_cliente).trim();
+      return (cl.cods && cl.cods[c]) || c === String(cl.cod).trim();
+    });
+
+    if (datasSel.length) {
+      linhas = linhas.filter(r => datasSel.indexOf(normData(r.data_movimento)) >= 0);
+    } else if (periodosSel.length) {
+      linhas = linhas.filter(r => {
+        return periodosSel.some(p => Number(p.ano) === Number(r.ano) && Number(p.mes) === Number(r.mes));
+      });
+    }
+
+    if (produtosSel.length) {
+      linhas = linhas.filter(r => produtosSel.indexOf(r.produto) >= 0);
+    }
+
+    if (!linhas.length) {
+      box.className = 'det-msg';
+      box.textContent = 'Nenhuma compra registrada para este cliente nos filtros selecionados.';
+      box.dataset.carregado = '1';
+      return;
+    }
+
+    const colsD = colunasDetalhe(linhas);
+    const prodMap = {}, totCol = {}, totQtdCol = {};
+    let totGeralProd = 0, totGeralQtd = 0;
+    colsD.forEach(c => { totCol[colKey(c)] = 0; totQtdCol[colKey(c)] = 0; });
+
+    linhas.forEach(r => {
+      const chave = (r.cod_produto || '-') + '|' + (r.produto || '-') + '|' + (r.marca || '-');
+      if (!prodMap[chave]) prodMap[chave] = { cod: r.cod_produto || '—', nome: r.produto || '—', marca: r.marca || '—', meses: {}, qtdMeses: {}, total: 0, qtdTotal: 0 };
+      const v = parseFloat(r.valor_nf) || 0;
+      const q = qtdDe(r);
+      const k = datasSel.length ? normData(r.data_movimento) : Number(r.ano) + '-' + Number(r.mes);
+      prodMap[chave].meses[k] = (prodMap[chave].meses[k] || 0) + v;
+      prodMap[chave].qtdMeses[k] = (prodMap[chave].qtdMeses[k] || 0) + q;
+      prodMap[chave].total += v;
+      prodMap[chave].qtdTotal += q;
+      if (k in totCol) totCol[k] += v;
+      if (k in totQtdCol) totQtdCol[k] += q;
+      totGeralProd += v;
+      totGeralQtd += q;
+    });
+
+    const produtos = Object.values(prodMap).sort((a, b) => b.total - a.total);
+
+    let h = '<div class="detalhe-box"><table class="detalhe-table"><thead><tr>' +
+      '<th class="detalhe-th">Cód. Prod</th><th class="detalhe-th">Produto</th><th class="detalhe-th">Marca</th>';
+    colsD.forEach(c => {
+      h += `<th class="detalhe-th" style="text-align:right">Qtd ${labelCol(c)}</th>`;
+      h += `<th class="detalhe-th" style="text-align:right">${labelCol(c)}</th>`;
+    });
+    h += '<th class="detalhe-th" style="text-align:right">Qtd Total' + (datasSel.length ? ' do período' : '') + '</th><th class="detalhe-th" style="text-align:right">Total' + (datasSel.length ? ' do período' : '') + '</th></tr></thead><tbody>';
+
+    produtos.forEach(p => {
+      h += `<tr><td class="detalhe-td">${p.cod}</td><td class="detalhe-td">${p.nome}</td><td class="detalhe-td">${p.marca}</td>`;
+      colsD.forEach(c => {
+        const k = colKey(c);
+        const v = p.meses[k] || 0;
+        const q = p.qtdMeses[k] || 0;
+        h += `<td class="detalhe-td num${q > 0 ? ' pos' : ''}">${q > 0 ? fmtQtd(q) : '—'}</td>`;
+        h += `<td class="detalhe-td num${v > 0 ? ' pos' : ''}">${v > 0 ? brl(v) : '—'}</td>`;
+      });
+      h += `<td class="detalhe-td num pos">${fmtQtd(p.qtdTotal)}</td><td class="detalhe-td num pos">${brl(p.total)}</td></tr>`;
+    });
+
+    h += '</tbody><tfoot><tr class="detalhe-foot"><td colspan="3">' + produtos.length + ' produto(s)</td>';
+    colsD.forEach(c => {
+      h += `<td>${fmtQtd(totQtdCol[colKey(c)])}</td>`;
+      h += `<td>${brl(totCol[colKey(c)])}</td>`;
+    });
+    h += `<td>${fmtQtd(totGeralQtd)}</td><td>${brl(totGeralProd)}</td></tr></tfoot></table></div>`;
+
+    box.className = '';
+    box.innerHTML = h;
+    box.dataset.carregado = '1';
+  } catch (e) {
+    console.error('Erro no detalhe do cliente', e);
+    box.className = 'det-msg';
+    box.textContent = 'Erro ao carregar produtos: ' + e.message;
+  }
+}
+
+// ============================================================
+// LIMPAR FILTROS
+// ============================================================
+function limparFiltros() {
+  produtosSel = [];
+  vendedoresSel = [];
+  periodosSel = [];
+  limparDataSilencioso();
+  basesSel = [];
+  filtroStatus = 'todos';
+  histCache = {};
+  detalheAberto = {};
+  renderTagsProd();
+  renderTagsVend();
+  renderTagsPeriodo();
+  atualizarCalendario();
+  renderBases(todasBases);
+  setFiltroStatus('todos');
+  carteiraCompleta = [];
+  recarregar();
+}
+
+// ============================================================
+// EXPORTAR CARTEIRA
+// ============================================================
+function dataArquivo() {
+  const h = new Date();
+  return h.getFullYear() + '-' + String(h.getMonth() + 1).padStart(2, '0') + '-' + String(h.getDate()).padStart(2, '0');
+}
+
+function labelCol(c) { return c.data ? fmtDataBR(c.data) : MESES_NOME[c.mes] + '/' + String(c.ano).slice(2); }
+
+function linhasCarteira() {
+  const cols = pivotCols || [];
+  const head = ['Cód. Cliente', 'Cliente', 'Vendedor', 'Cidade', 'UF', 'Endereço', 'Bairro'];
+  cols.forEach(c => head.push(labelCol(c)));
+  head.push('Total');
+
+  const rows = [head];
+  const totCol = {};
+  let totGeral = 0;
+  cols.forEach(c => { totCol[colKey(c)] = 0; });
+
+  clientesRender.forEach(cl => {
+    const ck = cl.key;
+    let tot = 0;
+    const r = [cl.cod || '', cl.nome || '', cl.vendedor || '', cl.cidade || '', cl.uf || '', cl.endereco || '', cl.bairro || ''];
+    cols.forEach(c => {
+      const v = (pivotValMap[ck] && pivotValMap[ck][colKey(c)]) ? pivotValMap[ck][colKey(c)] : 0;
+      tot += v;
+      totCol[colKey(c)] += v;
+      r.push(v);
+    });
+    r.push(tot);
+    totGeral += tot;
+    rows.push(r);
+  });
+
+  const tr = ['TOTAL', '', '', '', '', '', ''];
+  cols.forEach(c => { tr.push(totCol[colKey(c)]); });
+  tr.push(totGeral);
+  rows.push(tr);
+  return rows;
+}
+
+function planilhaDe(rows, larguras) {
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols'] = rows[0].map((_, i) => { return { wch: larguras(i) }; });
+  return ws;
+}
+
+function exportarCarteira() {
+  if (!clientesRender.length) { alert('Nenhum dado para exportar!'); return; }
+  const rows = linhasCarteira();
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, planilhaDe(rows, function(i) { return i === 1 ? 38 : (i < 7 ? 20 : 14); }), 'Carteira');
+  XLSX.writeFile(wb, 'Horus-Carteira-' + dataArquivo() + '.xlsx');
+}
+
+// ============================================================
+// EXPORTAR PRODUTO
+// ============================================================
+async function exportarProduto() {
+  if (!clientesRender.length) { alert('Nenhum dado para exportar!'); return; }
+  const btn = document.getElementById('btnExpCompleto');
+  const txtOrig = btn ? btn.innerHTML : '';
+  if (btn) { btn.disabled = true; btn.innerHTML = '⏳ Gerando...'; }
+
+  try {
+    let alvos = vendedoresSel.length ? vendedoresSel.slice() : [];
+    if (!alvos.length) {
+      const set = {};
+      clientesRender.forEach(cl => { if (cl.vendedor && cl.vendedor !== '—') set[cl.vendedor] = 1; });
+      alvos.push(...Object.keys(set));
+    }
+
+    const infoCli = {}, codsVisiveis = [];
+    clientesRender.forEach(cl => {
+      const todos = Object.keys(cl.cods || {});
+      if (!todos.length) todos.push(String(cl.cod));
+      todos.forEach(c => { if (!c) return; infoCli[c] = cl; codsVisiveis.push(c); });
+    });
+
+    const res = await fetch(API + '/api/clientes/produtos_export', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        unidades: basesSel,
+        vendedores: alvos,
+        produtos: produtosSel,
+        datas: datasSel.slice(),
+        periodos: periodosSel.map(p => { return { ano: Number(p.ano), mes: Number(p.mes) }; }),
+        cod_clientes: codsVisiveis
+      })
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const linhas = await res.json();
+    if (linhas && linhas.erro) throw new Error(linhas.erro);
+
+    const mapa = {}, mesesSet = {};
+    linhas.forEach(r => {
+      const ano = Number(r.ano), mes = Number(r.mes);
+      if (!ano || !mes) return;
+      const mk = ano + '-' + (mes < 10 ? '0' + mes : mes);
+      mesesSet[mk] = { ano: ano, mes: mes };
+      const k = String(r.cod_cliente) + '|' + (r.cod_produto || '-') + '|' + (r.produto || '-');
+      if (!mapa[k]) mapa[k] = { cod_cliente: r.cod_cliente, vendedor: r.vendedor || '', cod_produto: r.cod_produto || '', produto: r.produto || '', marca: r.marca || '', meses: {}, qtdMeses: {}, total: 0, qtdTotal: 0 };
+      if (!mapa[k].vendedor && r.vendedor) mapa[k].vendedor = r.vendedor;
+      const v = parseFloat(r.valor_nf) || 0;
+      const q = qtdDe(r);
+      mapa[k].meses[mk] = (mapa[k].meses[mk] || 0) + v;
+      mapa[k].qtdMeses[mk] = (mapa[k].qtdMeses[mk] || 0) + q;
+      mapa[k].total += v;
+      mapa[k].qtdTotal += q;
+    });
+
+    const mesesKeys = Object.keys(mesesSet).sort();
+    const header = ['Cód. Cliente', 'Cliente', 'Vendedor', 'Cód. Produto', 'Produto', 'Marca'];
+    mesesKeys.forEach(mk => {
+      const m = mesesSet[mk];
+      const lbl = MESES_NOME[m.mes].toLowerCase() + '/' + String(m.ano).slice(-2);
+      header.push('qtd ' + lbl);
+      header.push(lbl);
+    });
+    header.push('Qtd Total');
+    header.push('Total');
+
+    const rows = [header];
+    Object.keys(mapa).map(k => mapa[k])
+      .sort((a, b) => {
+        const na = (infoCli[String(a.cod_cliente)] || {}).nome || '',
+          nb = (infoCli[String(b.cod_cliente)] || {}).nome || '';
+        return na === nb ? b.total - a.total : (na < nb ? -1 : 1);
+      })
+      .forEach(p => {
+        const cl = infoCli[String(p.cod_cliente)] || {};
+        const vendCl = (cl.vendedor && cl.vendedor !== '—') ? cl.vendedor : '';
+        const linha = [p.cod_cliente, cl.nome || '', p.vendedor || vendCl, p.cod_produto, p.produto, p.marca];
+        mesesKeys.forEach(mk => {
+          linha.push(p.qtdMeses[mk] || 0);
+          linha.push(p.meses[mk] || 0);
+        });
+        linha.push(p.qtdTotal);
+        linha.push(p.total);
+        rows.push(linha);
+      });
+
+    if (rows.length === 1) { alert('Nenhum produto encontrado para os filtros selecionados.'); return; }
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, planilhaDe(rows, function(i) { return (i === 1 || i === 4) ? 38 : ((i === 2 || i === 5) ? 22 : 16); }), 'Produtos');
+    XLSX.writeFile(wb, 'Horus-Produtos-' + dataArquivo() + '.xlsx');
+  } catch (e) {
+    console.error('Erro na exportação de produtos', e);
+    alert('Erro ao exportar: ' + e.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = txtOrig; }
+  }
+}
+
+// ============================================================
+// FOOTER
+// ============================================================
+function atualizarFooter() {
+  const el = document.getElementById('dashboardFooter');
+  if (!el) return;
+  const agora = new Date().toLocaleString('pt-BR', {
+    day: '2-digit', month: '2-digit', year: 'numeric',
+    hour: '2-digit', minute: '2-digit'
+  });
+  el.textContent = '📅 Dados carregados em: ' + agora;
+}
+
+// ============================================================
+// FECHAR SUGESTÕES AO CLICAR FORA
+// ============================================================
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.busca-wrap')) {
+    document.getElementById('listaProd').style.display = 'none';
+    document.getElementById('listaVend').style.display = 'none';
+  }
+});
+
+// ============================================================
+// INIT — não carrega nada automaticamente!
+// ============================================================
+window.onload = async function() {
+  const loader = document.getElementById('loadingOverlay');
+  loader.classList.add('show');
+
+  // ⚠️ NÃO seleciona meses automaticamente.
+  // A página fica vazia até o usuário escolher algo,
+  // OU clicar em "Carregar ano atual".
+
+  await carregarFiltros();
+  atualizarCalendario();
+  renderTagsPeriodo();
+  renderTagsProd();
+
+  // Mostra mensagem inicial (não chama /api/pivot-clientes)
+  document.getElementById('pivotWrap').innerHTML = `
+    <div class="empty-state">
+      <span class="empty-icon">🔎</span>
+      <div class="empty-title">Selecione um filtro para começar</div>
+      <div class="empty-desc">Escolha um vendedor, produto ou período acima. Ou clique em <strong>"Carregar ano atual"</strong> no topo para ver tudo de uma vez.</div>
+    </div>
+  `;
+
+  loader.classList.remove('show');
+  atualizarFooter();
+};
+</script>
+</body>
+</html>
