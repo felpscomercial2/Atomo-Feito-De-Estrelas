@@ -73,7 +73,7 @@ def _init_pool():
     """Cria o pool UMA vez usando a URL de conexão do Neon."""
     global _POOL
     if _POOL is None:
-        database_url = os.environ.get('DATABASE_URL')
+        database_url = os.environ.get('postgresql://neondb_owner:npg_jwOm5fK9pZFs@ep-twilight-flower-b5u010cy-pooler.c-7.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require')
         if not database_url:
             raise ValueError("A variável de ambiente DATABASE_URL não está configurada!")
         
