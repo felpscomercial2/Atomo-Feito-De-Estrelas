@@ -905,7 +905,6 @@ def shelflife_migrar():
 EMAILS_AUTORIZADOS_SL = [
     'comercial2@reforpan.com.br',
     'marketing@alimentarefood.com.br',
-    'comercial1@esdel'
 ]
 
 
