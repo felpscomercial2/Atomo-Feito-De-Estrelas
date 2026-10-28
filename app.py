@@ -65,20 +65,21 @@ def cache_clear():
     _cache.clear()
 
 # ============================================================
-# CONEXÃO COM SUPABASE / RAILWAY
+# CONEXÃO COM NEON
 # ============================================================
 _POOL = None
 
 def _init_pool():
+    """Cria o pool UMA vez usando a URL de conexão do Neon."""
     global _POOL
     if _POOL is None:
+        database_url = os.environ.get('DATABASE_URL')
+        if not database_url:
+            raise ValueError("A variável de ambiente DATABASE_URL não está configurada!")
+        
         _POOL = psycopg2.pool.ThreadedConnectionPool(
             1, int(os.environ.get('DB_POOL_MAX', 10)),
-            host            = os.environ.get('DB_HOST'),
-            port            = int(os.environ.get('DB_PORT', 5432)),
-            database        = os.environ.get('DB_NAME', 'railway'),
-            user            = os.environ.get('DB_USER'),
-            password        = os.environ.get('DB_PASS'),
+            dsn             = database_url,
             sslmode         = 'require',
             connect_timeout = 10,
             keepalives      = 1,
@@ -87,113 +88,6 @@ def _init_pool():
             keepalives_count   = 5,
         )
     return _POOL
-
-
-class _PooledConn:
-    def __init__(self, conn):
-        self._conn = conn
-        self._returned = False
-
-    def __getattr__(self, name):
-        return getattr(self._conn, name)
-
-    def close(self):
-        if self._returned:
-            return
-        self._returned = True
-        try:
-            if self._conn.closed:
-                _init_pool().putconn(self._conn, close=True)
-                return
-            if self._conn.get_transaction_status() != psycopg2.extensions.TRANSACTION_STATUS_IDLE:
-                self._conn.rollback()
-            _init_pool().putconn(self._conn)
-        except Exception:
-            try:
-                _init_pool().putconn(self._conn, close=True)
-            except Exception:
-                pass
-
-    def __enter__(self):
-        return self._conn.__enter__()
-
-    def __exit__(self, *a):
-        return self._conn.__exit__(*a)
-
-
-def get_conn():
-    last_err = None
-    for attempt in range(3):
-        try:
-            pool = _init_pool()
-            conn = pool.getconn()
-            try:
-                cur = conn.cursor()
-                cur.execute('SELECT 1')
-                cur.close()
-            except Exception:
-                try:
-                    pool.putconn(conn, close=True)
-                except Exception:
-                    pass
-                conn = pool.getconn()
-            wrapped = _PooledConn(conn)
-            try:
-                if has_request_context():
-                    if not hasattr(g, '_conns'):
-                        g._conns = []
-                    g._conns.append(wrapped)
-            except Exception:
-                pass
-            return wrapped
-        except Exception as e:
-            last_err = e
-            global _POOL
-            _POOL = None
-            time.sleep(0.3 * (attempt + 1))
-    raise last_err
-
-
-def _serializar_row(row):
-    import datetime
-    out = {}
-    for k, v in row.items():
-        if isinstance(v, datetime.date):
-            try:
-                out[k] = v.isoformat()
-            except Exception:
-                out[k] = None
-        else:
-            out[k] = v
-    return out
-
-
-def consultar(sql, params=()):
-    conn = get_conn()
-    try:
-        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cursor.execute(sql, params)
-        try:
-            rows = [_serializar_row(dict(r)) for r in cursor.fetchall()]
-        except Exception:
-            cursor.execute(sql, params)
-            rows = []
-            while True:
-                try:
-                    row = cursor.fetchone()
-                except Exception:
-                    continue
-                if row is None:
-                    break
-                try:
-                    rows.append(_serializar_row(dict(row)))
-                except Exception:
-                    continue
-        cursor.close()
-        return rows
-    finally:
-        conn.close()
-
 # ============================================================
 # MONTA FILTROS
 # ============================================================
