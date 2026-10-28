@@ -67,16 +67,17 @@ def cache_clear():
 # ============================================================
 # CONEXÃO COM NEON
 # ============================================================
+# ============================================================
+# CONEXÃO COM NEON
+# ============================================================
 _POOL = None
 
 def _init_pool():
-    """Cria o pool UMA vez usando a URL de conexão do Neon."""
+    """Cria o pool UMA vez usando a URL de conexão direta do Neon."""
     global _POOL
     if _POOL is None:
-        # Pega a URL diretamente da variável de ambiente DATABASE_URL do Render
-        database_url = os.environ.get('postgresql://neondb_owner:npg_jwOm5fK9pZFs@ep-twilight-flower-b5u010cy-pooler.c-7.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require')
-        if not database_url:
-            raise ValueError("A variável de ambiente DATABASE_URL não está configurada!")
+        # URL de conexão fixa do Neon para garantir funcionamento imediato
+        database_url = "postgresql://neondb_owner:npg_jwOm5fK9pZFs@ep-twilight-flower-b5u010cy-pooler.c-7.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
         
         _POOL = psycopg2.pool.ThreadedConnectionPool(
             1, int(os.environ.get('DB_POOL_MAX', 10)),
@@ -89,7 +90,6 @@ def _init_pool():
             keepalives_count   = 5,
         )
     return _POOL
-
 def get_conn():
     """Função que faltava: obtém uma conexão do pool e guarda no contexto da requisição (g)."""
     pool = _init_pool()
