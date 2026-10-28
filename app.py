@@ -97,25 +97,30 @@ def get_conn():
     return conn
 
 def consultar(sql, params=None):
-    """Função auxiliar padrão para consultas."""
+    """Executa uma consulta garantindo que a conexão é sempre fechada e devolvida ao pool."""
     conn = get_conn()
     cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     try:
-        cursor.execute(sql, params or [])
-        if cursor.description:
-            resultado = [_serializar_row(dict(r)) for r in cursor.fetchall()]
-        else:
-            conn.commit()
-            resultado = []
-        return resultado
+        cursor.execute(sql, params or ())
+        resultado = cursor.fetchall()
+        return [dict(row) for row in resultado]
     finally:
         cursor.close()
+        conn.close()  # <-- DEVOLVE A CONEXÃO AO POOL PARA NÃO ESGOTAR!
 
-def _serializar_row(row):
-    for k, v in row.items():
-        if hasattr(v, 'isoformat'):
-            row[k] = v.isoformat()
-    return row
+def executar_sql(sql, params=None):
+    """Executa comandos de escrita (INSERT/UPDATE/DELETE) fechando sempre a conexão."""
+    conn = get_conn()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(sql, params or ())
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        raise e
+    finally:
+        cursor.close()
+        conn.close()  # <-- DEVOLVE A CONEXÃO AO POOL!
 # ============================================================
 # MONTA FILTROS
 # ============================================================
