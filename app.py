@@ -898,22 +898,15 @@ def shelflife_migrar():
     conn.commit(); cursor.close(); conn.close()
     return jsonify({'ok': True, 'detalhes': resultados})
 
-
 # ============================================================
-# SHELF LIFE — VERIFICAR ACESSO
+# SHELF LIFE — CONTROLE DE ACESSO (Livre)
 # ============================================================
-EMAILS_AUTORIZADOS_SL = [
-    'comercial2@reforpan.com.br',
-    'marketing@alimentarefood.com.br',
-]
-
-
 @app.route('/api/shelflife/verificar-acesso', methods=['POST'])
 def shelflife_verificar_acesso():
-    data  = request.get_json(force=True)
+    data  = request.get_json(force=True) or {}
     email = str(data.get('email', '')).strip().lower()
-    autorizado = email in [e.lower() for e in EMAILS_AUTORIZADOS_SL]
-    return jsonify({'autorizado': autorizado, 'email': email})
+    return jsonify({'autorizado': True, 'email': email})
+
 
 
 # ============================================================
