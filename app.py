@@ -792,6 +792,40 @@ def shelflife_migrar():
     cursor = conn.cursor()
     resultados = []
 
+    # 1. Cria a tabela shelflife se ela ainda não existir no Neon
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS shelflife (
+            id SERIAL PRIMARY KEY,
+            semana TEXT,
+            unidade TEXT,
+            cod_produto TEXT,
+            cod_sl TEXT,
+            produto TEXT,
+            marca TEXT,
+            quantidade_log NUMERIC,
+            validade DATE,
+            dias_vencimento INT,
+            vence_em TEXT,
+            status_logistica TEXT,
+            status TEXT,
+            is_sl BOOLEAN,
+            valor_sl NUMERIC(10,2),
+            quantidade_atual NUMERIC,
+            venda_3meses NUMERIC,
+            venda_mes NUMERIC,
+            data_inconsistencia DATE,
+            obs_logistica TEXT,
+            obs_gerais TEXT,
+            acao TEXT,
+            vendedor TEXT,
+            resolvido BOOLEAN DEFAULT FALSE,
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW()
+        )
+    """)
+    resultados.append('Tabela shelflife criada ou já existente')
+
+    # 2. Remove duplicados se houver
     cursor.execute("""
         DELETE FROM shelflife a
         USING shelflife b
@@ -804,6 +838,7 @@ def shelflife_migrar():
     removidos = cursor.rowcount
     resultados.append(f'Duplicatas removidas: {removidos}')
 
+    # 3. Adiciona a constraint UNIQUE se não existir
     cursor.execute("""
         SELECT COUNT(*) FROM pg_constraint
         WHERE conname = 'shelflife_semana_unidade_cod_produto_validade_key'
